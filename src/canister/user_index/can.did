@@ -198,6 +198,7 @@ service : (UserIndexInitArgs) -> {
   set_permission_to_upgrade_individual_canisters : (bool) -> (text);
   start_upgrades_for_individual_canisters : (text, blob) -> (text);
   toggle_signups_enabled : () -> (Result_3);
+  uninstall_individual_user_canister : (principal) -> (Result_3);
   update_index_with_unique_user_name_corresponding_to_user_principal_id : (
       text,
       principal,
