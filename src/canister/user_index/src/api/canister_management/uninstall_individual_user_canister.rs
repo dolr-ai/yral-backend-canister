@@ -6,7 +6,9 @@ use shared_utils::common::utils::{
     upgrade_canister::try_stopping_canister_with_retries,
 };
 
-use crate::CANISTER_DATA;
+use crate::{
+    util::canister_management::check_and_request_cycles_from_platform_orchestrator, CANISTER_DATA,
+};
 
 #[update(guard = "is_caller_controller_or_global_admin")]
 pub async fn uninstall_individual_user_canister(canister_id: Principal) -> Result<(), String> {
@@ -26,6 +28,8 @@ pub async fn uninstall_individual_user_canister(canister_id: Principal) -> Resul
             .remove(&user_principal_to_remove)
             .ok_or("Canister not found".to_string())
     })?;
+
+    let _ = check_and_request_cycles_from_platform_orchestrator().await;
 
     try_stopping_canister_with_retries(canister_id, 3)
         .await
