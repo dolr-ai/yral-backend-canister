@@ -48,6 +48,7 @@ pub mod recycle_canisters;
 pub mod request_cycles;
 pub mod reset_user_canister_ml_feed_cache;
 pub mod start_upgrades_for_individual_canisters;
+pub mod uninstall_individual_user_canister;
 pub mod update_user_canister_restart_timers;
 pub mod upgrade_all_creator_dao_governance_canisters_in_the_network;
 

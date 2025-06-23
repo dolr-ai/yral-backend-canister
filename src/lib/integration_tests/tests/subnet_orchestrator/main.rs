@@ -3,3 +3,5 @@ pub mod recharge_individual_canister_when_requested;
 pub mod test_allot_empty_canisters_to_individual_canister;
 pub mod test_mark_subnet_orchestrator_as_maxed_out_once_backup_canisters_are_consumed;
 pub mod test_updating_controller_before_upgrading_invidividual_canister;
+
+pub mod test_uninstalling_individual_canister_and_returning_to_backup_pool;
