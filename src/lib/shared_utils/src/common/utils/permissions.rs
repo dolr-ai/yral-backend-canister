@@ -23,7 +23,7 @@ pub fn is_caller_global_admin() -> Result<(), String> {
     let valid_canisters = vec![GLOBAL_SUPER_ADMIN_USER_ID_V1, GLOBAL_SUPER_ADMIN_USER_ID];
 
     if !valid_canisters.contains(&caller().to_string().as_str()) {
-        return Err("Unauthorize".into());
+        return Err("Unauthorized".into());
     }
     Ok(())
 }
