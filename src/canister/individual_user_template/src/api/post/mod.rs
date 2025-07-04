@@ -2,6 +2,7 @@ pub mod add_post_v2;
 pub mod delete_post;
 pub mod get_entire_individual_post_detail_by_id;
 pub mod get_individual_post_details_by_id;
+pub mod get_total_number_of_posts;
 // pub mod get_posts_of_this_user_profile_with_pagination;
 pub mod get_posts_of_this_user_profile_with_pagination_cursor;
 pub mod update_post_add_view_details;

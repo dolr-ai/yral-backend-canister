@@ -189,6 +189,13 @@ impl CanisterData {
             caller,
         )
     }
+
+    pub(crate) fn get_total_number_of_posts(&self) -> u64 {
+        self.all_created_posts
+            .iter()
+            .filter(|(_, post)| post.status != PostStatus::Deleted)
+            .count() as u64
+    }
 }
 
 #[derive(Serialize, Deserialize, Default)]
