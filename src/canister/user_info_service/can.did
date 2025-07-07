@@ -1,0 +1,2 @@
+type Result = variant { Ok; Err : text };
+service : { register_new_user : () -> (Result) }
