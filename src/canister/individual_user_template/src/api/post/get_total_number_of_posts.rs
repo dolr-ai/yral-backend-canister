@@ -3,7 +3,7 @@ use ic_cdk_macros::query;
 use crate::CANISTER_DATA;
 
 #[query]
-fn get_total_numer_of_posts() -> u64 {
+fn get_total_number_of_posts() -> u64 {
     CANISTER_DATA.with_borrow(|canister_data| {
         canister_data.get_total_number_of_posts()
     })

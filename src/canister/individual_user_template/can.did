@@ -398,7 +398,7 @@ service : (IndividualUserTemplateInitArgs) -> {
   get_token_roots_of_this_user_with_pagination_cursor : (nat64, nat64) -> (
       Result_8,
     ) query;
-  get_total_numer_of_posts : () -> (nat64) query;
+  get_total_number_of_posts : () -> (nat64) query;
   get_user_caniser_cycle_balance : () -> (nat) query;
   get_version : () -> (text) query;
   get_version_number : () -> (nat64) query;

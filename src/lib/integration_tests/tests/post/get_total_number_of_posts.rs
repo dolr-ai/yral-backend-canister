@@ -97,14 +97,14 @@ fn test_get_total_number_of_posts() {
         .query_call(
             alice_canister_id,
             Principal::anonymous(),
-            "get_total_numer_of_posts",
+            "get_total_number_of_posts",
             candid::encode_one(()).unwrap(),
         )
         .map(|reply_payload| {
             let total: u64 =
                 match reply_payload {
                     WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
-                    _ => panic!("\n🛑 get_total_numer_of_posts failed\n"),
+                    _ => panic!("\n🛑 get_total_number_of_posts failed\n"),
                 };
             total
         })
@@ -162,14 +162,14 @@ fn test_get_total_number_of_posts() {
         .query_call(
             alice_canister_id,
             Principal::anonymous(),
-            "get_total_numer_of_posts",
+            "get_total_number_of_posts",
             candid::encode_one(()).unwrap(),
         )
         .map(|reply_payload| {
             let total: u64 =
                 match reply_payload {
                     WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
-                    _ => panic!("\n🛑 get_total_numer_of_posts failed\n"),
+                    _ => panic!("\n🛑 get_total_number_of_posts failed\n"),
                 };
             total
         })
