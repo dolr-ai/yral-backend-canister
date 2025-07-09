@@ -1,0 +1,26 @@
+[package]
+name = "notification_store"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+candid = { workspace = true }
+ic-cdk = { workspace = true }
+serde = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-stable-structures = { workspace = true }
+ciborium = { workspace = true }
+shared_utils = { workspace = true }
+serde_json = { workspace = true }
+serde_json_any_key = "2.0.0"
+futures = { workspace = true }
+ic-cdk-timers = "0.12" 
+
+[dev-dependencies]
+test_utils = { workspace = true }
