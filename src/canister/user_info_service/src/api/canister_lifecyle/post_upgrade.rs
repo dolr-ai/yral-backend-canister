@@ -1,12 +1,14 @@
 use ciborium::de;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::Memory;
+use shared_utils::canister_specific::user_info_service::args::UserInfoServiceInitArgs;
 
 use crate::{CANISTER_DATA, data_model::memory::get_upgrades_memory};
 
 #[post_upgrade]
 fn post_upgrade() {
     restore_data_from_stable_memory();
+    update_version_from_args();
 }
 
 fn restore_data_from_stable_memory() {
@@ -25,4 +27,14 @@ fn restore_data_from_stable_memory() {
         *canister_data = de::from_reader(&*state_bytes)
             .expect("Failed to deserialize canister data after upgrade");
     })
+}
+
+fn update_version_from_args() {
+    let (upgrade_args,) = ic_cdk::api::call::arg_data::<(UserInfoServiceInitArgs,)>(
+        ic_cdk::api::call::ArgDecoderConfig::default(),
+    );
+
+    CANISTER_DATA.with_borrow_mut(|canister_data| {
+        canister_data.version = upgrade_args.version;
+    });
 }

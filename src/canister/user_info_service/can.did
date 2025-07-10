@@ -1,2 +1,21 @@
-type Result = variant { Ok; Err : text };
-service : { register_new_user : () -> (Result) }
+type Result = variant { Ok : UserProfileDetailsForFrontendV3; Err : text };
+type Result_1 = variant { Ok : SessionType; Err : text };
+type Result_2 = variant { Ok; Err : text };
+type SessionType = variant { AnonymousSession; RegisteredSession };
+type UserInfoServiceInitArgs = record { version : text };
+type UserProfileDetailsForFrontendV3 = record {
+  profile_picture_url : opt text;
+  principal_id : principal;
+  profile_stats : UserProfileGlobalStats;
+};
+type UserProfileGlobalStats = record {
+  hot_bets_received : nat64;
+  not_bets_received : nat64;
+};
+service : (UserInfoServiceInitArgs) -> {
+  get_profile_details : () -> (Result) query;
+  get_session_type : () -> (Result_1) query;
+  get_version : () -> (text) query;
+  register_new_user : () -> (Result_2);
+  update_last_access_time : () -> (Result_2);
+}
