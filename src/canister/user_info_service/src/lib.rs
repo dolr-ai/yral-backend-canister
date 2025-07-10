@@ -1,3 +1,4 @@
+use candid::Principal;
 use std::cell::RefCell;
 
 use ic_cdk::export_candid;

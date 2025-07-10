@@ -105,6 +105,25 @@ impl CanisterData {
             Err("User not found".to_string())
         }
     }
+
+    pub fn update_session_type_for_user(
+        &mut self,
+        user_principal: Principal,
+        session_type: SessionType,
+    ) -> Result<(), String> {
+        if let Some(mut user_info) = self.user_infos.get(&user_principal) {
+            match user_info.session_type {
+                SessionType::AnonymousSession => {
+                    user_info.session_type = session_type;
+                    self.user_infos.insert(user_principal, user_info);
+                    Ok(())
+                }
+                _ => Err("Session type can only be updated from AnonymousSession".to_string()),
+            }
+        } else {
+            Err("User not found".to_string())
+        }
+    }
 }
 
 impl Default for CanisterData {
