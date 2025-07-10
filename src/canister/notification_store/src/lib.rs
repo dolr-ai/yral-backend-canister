@@ -1,4 +1,5 @@
 use candid::Principal;
+use ic_cdk_macros::export_candid;
 use shared_utils::canister_specific::notification_store::types::notification::{Notification, NotificationData, NotificationType};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
@@ -74,3 +75,5 @@ fn init() {
         })
     });
 }
+
+export_candid!();

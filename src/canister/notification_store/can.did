@@ -1,0 +1,17 @@
+type LikedPayload = record { post_id : nat64; by_user_principal : principal };
+type NotificationData = record {
+  read : bool;
+  created_at : nat64;
+  notification_id : nat64;
+  payload : NotificationType;
+};
+type NotificationType = variant {
+  Liked : LikedPayload;
+  VideoUpload : VideoUploadPayload;
+};
+type VideoUploadPayload = record { video_id : nat64 };
+service : () -> {
+  add_notification : (principal, NotificationType) -> ();
+  get_notifications : (principal, nat64, nat64) -> (vec NotificationData);
+  mark_notification_as_read : (principal, nat64) -> ();
+}
