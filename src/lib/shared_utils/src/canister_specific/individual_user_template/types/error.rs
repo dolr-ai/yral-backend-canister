@@ -89,3 +89,15 @@ impl From<(RejectionCode, String)> for AirdropError {
         AirdropError::CallError(value.0, value.1)
     }
 }
+
+#[derive(CandidType, Deserialize, PartialEq, Eq, Debug)]
+pub enum NotificationStoreError {
+    Unauthorized,
+    CallError(RejectionCode, String),
+}
+
+impl From<(RejectionCode, String)> for NotificationStoreError {
+    fn from(value: (RejectionCode, String)) -> Self {
+        NotificationStoreError::CallError(value.0, value.1)
+    }
+}

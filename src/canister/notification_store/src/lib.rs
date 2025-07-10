@@ -1,5 +1,7 @@
 use candid::Principal;
+use ic_cdk::caller;
 use ic_cdk_macros::export_candid;
+use shared_utils::canister_specific::individual_user_template::types::error::NotificationStoreError;
 use shared_utils::canister_specific::notification_store::types::notification::{Notification, NotificationData, NotificationType};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
@@ -22,16 +24,25 @@ thread_local! {
 
 
 #[ic_cdk_macros::update]
-fn add_notification(user: Principal, notification_type: NotificationType) {
+fn add_notification(user: Principal, notification_type: NotificationType) -> Result<(), NotificationStoreError> {
+    if caller() != user{
+        return Err(NotificationStoreError::Unauthorized);
+    }
     CANISTER_DATA.with(|map| {
         let next_id = NEXT_ID.with(|id| *id.borrow_mut());
         map.borrow_mut().insert(user, Notification (vec![NotificationData { notification_id: next_id, payload: notification_type, read: false, created_at: ic_cdk::api::time() }]));
         NEXT_ID.with(|id| *id.borrow_mut() += 1);
     });
+
+    Ok(())
 }
 
 #[ic_cdk_macros::update]
-fn mark_notification_as_read(user: Principal, notification_id: u64) {
+fn mark_notification_as_read(user: Principal, notification_id: u64) -> Result<(), NotificationStoreError>{
+    if caller() != user{
+        return Err(NotificationStoreError::Unauthorized);
+    }
+
     CANISTER_DATA.with_borrow_mut(|map| {
         let mut notifications = map.get(&user).unwrap();
 
@@ -39,9 +50,11 @@ fn mark_notification_as_read(user: Principal, notification_id: u64) {
 
         map.insert(user, notifications);
     });
+
+    Ok(())
 }
 
-#[ic_cdk_macros::update]
+#[ic_cdk_macros::query]
 fn get_notifications(user: Principal, limit: usize, offset: usize) -> Vec<NotificationData> {
     CANISTER_DATA.with(|map| {
         let notifications = map.borrow().get(&user).unwrap();
