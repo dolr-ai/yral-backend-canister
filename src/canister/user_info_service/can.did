@@ -18,4 +18,5 @@ service : (UserInfoServiceInitArgs) -> {
   get_version : () -> (text) query;
   register_new_user : () -> (Result_2);
   update_last_access_time : () -> (Result_2);
+  update_session_type : (principal, SessionType) -> (Result_2);
 }
