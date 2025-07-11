@@ -5,7 +5,7 @@ use ciborium::de;
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize,Default)]
 pub struct Notification (pub Vec<NotificationData>);
 
 #[derive(Clone, Serialize, Deserialize, CandidType)]

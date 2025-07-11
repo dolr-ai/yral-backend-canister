@@ -31,7 +31,9 @@ fn add_notification(user: Principal, notification_type: NotificationType) -> Res
     }
     CANISTER_DATA.with(|map| {
         let next_id = NEXT_ID.with(|id| *id.borrow_mut());
-        map.borrow_mut().insert(user, Notification (vec![NotificationData { notification_id: next_id, payload: notification_type, read: false, created_at: get_current_system_time_from_ic()}]));
+        let mut notifications = map.borrow().get(&user).unwrap_or_default();
+        notifications.0.push(NotificationData { notification_id: next_id, payload: notification_type, read: false, created_at: get_current_system_time_from_ic()});
+        map.borrow_mut().insert(user, Notification (notifications.0));
         NEXT_ID.with(|id| *id.borrow_mut() += 1);
     });
 
