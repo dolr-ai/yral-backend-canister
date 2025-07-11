@@ -1,13 +1,14 @@
-use ic_stable_structures::{DefaultMemoryImpl, memory_manager::{MemoryId, VirtualMemory, MemoryManager}};
+use ic_stable_structures::{
+    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
+    DefaultMemoryImpl,
+};
 use std::cell::RefCell;
 
 // A memory for upgrades, where data from the heap can be serialized/deserialized.
 const UPGRADES: MemoryId = MemoryId::new(0);
 
-// A memory for the StableVec for individual_user wasm. 
+// A memory for the StableVec for individual_user wasm.
 const INDIVIDUAL_USER_WASM_MEMORY: MemoryId = MemoryId::new(1);
-
-
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 

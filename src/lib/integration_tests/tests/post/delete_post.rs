@@ -1,4 +1,3 @@
-
 use candid::{encode_one, Principal};
 use pocket_ic::WasmResult;
 use shared_utils::{
@@ -10,9 +9,7 @@ use shared_utils::{
 };
 use test_utils::setup::{
     env::pocket_ic_env::get_new_pocket_ic_env,
-    test_constants::{
-        get_mock_user_alice_principal_id, get_mock_user_bob_principal_id,
-    },
+    test_constants::{get_mock_user_alice_principal_id, get_mock_user_bob_principal_id},
 };
 
 #[test]

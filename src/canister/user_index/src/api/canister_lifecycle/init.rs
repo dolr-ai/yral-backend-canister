@@ -34,8 +34,8 @@ mod test {
         common::types::known_principal::{KnownPrincipalMap, KnownPrincipalType},
     };
     use test_utils::setup::test_constants::{
-        get_global_super_admin_principal_id,
-        get_mock_canister_id_user_index, get_mock_user_alice_canister_id,
+        get_global_super_admin_principal_id, get_mock_canister_id_user_index,
+        get_mock_user_alice_canister_id,
     };
 
     use super::*;

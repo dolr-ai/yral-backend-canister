@@ -15,8 +15,8 @@ impl Storable for StorablePrincipal {
         Decode!(bytes.as_ref(), Self).unwrap()
     }
 
-    const BOUND: Bound = Bound::Bounded { 
-        max_size: 38, 
-        is_fixed_size: true 
+    const BOUND: Bound = Bound::Bounded {
+        max_size: 38,
+        is_fixed_size: true,
     };
 }

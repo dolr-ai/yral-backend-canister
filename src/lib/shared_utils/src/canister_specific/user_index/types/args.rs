@@ -8,5 +8,5 @@ use crate::{access_control::UserAccessRole, common::types::known_principal::Know
 pub struct UserIndexInitArgs {
     pub known_principal_ids: Option<KnownPrincipalMap>,
     pub access_control_map: Option<HashMap<Principal, Vec<UserAccessRole>>>,
-    pub version: String
+    pub version: String,
 }

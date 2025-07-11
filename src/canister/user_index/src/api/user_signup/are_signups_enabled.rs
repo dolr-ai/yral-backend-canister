@@ -1,7 +1,6 @@
 use ic_cdk_macros::query;
 
-use crate::{CANISTER_DATA, data_model::CanisterData};
-
+use crate::{data_model::CanisterData, CANISTER_DATA};
 
 #[query]
 fn are_signups_enabled() -> bool {
@@ -29,7 +28,7 @@ mod test {
             configuration: Configuration {
                 known_principal_ids: HashMap::default(),
                 signups_open_on_this_subnet: true,
-                url_to_send_canister_metrics_to: String::from("http://example.com")
+                url_to_send_canister_metrics_to: String::from("http://example.com"),
             },
             ..Default::default()
         };

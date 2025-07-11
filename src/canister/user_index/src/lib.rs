@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use candid::{Principal, Nat};
+use candid::{Nat, Principal};
 use data_model::CanisterData;
 use ic_cdk::api::{
     call::CallResult,

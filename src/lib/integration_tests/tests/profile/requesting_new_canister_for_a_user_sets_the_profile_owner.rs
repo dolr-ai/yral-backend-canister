@@ -5,14 +5,18 @@ use shared_utils::{
     common::types::known_principal::KnownPrincipalType,
 };
 use test_utils::setup::{
-    env::{pocket_ic_env::get_new_pocket_ic_env, pocket_ic_init::get_initialized_env_with_provisioned_known_canisters},
+    env::{
+        pocket_ic_env::get_new_pocket_ic_env,
+        pocket_ic_init::get_initialized_env_with_provisioned_known_canisters,
+    },
     test_constants::get_mock_user_alice_principal_id,
 };
 
 #[test]
 fn requesting_new_canister_for_a_user_sets_the_profile_owner() {
     let (pocket_ic, known_principal_map) = get_new_pocket_ic_env();
-    let known_principal_map = get_initialized_env_with_provisioned_known_canisters(&pocket_ic, known_principal_map);
+    let known_principal_map =
+        get_initialized_env_with_provisioned_known_canisters(&pocket_ic, known_principal_map);
     let user_index_canister_id = known_principal_map
         .get(&KnownPrincipalType::CanisterIdUserIndex)
         .unwrap();

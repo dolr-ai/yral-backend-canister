@@ -2,8 +2,7 @@ use candid::Principal;
 use ic_cdk_macros::update;
 use shared_utils::common::types::known_principal::KnownPrincipalType;
 
-use crate::{CANISTER_DATA, data_model::CanisterData};
-
+use crate::{data_model::CanisterData, CANISTER_DATA};
 
 #[update]
 fn toggle_signups_enabled() -> Result<(), String> {
@@ -30,7 +29,8 @@ fn toggle_signups_enabled_impl(
         return Err("Unauthorized".to_string());
     }
 
-    canister_data.configuration.signups_open_on_this_subnet = !canister_data.configuration.signups_open_on_this_subnet;
+    canister_data.configuration.signups_open_on_this_subnet =
+        !canister_data.configuration.signups_open_on_this_subnet;
 
     Ok(())
 }
@@ -40,7 +40,6 @@ mod test {
     use test_utils::setup::test_constants::{
         get_global_super_admin_principal_id, get_mock_user_alice_principal_id,
     };
-
 
     use super::*;
 

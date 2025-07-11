@@ -7,7 +7,10 @@ use shared_utils::{
     common::types::known_principal::KnownPrincipalType,
 };
 use test_utils::setup::{
-    env::{pocket_ic_env::get_new_pocket_ic_env, pocket_ic_init::get_initialized_env_with_provisioned_known_canisters},
+    env::{
+        pocket_ic_env::get_new_pocket_ic_env,
+        pocket_ic_init::get_initialized_env_with_provisioned_known_canisters,
+    },
     test_constants::{
         get_canister_wasm, get_global_super_admin_principal_id, get_mock_user_alice_principal_id,
     },
@@ -15,9 +18,11 @@ use test_utils::setup::{
 
 #[ignore]
 #[test]
-fn when_canister_cycle_balance_is_below_the_configured_or_freezing_threshold_then_running_topup_function_in_user_index_canister_tops_up_the_canisters_that_need_it() {
+fn when_canister_cycle_balance_is_below_the_configured_or_freezing_threshold_then_running_topup_function_in_user_index_canister_tops_up_the_canisters_that_need_it(
+) {
     let (pocket_ic, known_principal_map) = get_new_pocket_ic_env();
-    let known_principal_map = get_initialized_env_with_provisioned_known_canisters(&pocket_ic, known_principal_map);
+    let known_principal_map =
+        get_initialized_env_with_provisioned_known_canisters(&pocket_ic, known_principal_map);
     let user_index_canister_id = known_principal_map
         .get(&KnownPrincipalType::CanisterIdUserIndex)
         .unwrap();

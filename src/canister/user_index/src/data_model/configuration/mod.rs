@@ -10,6 +10,10 @@ pub struct Configuration {
 }
 impl Default for Configuration {
     fn default() -> Self {
-        Self { known_principal_ids: Default::default(), signups_open_on_this_subnet: true, url_to_send_canister_metrics_to: Default::default() }
+        Self {
+            known_principal_ids: Default::default(),
+            signups_open_on_this_subnet: true,
+            url_to_send_canister_metrics_to: Default::default(),
+        }
     }
 }

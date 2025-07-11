@@ -87,7 +87,6 @@ pub fn get_user_index_canister_wasm() -> Vec<u8> {
     bytes
 }
 
-
 pub fn get_canister_wasm(canister_type: KnownPrincipalType) -> Vec<u8> {
     let mut bytes = Vec::new();
 

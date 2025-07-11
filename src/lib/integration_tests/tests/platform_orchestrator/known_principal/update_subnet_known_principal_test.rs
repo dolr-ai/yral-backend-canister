@@ -2,20 +2,13 @@ use candid::{CandidType, Principal};
 use ic_ledger_types::{BlockIndex, Tokens};
 use pocket_ic::WasmResult;
 use serde::{Deserialize, Serialize};
-use shared_utils::
-    common::
-        types::
-            known_principal::KnownPrincipalType
-        
-    
-;
+use shared_utils::common::types::known_principal::KnownPrincipalType;
 use std::{
     collections::{HashMap, HashSet},
     time::SystemTime,
 };
 use test_utils::setup::{
-    env::pocket_ic_env::get_new_pocket_ic_env,
-    test_constants::get_mock_user_alice_principal_id,
+    env::pocket_ic_env::get_new_pocket_ic_env, test_constants::get_mock_user_alice_principal_id,
 };
 
 pub type CanisterId = Principal;

@@ -9,12 +9,10 @@ use std::{
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use shared_utils::{
-    canister_specific::
-        platform_orchestrator::types::{
-            args::UpgradeCanisterArg, well_known_principal::PlatformOrchestratorKnownPrincipal,
-            SubnetUpgradeReport,
-        }
-    ,
+    canister_specific::platform_orchestrator::types::{
+        args::UpgradeCanisterArg, well_known_principal::PlatformOrchestratorKnownPrincipal,
+        SubnetUpgradeReport,
+    },
     common::types::wasm::{CanisterWasm, WasmType},
     types::creator_dao_stats::CreatorDaoTokenStats,
 };

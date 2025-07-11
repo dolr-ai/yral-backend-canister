@@ -4080,14 +4080,11 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "ciborium",
- "futures",
  "ic-cdk 0.15.1",
  "ic-cdk-macros 0.16.0",
  "ic-cdk-timers",
  "ic-stable-structures",
  "serde",
- "serde_json",
- "serde_json_any_key",
  "shared_utils",
  "test_utils",
 ]

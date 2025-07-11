@@ -2,9 +2,8 @@ use std::borrow::Cow;
 
 use candid::CandidType;
 use ciborium::de;
-use serde::{Deserialize, Serialize};
 use ic_stable_structures::{storable::Bound, Storable};
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, PartialOrd, Eq, Ord, CandidType)]
 pub enum WasmType {
@@ -25,9 +24,11 @@ impl Storable for WasmType {
         wasm_type
     }
 
-    const BOUND: Bound = Bound::Bounded { max_size: 25, is_fixed_size: false };
+    const BOUND: Bound = Bound::Bounded {
+        max_size: 25,
+        is_fixed_size: false,
+    };
 }
-
 
 #[derive(Serialize, Deserialize, CandidType, Clone)]
 pub struct CanisterWasm {
