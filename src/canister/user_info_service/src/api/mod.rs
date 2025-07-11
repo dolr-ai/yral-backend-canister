@@ -1,4 +1,4 @@
-mod canister_lifecyle;
+mod canister_lifecycle;
 mod get_profile_details;
 mod get_session_type;
 mod register_new_user;
