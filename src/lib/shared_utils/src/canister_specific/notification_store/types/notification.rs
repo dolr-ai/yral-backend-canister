@@ -1,4 +1,4 @@
-use std::{borrow::Cow, time::SystemTime};
+use std::borrow::Cow;
 
 use candid::{CandidType, Principal};
 use ciborium::de;
@@ -13,7 +13,7 @@ pub struct NotificationData {
     pub notification_id: u64,
     pub payload: NotificationType,
     pub read: bool,
-    pub created_at: SystemTime,
+    pub created_at: u64,
 }
 
 #[derive(Clone, Serialize, Deserialize, CandidType)]
