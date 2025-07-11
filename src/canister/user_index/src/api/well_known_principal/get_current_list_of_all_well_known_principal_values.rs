@@ -7,10 +7,7 @@ use crate::CANISTER_DATA;
 #[query]
 fn get_current_list_of_all_well_known_principal_values() -> Vec<(KnownPrincipalType, Principal)> {
     CANISTER_DATA.with(|canister_data_ref_cell| {
-        let known_principal_ids = &canister_data_ref_cell
-            .borrow()
-            .configuration
-            .known_principal_ids;
+        let known_principal_ids = &canister_data_ref_cell.borrow().configuration.known_principal_ids;
         get_current_list_of_all_well_known_principal_values_impl(known_principal_ids)
     })
 }
@@ -27,7 +24,8 @@ fn get_current_list_of_all_well_known_principal_values_impl(
 #[cfg(test)]
 mod test {
     use test_utils::setup::test_constants::{
-        get_global_super_admin_principal_id, get_mock_canister_id_user_index,
+        get_global_super_admin_principal_id,
+        get_mock_canister_id_user_index,
     };
 
     use super::*;

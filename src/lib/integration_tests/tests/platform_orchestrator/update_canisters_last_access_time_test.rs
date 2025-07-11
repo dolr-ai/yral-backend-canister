@@ -8,7 +8,9 @@ use ic_cdk::api::management_canister::main::CanisterId;
 use ic_ledger_types::{BlockIndex, Tokens};
 use pocket_ic::WasmResult;
 use shared_utils::{
-    canister_specific::platform_orchestrator::types::args::PlatformOrchestratorInitArgs,
+    canister_specific::
+        platform_orchestrator::types::args::PlatformOrchestratorInitArgs
+    ,
     common::types::known_principal::KnownPrincipalType,
 };
 use test_utils::setup::{

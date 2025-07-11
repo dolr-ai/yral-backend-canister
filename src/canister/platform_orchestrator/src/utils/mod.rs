@@ -56,6 +56,7 @@ pub(crate) async fn recharge_subnet_orchestrator_if_needed(
     Ok(())
 }
 
+
 pub(crate) async fn upgrade_subnet_orchestrator_canister(
     canister_id: Principal,
     wasm: Vec<u8>,

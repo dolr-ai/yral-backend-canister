@@ -1,22 +1,17 @@
+
+
 use candid::Principal;
 use pocket_ic::WasmResult;
-use shared_utils::{
-    canister_specific::individual_user_template::types::session::SessionType,
-    common::types::known_principal::KnownPrincipalType,
-};
+use shared_utils::{canister_specific::individual_user_template::types::session::SessionType, common::types::known_principal::KnownPrincipalType};
 use test_utils::setup::{
-    env::{
-        pocket_ic_env::get_new_pocket_ic_env,
-        pocket_ic_init::get_initialized_env_with_provisioned_known_canisters,
-    },
+    env::{pocket_ic_env::get_new_pocket_ic_env, pocket_ic_init::get_initialized_env_with_provisioned_known_canisters},
     test_constants::get_mock_user_alice_principal_id,
 };
 
 #[test]
 fn update_last_access_time_test() {
     let (pocket_ic, known_principal_map) = get_new_pocket_ic_env();
-    let known_principal_map =
-        get_initialized_env_with_provisioned_known_canisters(&pocket_ic, known_principal_map);
+    let known_principal_map = get_initialized_env_with_provisioned_known_canisters(&pocket_ic, known_principal_map);
     let user_index_canister_id = known_principal_map
         .get(&KnownPrincipalType::CanisterIdUserIndex)
         .unwrap();

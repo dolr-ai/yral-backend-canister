@@ -3,7 +3,10 @@ use pocket_ic::WasmResult;
 use shared_utils::common::types::known_principal::KnownPrincipalType;
 use test_utils::setup::{
     env::pocket_ic_env::get_new_pocket_ic_env,
-    test_constants::{get_mock_user_alice_principal_id, get_mock_user_charlie_canister_id},
+    test_constants::{
+         get_mock_user_alice_principal_id,
+        get_mock_user_charlie_canister_id,
+    },
 };
 
 #[test]

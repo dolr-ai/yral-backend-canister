@@ -6,7 +6,7 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct Notification(pub Vec<NotificationData>);
+pub struct Notification (pub Vec<NotificationData>);
 
 #[derive(Clone, Serialize, Deserialize, CandidType)]
 pub struct NotificationData {
@@ -24,8 +24,7 @@ pub struct LikedPayload {
 
 #[derive(Clone, Serialize, Deserialize, CandidType)]
 pub struct VideoUploadPayload {
-    #[serde(alias = "video_id")]
-    pub video_uid: u64,
+    video_id: u64,
 }
 
 #[derive(Clone, Serialize, Deserialize, CandidType)]

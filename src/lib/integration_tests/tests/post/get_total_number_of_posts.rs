@@ -1,14 +1,17 @@
+
 use candid::{encode_one, Principal};
 use pocket_ic::WasmResult;
 use shared_utils::{
-    canister_specific::individual_user_template::types::post::{
-        PostDetailsForFrontend, PostDetailsFromFrontend,
+    canister_specific::individual_user_template::types::{
+        post::{PostDetailsForFrontend, PostDetailsFromFrontend},
     },
     common::types::known_principal::KnownPrincipalType,
 };
 use test_utils::setup::{
     env::pocket_ic_env::get_new_pocket_ic_env,
-    test_constants::{get_mock_user_alice_principal_id, get_mock_user_bob_principal_id},
+    test_constants::{
+        get_mock_user_alice_principal_id, get_mock_user_bob_principal_id,
+    },
 };
 
 #[test]
@@ -98,10 +101,11 @@ fn test_get_total_number_of_posts() {
             candid::encode_one(()).unwrap(),
         )
         .map(|reply_payload| {
-            let total: u64 = match reply_payload {
-                WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
-                _ => panic!("\n🛑 get_total_number_of_posts failed\n"),
-            };
+            let total: u64 =
+                match reply_payload {
+                    WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
+                    _ => panic!("\n🛑 get_total_number_of_posts failed\n"),
+                };
             total
         })
         .unwrap();
@@ -162,10 +166,11 @@ fn test_get_total_number_of_posts() {
             candid::encode_one(()).unwrap(),
         )
         .map(|reply_payload| {
-            let total: u64 = match reply_payload {
-                WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
-                _ => panic!("\n🛑 get_total_number_of_posts failed\n"),
-            };
+            let total: u64 =
+                match reply_payload {
+                    WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
+                    _ => panic!("\n🛑 get_total_number_of_posts failed\n"),
+                };
             total
         })
         .unwrap();

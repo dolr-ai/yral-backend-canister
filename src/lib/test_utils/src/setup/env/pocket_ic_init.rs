@@ -1,11 +1,15 @@
+
 use candid::Principal;
 use pocket_ic::PocketIc;
-use shared_utils::common::types::known_principal::{KnownPrincipalMap, KnownPrincipalType};
+use shared_utils::
+    common::types::known_principal::{KnownPrincipalMap, KnownPrincipalType}
+;
+
 
 pub fn get_initialized_env_with_provisioned_known_canisters(
-    pocket_ic: &PocketIc,
-    mut known_principals: KnownPrincipalMap,
+    pocket_ic: &PocketIc, mut known_principals: KnownPrincipalMap,
 ) -> KnownPrincipalMap {
+
     let platform_canister_id = known_principals
         .get(&KnownPrincipalType::CanisterIdPlatformOrchestrator)
         .cloned()
