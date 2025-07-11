@@ -25,15 +25,13 @@ thread_local! {
 
 
 #[ic_cdk_macros::update]
-fn add_notification(user: Principal, notification_type: NotificationType) -> Result<(), NotificationStoreError> {
-    if caller() != user{
-        return Err(NotificationStoreError::Unauthorized);
-    }
+fn add_notification(notification_type: NotificationType) -> Result<(), NotificationStoreError> {
+    let caller = caller();
     CANISTER_DATA.with(|map| {
         let next_id = NEXT_ID.with(|id| *id.borrow_mut());
-        let mut notifications = map.borrow().get(&user).unwrap_or_default();
+        let mut notifications = map.borrow().get(&caller).unwrap_or_default();
         notifications.0.push(NotificationData { notification_id: next_id, payload: notification_type, read: false, created_at: get_current_system_time_from_ic()});
-        map.borrow_mut().insert(user, Notification (notifications.0));
+        map.borrow_mut().insert(caller, Notification (notifications.0));
         NEXT_ID.with(|id| *id.borrow_mut() += 1);
     });
 
@@ -41,26 +39,24 @@ fn add_notification(user: Principal, notification_type: NotificationType) -> Res
 }
 
 #[ic_cdk_macros::update]
-fn mark_notification_as_read(user: Principal, notification_id: u64) -> Result<(), NotificationStoreError>{
-    if caller() != user{
-        return Err(NotificationStoreError::Unauthorized);
-    }
-
+fn mark_notification_as_read(notification_id: u64) -> Result<(), NotificationStoreError>{
+    let caller = caller();
     CANISTER_DATA.with_borrow_mut(|map| {
-        let mut notifications = map.get(&user).unwrap();
+        let mut notifications = map.get(&caller).unwrap();
 
         notifications.0.iter_mut().find(|n| n.notification_id == notification_id).unwrap().read = true;
 
-        map.insert(user, notifications);
+        map.insert(caller, notifications);
     });
 
     Ok(())
 }
 
 #[ic_cdk_macros::query]
-fn get_notifications(user: Principal, limit: usize, offset: usize) -> Vec<NotificationData> {
+fn get_notifications(limit: usize, offset: usize) -> Vec<NotificationData> {
+    let caller = caller();
     CANISTER_DATA.with(|map| {
-        let notifications = map.borrow().get(&user).unwrap();
+        let notifications = map.borrow().get(&caller).unwrap();
         notifications.0.iter().skip(offset).take(limit).cloned().collect()
     })
 }
@@ -91,7 +87,6 @@ fn init() {
         })
     });
 }
-
 #[ic_cdk_macros::post_upgrade]
 pub fn post_upgrade(){
         // pruning notifications older than 30 days
@@ -117,4 +112,6 @@ pub fn post_upgrade(){
             })
         });
 }
+
 export_candid!();
+
