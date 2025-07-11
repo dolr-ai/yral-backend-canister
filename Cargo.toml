@@ -7,7 +7,7 @@ members = [
     "src/canister/platform_orchestrator",
     "src/lib/integration_tests",
     "src/lib/shared_utils",
-    "src/lib/test_utils",
+    "src/lib/test_utils", "src/canister/dedup_index",
 ]
 
 [workspace.dependencies]

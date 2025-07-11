@@ -1,0 +1,8 @@
+type SystemTime = record {
+  nanos_since_epoch : nat32;
+  secs_since_epoch : nat64;
+};
+service : {
+  add_video_to_index : (text, record { text; SystemTime }) -> ();
+  is_duplicate : (text) -> (bool) query;
+}
