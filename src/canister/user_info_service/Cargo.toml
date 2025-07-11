@@ -10,14 +10,11 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = { workspace = true }
 ic-cdk = { workspace = true }
-ic-cdk-timers = { workspace = true }
 ic-cdk-macros = { workspace = true }
 shared_utils = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
 ic-stable-structures = { workspace = true }
 ciborium = { workspace = true }
-futures = { workspace = true }
 
 [dev-dependencies]
 test_utils = { workspace = true }
