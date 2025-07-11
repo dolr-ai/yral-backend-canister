@@ -1,6 +1,7 @@
 use std::{borrow::Cow, time::SystemTime};
 
-use candid::{CandidType, Decode, Encode, Principal};
+use candid::{CandidType, Principal};
+use ciborium::{de, ser};
 use ic_stable_structures::{BTreeMap as StableBTreeMap, Storable, storable::Bound};
 use serde::{Deserialize, Serialize};
 use shared_utils::{
@@ -38,11 +39,13 @@ impl UserInfo {
 
 impl Storable for UserInfo {
     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
+        let mut bytes = vec![];
+        ser::into_writer(self, &mut bytes).unwrap();
+        Cow::Owned(bytes)
     }
 
     fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
+        de::from_reader(bytes.as_ref()).unwrap()
     }
 
     const BOUND: Bound = Bound::Unbounded;
