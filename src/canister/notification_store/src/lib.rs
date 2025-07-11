@@ -7,6 +7,7 @@ use shared_utils::canister_specific::notification_store::types::error::Notificat
 use shared_utils::canister_specific::notification_store::types::notification::{
     Notification, NotificationData, NotificationType,
 };
+use shared_utils::common::utils::system_time::get_current_system_time_from_ic;
 use std::cell::RefCell;
 use std::time::Duration;
 
@@ -40,7 +41,7 @@ fn add_notification(
                 notification_id: next_id,
                 payload: notification_type,
                 read: false,
-                created_at: ic_cdk::api::time(),
+                created_at: get_current_system_time_from_ic(),
             }]),
         );
         NEXT_ID.with(|id| *id.borrow_mut() += 1);
@@ -93,7 +94,7 @@ fn init() {
     // pruning notifications older than 30 days
     ic_cdk_timers::set_timer_interval(Duration::from_secs(60 * 60 * 24 * 30), move || {
         CANISTER_DATA.with_borrow_mut(|map| {
-            let now = ic_cdk::api::time();
+            let now = get_current_system_time_from_ic();
 
             // Collecting the user principals first to avoid borrowing issues while mutating the map
             let users: Vec<Principal> = map.iter().map(|(user, _)| user).collect();
