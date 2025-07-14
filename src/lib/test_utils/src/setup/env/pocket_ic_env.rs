@@ -134,6 +134,9 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
             .unwrap(),
         )
         .unwrap();
+    for i in 0..30 {
+        pocket_ic.tick()
+    }
     pocket_ic
         .update_call(
             platform_canister_id,
@@ -146,8 +149,17 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
             .unwrap(),
         )
         .unwrap();
+    for i in 0..30 {
+        pocket_ic.tick()
+    }
     pocket_ic.add_cycles(platform_canister_id, 10_000_000_000_000_000);
+    for i in 0..30 {
+        pocket_ic.tick()
+    }
     pocket_ic.add_cycles(notification_store_canister_id, 10_000_000_000_000_000);
+    for i in 0..30 {
+        pocket_ic.tick()
+    }
     //Ledger Canister
     let minting_account = AccountIdentifier::new(&super_admin, &DEFAULT_SUBACCOUNT);
     let ledger_canister_wasm = include_bytes!("../../../ledger-canister.wasm");
