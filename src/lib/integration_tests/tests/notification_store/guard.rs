@@ -1,3 +1,4 @@
+use candid::Encode;
 use pocket_ic::WasmResult;
 use shared_utils::{canister_specific::notification_store::types::{error::NotificationStoreError, notification::{NotificationData, NotificationType, VideoUploadPayload}}, common::types::known_principal::KnownPrincipalType};
 use test_utils::setup::{env::pocket_ic_env::get_new_pocket_ic_env, test_constants::{get_mock_user_alice_principal_id, get_mock_user_charlie_principal_id}};
@@ -21,7 +22,7 @@ fn test_guard() {
     };
     res.unwrap();
 
-    let notifications = pic.query_call(notification_store_canister_id, alice_principal, "get_notifications", candid::encode_one((10, 0, )).unwrap()).unwrap();
+    let notifications = pic.query_call(notification_store_canister_id, alice_principal, "get_notifications", Encode!(10, 0 ).unwrap()).unwrap();
     let notifications: Vec<NotificationData> = match notifications {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
         _ => panic!("\n🛑 get notifications failed\n"),
@@ -33,7 +34,7 @@ fn test_guard() {
     }));
 
     let charlie_principal = get_mock_user_charlie_principal_id();
-    let guard_res = pic.query_call(notification_store_canister_id, charlie_principal, "get_notifications", candid::encode_one((10, 0, )).unwrap()).unwrap();
+    let guard_res = pic.query_call(notification_store_canister_id, charlie_principal, "get_notifications", Encode!(10, 0 ).unwrap()).unwrap();
     let guard_res: Vec<NotificationData> = match guard_res {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
         _ => panic!("\n🛑 get notifications failed\n"),
