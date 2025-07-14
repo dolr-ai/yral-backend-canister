@@ -100,7 +100,7 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
         "../../../../../../target/wasm32-unknown-unknown/release/user_index.wasm.gz"
     );
     let notification_store_canister_wasm = include_bytes!(
-        "../../../../../../target/wasm32-unknown-unknown/release/notification_store.wasm.gz"
+        "../../../../../../target/wasm32-unknown-unknown/release/notification_store.wasm"
     );
     let platform_orchestrator_init_args = PlatformOrchestratorInitArgs {
         version: "v1.0.0".into(),
