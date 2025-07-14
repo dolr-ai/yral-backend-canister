@@ -8,6 +8,10 @@ use pocket_ic::{
 };
 use shared_utils::{
     canister_specific::{notification_store::types::args::NotificationStoreInitArgs, platform_orchestrator::types::args::PlatformOrchestratorInitArgs},
+    canister_specific::{
+        platform_orchestrator::types::args::PlatformOrchestratorInitArgs,
+        user_info_service::{self, args::UserInfoServiceInitArgs},
+    },
     common::types::{
         known_principal::{KnownPrincipalMap, KnownPrincipalType},
         wasm::WasmType,
@@ -43,6 +47,52 @@ struct AuthorizedSubnetWorks {
     subnets: Vec<Principal>,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct ServiceCanisters {
+    pub user_info_service_canister_id: Principal,
+}
+
+pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, ServiceCanisters) {
+    let pocket_ic = PocketIcBuilder::new()
+        .with_nns_subnet()
+        .with_application_subnet()
+        .with_system_subnet()
+        .build();
+
+    let super_admin = get_global_super_admin_principal_id();
+
+    let user_servcie_canister = pocket_ic.create_canister_with_settings(
+        Some(super_admin),
+        Some(CanisterSettings {
+            controllers: Some(vec![super_admin]),
+            ..Default::default()
+        }),
+    );
+
+    pocket_ic.add_cycles(user_servcie_canister, 10_000_000_000_000_000);
+
+    let user_info_service_canister_wasm = include_bytes!(
+        "../../../../../../target/wasm32-unknown-unknown/release/user_info_service.wasm.gz"
+    );
+
+    let user_info_service_canister_init_args = UserInfoServiceInitArgs {
+        version: "v1.0.0".into(),
+    };
+
+    pocket_ic.install_canister(
+        user_servcie_canister,
+        user_info_service_canister_wasm.to_vec(),
+        candid::encode_one(user_info_service_canister_init_args).unwrap(),
+        Some(super_admin),
+    );
+
+    let service_canisters = ServiceCanisters {
+        user_info_service_canister_id: user_servcie_canister,
+    };
+
+    (pocket_ic, service_canisters)
+}
+
 pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
     let pocket_ic = PocketIcBuilder::new()
         .with_nns_subnet()
@@ -50,8 +100,6 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
         .with_application_subnet()
         .with_system_subnet()
         .build();
-
-
 
     let mut known_principal = KnownPrincipalMap::new();
 

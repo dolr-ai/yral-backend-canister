@@ -1,12 +1,14 @@
 use candid::Principal;
 use ic_cdk::api::management_canister::provisional::CanisterId;
-use shared_utils::common::types::known_principal::KnownPrincipalType;
+use shared_utils::{
+    common::types::known_principal::KnownPrincipalType, constant::GLOBAL_SUPER_ADMIN_USER_ID_V1,
+};
 use std::{fs::File, io::Read, path::PathBuf};
 
 pub mod v1;
 
 pub fn get_global_super_admin_principal_id() -> Principal {
-    Principal::self_authenticating([0])
+    Principal::from_text(GLOBAL_SUPER_ADMIN_USER_ID_V1).unwrap()
 }
 
 pub fn get_mock_user_alice_principal_id() -> Principal {
@@ -86,7 +88,6 @@ pub fn get_user_index_canister_wasm() -> Vec<u8> {
     file.read_to_end(&mut bytes).expect("Failed to read file");
     bytes
 }
-
 
 pub fn get_canister_wasm(canister_type: KnownPrincipalType) -> Vec<u8> {
     let mut bytes = Vec::new();
