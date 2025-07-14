@@ -21,10 +21,10 @@ thread_local! {
     static CANISTER_DATA: RefCell<CanisterData> = RefCell::default();
 }
 
-const THIRTY_DAYS_IN_NANOS: u64 = 30 * 24 * 60 * 60 * 1_000_000_000;
+const PRUNING_INTERVAL_IN_NANOS: u64 = 30 * 24 * 60 * 60 * 1_000_000_000;
 
 fn set_pruning_timer() {
-    ic_cdk_timers::set_timer_interval(Duration::from_secs(60 * 60 * 24 * 30), move || {
+    ic_cdk_timers::set_timer_interval(Duration::from_nanos(PRUNING_INTERVAL_IN_NANOS), move || {
         CANISTER_DATA.with_borrow_mut(|map| {
             let now = get_current_system_time_from_ic();
 
