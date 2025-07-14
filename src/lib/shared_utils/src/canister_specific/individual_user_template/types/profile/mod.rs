@@ -45,6 +45,13 @@ pub struct UserProfileDetailsForFrontendV2 {
     pub migration_info: MigrationInfo,
 }
 
+#[derive(CandidType, Deserialize, Debug, PartialEq, Eq)]
+pub struct UserProfileDetailsForFrontendV3 {
+    pub principal_id: Principal,
+    pub profile_stats: UserProfileGlobalStats,
+    pub profile_picture_url: Option<String>,
+}
+
 #[derive(CandidType, Deserialize, Clone, Copy, Debug, Default, Serialize, PartialEq, Eq)]
 pub struct UserProfileGlobalStats {
     pub hot_bets_received: u64,
