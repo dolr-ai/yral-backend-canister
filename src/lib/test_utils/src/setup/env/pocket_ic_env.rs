@@ -152,11 +152,11 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
     for i in 0..30 {
         pocket_ic.tick()
     }
-    pocket_ic.add_cycles(platform_canister_id, 10_000_000_000_000_000);
+    pocket_ic.add_cycles(platform_canister_id, 10_000_000_000_000_000_000_000);
     for i in 0..30 {
         pocket_ic.tick()
     }
-    pocket_ic.add_cycles(notification_store_canister_id, 10_000_000_000_000_000);
+    pocket_ic.add_cycles(notification_store_canister_id, 10_000_000_000_000_000_000_000);
     for i in 0..30 {
         pocket_ic.tick()
     }
