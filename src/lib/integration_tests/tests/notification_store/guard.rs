@@ -1,16 +1,13 @@
 use candid::Encode;
 use pocket_ic::WasmResult;
 use shared_utils::{canister_specific::notification_store::types::{error::NotificationStoreError, notification::{NotificationData, NotificationType, VideoUploadPayload}}, common::types::known_principal::KnownPrincipalType};
-use test_utils::setup::{env::pocket_ic_env::get_new_pocket_ic_env, test_constants::{get_mock_user_alice_principal_id, get_mock_user_charlie_principal_id}};
+use test_utils::setup::{env::pocket_ic_env::{get_new_pocket_ic_env, get_new_pocket_ic_env_with_service_canisters_provisioned}, test_constants::{get_mock_user_alice_principal_id, get_mock_user_charlie_principal_id}};
 
 #[test]
 fn test_notification_authorization() {
-    let (pic, known_principals) = get_new_pocket_ic_env();
+    let (pic, known_principals) = get_new_pocket_ic_env_with_service_canisters_provisioned();
 
-    let notification_store_canister_id = known_principals
-        .get(&KnownPrincipalType::CanisterIdNotificationStore)
-        .cloned()
-        .unwrap();
+    let notification_store_canister_id = service_canisters.notification_store_canister_id;
 
     let alice_principal = get_mock_user_alice_principal_id();
     let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", candid::encode_one(NotificationType::VideoUpload(VideoUploadPayload {

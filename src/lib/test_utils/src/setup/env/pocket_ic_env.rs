@@ -9,7 +9,6 @@ use pocket_ic::{
 use shared_utils::{
     canister_specific::{notification_store::types::args::NotificationStoreInitArgs, platform_orchestrator::types::args::PlatformOrchestratorInitArgs},
     canister_specific::{
-        platform_orchestrator::types::args::PlatformOrchestratorInitArgs,
         user_info_service::{self, args::UserInfoServiceInitArgs},
     },
     common::types::{
@@ -50,6 +49,7 @@ struct AuthorizedSubnetWorks {
 #[derive(Clone, Copy, Debug)]
 pub struct ServiceCanisters {
     pub user_info_service_canister_id: Principal,
+    pub notification_store_canister_id: Principal,
 }
 
 pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, ServiceCanisters) {
@@ -69,13 +69,29 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         }),
     );
 
+    let notification_store_canister = pocket_ic.create_canister_with_settings(
+        Some(super_admin),
+        Some(CanisterSettings {
+            controllers: Some(vec![super_admin]),
+            ..Default::default()
+        }),
+    );
+
     pocket_ic.add_cycles(user_servcie_canister, 10_000_000_000_000_000);
 
     let user_info_service_canister_wasm = include_bytes!(
         "../../../../../../target/wasm32-unknown-unknown/release/user_info_service.wasm.gz"
     );
 
+    let notification_store_canister_wasm = include_bytes!(
+        "../../../../../../target/wasm32-unknown-unknown/release/notification_store.wasm.gz"
+    );
+
     let user_info_service_canister_init_args = UserInfoServiceInitArgs {
+        version: "v1.0.0".into(),
+    };
+
+    let notification_store_canister_init_args = NotificationStoreInitArgs {
         version: "v1.0.0".into(),
     };
 
@@ -86,8 +102,16 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         Some(super_admin),
     );
 
+    pocket_ic.install_canister(
+        notification_store_canister,
+        notification_store_canister_wasm.to_vec(),
+        candid::encode_one(notification_store_canister_init_args).unwrap(),
+        Some(super_admin),
+    );
+
     let service_canisters = ServiceCanisters {
         user_info_service_canister_id: user_servcie_canister,
+        notification_store_canister_id: notification_store_canister,
     };
 
     (pocket_ic, service_canisters)
@@ -121,19 +145,6 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
         platform_canister_id,
     );
 
-    let notification_store_canister_id = pocket_ic.create_canister_with_settings(
-        Some(super_admin),
-        Some(CanisterSettings {
-            controllers: Some(vec![super_admin]),
-            ..Default::default()
-        }),
-    );
-
-    known_principal.insert(
-        KnownPrincipalType::CanisterIdNotificationStore,
-        notification_store_canister_id,
-    );
-
     pocket_ic.add_cycles(
         platform_canister_id,
         CANISTER_INITIAL_CYCLES_FOR_SPAWNING_CANISTERS,
@@ -147,9 +158,6 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
     let subnet_orchestrator_canister_wasm = include_bytes!(
         "../../../../../../target/wasm32-unknown-unknown/release/user_index.wasm.gz"
     );
-    let notification_store_canister_wasm = include_bytes!(
-        "../../../../../../target/wasm32-unknown-unknown/release/notification_store.wasm.gz"
-    );
     let platform_orchestrator_init_args = PlatformOrchestratorInitArgs {
         version: "v1.0.0".into(),
     };
@@ -157,19 +165,6 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
         platform_canister_id,
         platform_orchestrator_wasm.into(),
         candid::encode_one(platform_orchestrator_init_args).unwrap(),
-        Some(super_admin),
-    );
-    
-    pocket_ic.add_cycles(notification_store_canister_id, 10_000_000_000_000_000_000_000);
-
-    let notification_store_init_args = NotificationStoreInitArgs {
-        version: "v1.0.0".into(),
-    };
-
-    pocket_ic.install_canister(
-        notification_store_canister_id,
-        notification_store_canister_wasm.into(),
-        candid::encode_one(notification_store_init_args).unwrap(),
         Some(super_admin),
     );
 
