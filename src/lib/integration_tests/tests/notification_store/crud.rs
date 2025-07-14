@@ -49,12 +49,9 @@ fn test_crud() {
 
 #[test]
 fn test_increment_notification_id() {
-    let (pic, known_principals) = get_new_pocket_ic_env();
+    let (pic, known_principals) = get_new_pocket_ic_env_with_service_canisters_provisioned();
 
-    let notification_store_canister_id = known_principals
-        .get(&KnownPrincipalType::CanisterIdNotificationStore)
-        .cloned()
-        .unwrap();
+    let notification_store_canister_id = known_principals.notification_store_canister_id;
 
     let alice_principal = get_mock_user_alice_principal_id();
     let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", candid::encode_one(NotificationType::VideoUpload(VideoUploadPayload {
