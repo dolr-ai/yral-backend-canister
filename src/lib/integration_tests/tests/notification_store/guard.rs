@@ -22,7 +22,7 @@ fn test_guard() {
     };
     res.unwrap();
 
-    let notifications = pic.query_call(notification_store_canister_id, alice_principal, "get_notifications", Encode!(&10, &0 ).unwrap()).unwrap();
+    let notifications = pic.query_call(notification_store_canister_id, alice_principal, "get_notifications", Encode!(&10u64, &0u64 ).unwrap()).unwrap();
     let notifications: Vec<NotificationData> = match notifications {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
         _ => panic!("\n🛑 get notifications failed\n"),
@@ -34,7 +34,7 @@ fn test_guard() {
     }));
 
     let charlie_principal = get_mock_user_charlie_principal_id();
-    let guard_res = pic.query_call(notification_store_canister_id, charlie_principal, "get_notifications", Encode!(&10, &0 ).unwrap()).unwrap();
+    let guard_res = pic.query_call(notification_store_canister_id, charlie_principal, "get_notifications", Encode!(&10u64, &0u64 ).unwrap()).unwrap();
     let guard_res: Vec<NotificationData> = match guard_res {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
         _ => panic!("\n🛑 get notifications failed\n"),
