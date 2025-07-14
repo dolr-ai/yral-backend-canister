@@ -22,7 +22,7 @@ fn test_crud() {
     };
     res.unwrap();
 
-    let notifications = pic.query_call(notification_store_canister_id, alice_principal, "get_notifications", Encode!(10, 0).unwrap()).unwrap();
+    let notifications = pic.query_call(notification_store_canister_id, alice_principal, "get_notifications", Encode!(&10, &0).unwrap()).unwrap();
     let notifications: Vec<NotificationData> = match notifications {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
         _ => panic!("\n🛑 get notifications failed\n"),
@@ -40,7 +40,7 @@ fn test_crud() {
     };
     res.unwrap();
 
-    let notifications = pic.query_call(notification_store_canister_id, alice_principal, "get_notifications", Encode!(10, 0).unwrap()).unwrap();
+    let notifications = pic.query_call(notification_store_canister_id, alice_principal, "get_notifications", Encode!(&10, &0).unwrap()).unwrap();
     let notifications: Vec<NotificationData> = match notifications {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
         _ => panic!("\n🛑 get notifications failed\n"),
