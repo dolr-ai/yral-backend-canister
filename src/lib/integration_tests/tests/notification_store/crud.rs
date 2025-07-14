@@ -33,7 +33,7 @@ fn test_crud() {
         video_id: 1,
     }));
 
-    let res = pic.update_call(notification_store_canister_id, alice_principal, "mark_notification_as_read", candid::encode_one(&0u64).unwrap()).unwrap();
+    let res = pic.update_call(notification_store_canister_id, alice_principal, "mark_notification_as_read", candid::encode_one(0u64).unwrap()).unwrap();
     let res: Result<(), NotificationStoreError> = match res {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
         _ => panic!("\n🛑 mark notification as read failed\n"),
