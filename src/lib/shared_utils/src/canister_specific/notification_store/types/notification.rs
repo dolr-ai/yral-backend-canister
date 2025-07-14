@@ -16,19 +16,19 @@ pub struct NotificationData {
     pub created_at: SystemTime,
 }
 
-#[derive(Clone, Serialize, Deserialize, CandidType)]
+#[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]
 pub struct LikedPayload {
     pub by_user_principal: Principal,
     pub post_id: u64,
 }
 
-#[derive(Clone, Serialize, Deserialize, CandidType)]
+#[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]
 pub struct VideoUploadPayload {
     #[serde(alias = "video_uid")]
     pub video_id: u64,
 }
 
-#[derive(Clone, Serialize, Deserialize, CandidType)]
+#[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]
 pub enum NotificationType {
     Liked(LikedPayload),
     VideoUpload(VideoUploadPayload),

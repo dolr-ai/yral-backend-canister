@@ -56,7 +56,7 @@ fn mark_notification_as_read(notification_id: u64) -> Result<(), NotificationSto
 fn get_notifications(limit: usize, offset: usize) -> Vec<NotificationData> {
     let caller = caller();
     CANISTER_DATA.with(|map| {
-        let notifications = map.borrow().get(&caller).unwrap();
+        let notifications = map.borrow().get(&caller).unwrap_or_default();
         notifications.0.iter().skip(offset).take(limit).cloned().collect()
     })
 }
