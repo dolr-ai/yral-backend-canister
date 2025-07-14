@@ -127,6 +127,15 @@ impl CanisterData {
             Err("User not found".to_string())
         }
     }
+
+    pub fn delete_user_info(&mut self, user_principal: Principal) -> Result<(), String> {
+        let removed_user = self.user_infos.remove(&user_principal);
+        if removed_user.is_some() {
+            Ok(())
+        } else {
+            Err("User not found".to_string())
+        }
+    }
 }
 
 impl Default for CanisterData {

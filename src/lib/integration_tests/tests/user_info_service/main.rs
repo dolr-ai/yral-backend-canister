@@ -1,3 +1,4 @@
 pub mod test_check_session_type_for_user_info_service;
+pub mod test_delete_user_for_user_info_service;
 pub mod test_registeration_of_new_users;
 pub mod test_update_session_type_for_user_info_service;
