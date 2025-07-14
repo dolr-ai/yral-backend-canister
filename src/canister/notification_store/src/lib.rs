@@ -16,7 +16,6 @@ use crate::data_model::CanisterData;
 
 thread_local! {
     static CANISTER_DATA: RefCell<CanisterData> = RefCell::new(CanisterData::default());
-    static NEXT_ID: RefCell<u64> = RefCell::new(0);
 }
 
 const THIRTY_DAYS_IN_NANOS: u64 = 30 * 24 * 60 * 60 * 1_000_000_000;
