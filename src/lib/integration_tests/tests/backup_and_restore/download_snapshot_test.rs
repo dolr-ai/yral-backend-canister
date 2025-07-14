@@ -69,6 +69,8 @@ fn download_snapshot_test() {
         })
         .unwrap();
 
+    println!("subnet_orchestrator_canister_id: {:?}", subnet_orchestrator_canister_id);
+
     for _ in 0..50 {
         pic.tick()
     }
@@ -84,6 +86,7 @@ fn download_snapshot_test() {
     let post_cache_canister_id = pic.create_canister();
     pic.add_cycles(post_cache_canister_id, 2_000_000_000_000);
 
+    println!("post_cache_canister_id: {:?}", post_cache_canister_id);
     // Init individual template canister - alice
 
     let alice_individual_template_canister_id = pic
@@ -103,6 +106,7 @@ fn download_snapshot_test() {
         .unwrap()
         .unwrap();
 
+    println!("alice_individual_template_canister_id: {:?}", alice_individual_template_canister_id);
     // Init individual template canister - bob
 
     let bob_individual_template_canister_id = pic
@@ -122,6 +126,7 @@ fn download_snapshot_test() {
         .unwrap()
         .unwrap();
 
+    println!("bob_individual_template_canister_id: {:?}", bob_individual_template_canister_id);
     // Init individual template canister - dan
 
     let dan_individual_template_canister_id = pic
@@ -140,6 +145,8 @@ fn download_snapshot_test() {
         })
         .unwrap()
         .unwrap();
+
+    println!("dan_individual_template_canister_id: {:?}", dan_individual_template_canister_id);
 
     // Create posts
     // Alice creates a post
@@ -166,6 +173,8 @@ fn download_snapshot_test() {
         })
         .unwrap();
 
+    println!("res1: {:?}", res1);
+
     let alice_post_2 = PostDetailsFromFrontend {
         is_nsfw: false,
         description: "This is a fun video to watch 2".to_string(),
@@ -189,6 +198,8 @@ fn download_snapshot_test() {
         })
         .unwrap();
 
+    println!("res2: {:?}", res2);
+
     // Top up Bob's account
     let reward = pic.update_call(
         bob_individual_template_canister_id,
@@ -197,6 +208,8 @@ fn download_snapshot_test() {
         encode_one(()).unwrap(),
     );
 
+    println!("reward: {:?}", reward);
+
     // Top up Dan's account
     let reward = pic.update_call(
         dan_individual_template_canister_id,
@@ -204,6 +217,8 @@ fn download_snapshot_test() {
         "get_rewarded_for_signing_up",
         encode_one(()).unwrap(),
     );
+
+    println!("reward: {:?}", reward);
 
     // Upgrade canister
     // Individual template canisters
