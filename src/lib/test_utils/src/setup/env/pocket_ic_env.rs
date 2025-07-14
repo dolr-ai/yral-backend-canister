@@ -7,7 +7,7 @@ use pocket_ic::{
     management_canister::CanisterSettings, PocketIc, PocketIcBuilder, UserError, WasmResult,
 };
 use shared_utils::{
-    canister_specific::platform_orchestrator::types::args::PlatformOrchestratorInitArgs,
+    canister_specific::{notification_store::types::args::NotificationStoreInitArgs, platform_orchestrator::types::args::PlatformOrchestratorInitArgs},
     common::types::{
         known_principal::{KnownPrincipalMap, KnownPrincipalType},
         wasm::WasmType,
@@ -114,10 +114,14 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
     
     pocket_ic.add_cycles(notification_store_canister_id, 10_000_000_000_000_000_000_000);
 
+    let notification_store_init_args = NotificationStoreInitArgs {
+        version: "v1.0.0".into(),
+    };
+
     pocket_ic.install_canister(
         notification_store_canister_id,
         notification_store_canister_wasm.into(),
-        candid::encode_one(()).unwrap(),
+        candid::encode_one(notification_store_init_args).unwrap(),
         Some(super_admin),
     );
 

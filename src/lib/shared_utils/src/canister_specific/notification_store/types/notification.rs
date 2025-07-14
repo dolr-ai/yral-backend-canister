@@ -5,15 +5,15 @@ use ciborium::de;
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize,Default)]
-pub struct Notification (pub Vec<NotificationData>);
+#[derive(Serialize, Deserialize, Clone, Default, Debug, CandidType)]
+pub struct Notification(pub Vec<NotificationData>);
 
-#[derive(Clone, Serialize, Deserialize, CandidType)]
+#[derive(Serialize, Deserialize, Clone, Debug, CandidType)]
 pub struct NotificationData {
     pub notification_id: u64,
     pub payload: NotificationType,
     pub read: bool,
-    pub created_at: SystemTime,
+    pub created_at: std::time::SystemTime,
 }
 
 #[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]

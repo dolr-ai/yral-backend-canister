@@ -1,116 +1,130 @@
-use candid::Principal;
+pub mod canister_lifecycle;
+
+use candid::{CandidType, Principal};
 use ic_cdk::caller;
-use ic_cdk_macros::export_candid;
+use ic_cdk_macros::{export_candid, query, update};
+use serde::{Deserialize, Serialize};
 use shared_utils::canister_specific::notification_store::types::error::NotificationStoreError;
-use shared_utils::canister_specific::notification_store::types::notification::{Notification, NotificationData, NotificationType};
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
+use shared_utils::canister_specific::notification_store::types::notification::{
+    Notification, NotificationData, NotificationType,
+};
+use shared_utils::canister_specific::notification_store::types::args::NotificationStoreInitArgs;
 use shared_utils::common::utils::system_time::get_current_system_time_from_ic;
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::time::Duration;
 
-pub type Memory = VirtualMemory<DefaultMemoryImpl>;
+#[derive(CandidType, Serialize, Deserialize, Default)]
+struct CanisterData {
+    notifications: BTreeMap<Principal, Notification>,
+    version: String,
+}
+
+mod memory {
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
+    use ic_stable_structures::DefaultMemoryImpl;
+    use std::cell::RefCell;
+
+    type Memory = VirtualMemory<DefaultMemoryImpl>;
+
+    thread_local! {
+        static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
+            RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
+    }
+
+    const UPGRADES: MemoryId = MemoryId::new(0);
+
+    pub fn get_upgrades_memory() -> Memory {
+        MEMORY_MANAGER.with(|m| m.borrow().get(UPGRADES))
+    }
+}
 
 thread_local! {
-    static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-
+    static CANISTER_DATA: RefCell<CanisterData> = RefCell::new(CanisterData::default());
     static NEXT_ID: RefCell<u64> = RefCell::new(0);
-
-    static CANISTER_DATA: RefCell<StableBTreeMap<Principal, Notification, Memory>> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(0))),
-        )
-    );
 }
 
-
-#[ic_cdk_macros::update]
+#[update]
 fn add_notification(notification_type: NotificationType) -> Result<(), NotificationStoreError> {
     let caller = caller();
-    CANISTER_DATA.with(|map| {
-        let next_id = NEXT_ID.with(|id| *id.borrow_mut());
-        let mut notifications = map.borrow().get(&caller).unwrap_or_default();
-        notifications.0.push(NotificationData { notification_id: next_id, payload: notification_type, read: false, created_at: get_current_system_time_from_ic()});
-        map.borrow_mut().insert(caller, Notification (notifications.0));
-        NEXT_ID.with(|id| *id.borrow_mut() += 1);
+    CANISTER_DATA.with_borrow_mut(|canister_data| {
+        let next_id = NEXT_ID.with(|id| {
+            let result = *id.borrow();
+            *id.borrow_mut() += 1;
+            result
+        });
+        let notifications = canister_data.notifications.entry(caller).or_default();
+        notifications.0.push(NotificationData {
+            notification_id: next_id,
+            payload: notification_type,
+            read: false,
+            created_at: get_current_system_time_from_ic(),
+        });
     });
 
     Ok(())
 }
 
-#[ic_cdk_macros::update]
-fn mark_notification_as_read(notification_id: u64) -> Result<(), NotificationStoreError>{
+#[update]
+fn mark_notification_as_read(notification_id: u64) -> Result<(), NotificationStoreError> {
     let caller = caller();
-    CANISTER_DATA.with_borrow_mut(|map| {
-        let mut notifications = map.get(&caller).unwrap();
-
-        notifications.0.iter_mut().find(|n| n.notification_id == notification_id).unwrap().read = true;
-
-        map.insert(caller, notifications);
+    CANISTER_DATA.with_borrow_mut(|canister_data| {
+        if let Some(notifications) = canister_data.notifications.get_mut(&caller) {
+            if let Some(notification) = notifications
+                .0
+                .iter_mut()
+                .find(|n| n.notification_id == notification_id)
+            {
+                notification.read = true;
+            }
+        }
     });
 
     Ok(())
 }
 
-#[ic_cdk_macros::query]
+#[query]
 fn get_notifications(limit: usize, offset: usize) -> Vec<NotificationData> {
     let caller = caller();
-    CANISTER_DATA.with(|map| {
-        let notifications = map.borrow().get(&caller).unwrap_or_default();
-        notifications.0.iter().skip(offset).take(limit).cloned().collect()
+    CANISTER_DATA.with_borrow(|canister_data| {
+        canister_data
+            .notifications
+            .get(&caller)
+            .map(|notifications| {
+                notifications
+                    .0
+                    .iter()
+                    .skip(offset)
+                    .take(limit)
+                    .cloned()
+                    .collect()
+            })
+            .unwrap_or_default()
     })
 }
 
-#[ic_cdk_macros::init]
-fn init() {
+const THIRTY_DAYS_IN_NANOS: u64 = 30 * 24 * 60 * 60 * 1_000_000_000;
 
-    // pruning notifications older than 30 days
+fn set_pruning_timer() {
     ic_cdk_timers::set_timer_interval(Duration::from_secs(60 * 60 * 24 * 30), move || {
-        CANISTER_DATA.with_borrow_mut(|map|{
-            let now = get_current_system_time_from_ic();
+        CANISTER_DATA.with_borrow_mut(|canister_data| {
+            let now_nanos = get_current_system_time_from_ic()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos() as u64;
 
-            // Collecting the user principals first to avoid borrowing issues while mutating the map
-            let users: Vec<Principal> = map
-                .iter()
-                .map(|(user, _)| user)
-                .collect();
-
-            for user in users {
-                if let Some(mut notifications) = map.get(&user) {
-                    notifications
-                        .0
-                        .retain(|n| n.created_at > now);
-
-                    map.insert(user, notifications);
-                }
+            for notifications in canister_data.notifications.values_mut() {
+                notifications.0.retain(|n| {
+                    let created_at_nanos = n
+                        .created_at
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_nanos() as u64;
+                    now_nanos.saturating_sub(created_at_nanos) < THIRTY_DAYS_IN_NANOS
+                });
             }
         })
     });
-}
-#[ic_cdk_macros::post_upgrade]
-pub fn post_upgrade(){
-        // pruning notifications older than 30 days
-        ic_cdk_timers::set_timer_interval(Duration::from_secs(60 * 60 * 24 * 30), move || {
-            CANISTER_DATA.with_borrow_mut(|map|{
-                let now = get_current_system_time_from_ic();
-    
-                // Collecting the user principals first to avoid borrowing issues while mutating the map
-                let users: Vec<Principal> = map
-                    .iter()
-                    .map(|(user, _)| user)
-                    .collect();
-    
-                for user in users {
-                    if let Some(mut notifications) = map.get(&user) {
-                        notifications
-                            .0
-                            .retain(|n| n.created_at > now);
-    
-                        map.insert(user, notifications);
-                    }
-                }
-            })
-        });
 }
 
 export_candid!();

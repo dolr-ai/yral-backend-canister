@@ -33,7 +33,9 @@ dfx canister install platform_orchestrator --mode upgrade --argument "(record {
   version= \"v2.2.0\"
 })"
 
-dfx canister install notification_store --mode upgrade
+dfx canister install notification_store --mode upgrade --argument "(record {
+  version= \"v2.2.0\"
+})"
 
 scripts/canisters/local_deploy/upgrade_subnet_orchestrator.sh
 
