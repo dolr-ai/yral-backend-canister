@@ -3,7 +3,8 @@ use shared_utils::canister_specific::individual_user_template::types::session::S
 use test_utils::canister_calls::{query, update};
 use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned;
 use test_utils::setup::test_constants::{
-    get_mock_user_alice_principal_id, get_mock_user_charlie_principal_id,
+    get_global_super_admin_principal_id, get_mock_user_alice_principal_id,
+    get_mock_user_charlie_principal_id,
 };
 
 #[test]
@@ -12,14 +13,15 @@ fn test_check_session_type_for_user_info_service() {
 
     let user_info_service_canister = service_canisters.user_info_service_canister_id;
     let charlie_principal_id = get_mock_user_charlie_principal_id();
+    let global_admin = get_global_super_admin_principal_id();
 
     // First, register the user
     let registration_result = update::<_, Result<(), String>>(
         &pocket_ic,
         user_info_service_canister,
-        charlie_principal_id,
+        global_admin,
         "register_new_user",
-        (),
+        (charlie_principal_id,),
     )
     .expect("Failed to register new user");
 

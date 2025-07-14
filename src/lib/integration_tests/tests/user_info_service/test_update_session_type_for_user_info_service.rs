@@ -20,9 +20,9 @@ fn test_update_session_type_for_user_info_service() {
     let registration_result = update::<_, Result<(), String>>(
         &pocket_ic,
         user_info_service_canister,
-        charlie_principal_id,
+        global_admin,
         "register_new_user",
-        (),
+        (charlie_principal_id,),
     )
     .expect("Failed to register new user");
 
