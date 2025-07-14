@@ -78,6 +78,7 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
     );
 
     pocket_ic.add_cycles(user_servcie_canister, 10_000_000_000_000_000);
+    pocket_ic.add_cycles(notification_store_canister, 10_000_000_000_000_000);
 
     let user_info_service_canister_wasm = include_bytes!(
         "../../../../../../target/wasm32-unknown-unknown/release/user_info_service.wasm.gz"
