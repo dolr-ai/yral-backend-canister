@@ -1,4 +1,4 @@
-use crate::{memory, set_pruning_timer, CANISTER_DATA};
+use crate::{data_model::memory, set_pruning_timer, CANISTER_DATA};
 use ciborium::de;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::Memory;

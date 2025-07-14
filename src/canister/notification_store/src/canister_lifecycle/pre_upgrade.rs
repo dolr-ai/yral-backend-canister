@@ -2,7 +2,7 @@ use ciborium::ser;
 use ic_cdk_macros::pre_upgrade;
 use ic_stable_structures::writer::Writer;
 
-use crate::{memory, CANISTER_DATA};
+use crate::{data_model::memory, CANISTER_DATA};
 
 #[pre_upgrade]
 fn pre_upgrade() {
