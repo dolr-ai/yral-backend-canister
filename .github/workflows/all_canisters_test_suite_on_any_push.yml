@@ -48,6 +48,7 @@ jobs:
           nix-shell --run "dfx canister create --no-wallet individual_user_template"
           nix-shell --run "dfx canister create --no-wallet user_index"
           nix-shell --run "dfx canister create --no-wallet platform_orchestrator"
+          nix-shell --run "dfx canister create --no-wallet notification_store"
       - name: Stop local replica
         run: nix-shell --run "dfx stop"
       - name: Build platform_orchestrator canister
@@ -62,6 +63,10 @@ jobs:
         run: |
           nix-shell --run "dfx build user_index"
           gzip -f -1 ./target/wasm32-unknown-unknown/release/user_index.wasm
+      - name: Build notification_store canister
+        run: |
+          nix-shell --run "dfx build notification_store"
+          gzip -f -1 ./target/wasm32-unknown-unknown/release/notification_store.wasm
       - name: Run canister test suite
         env:
           POCKET_IC_BIN: ${{ github.workspace }}/pocket-ic
