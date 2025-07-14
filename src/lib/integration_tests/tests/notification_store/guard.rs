@@ -7,7 +7,7 @@ use test_utils::setup::{env::pocket_ic_env::{get_new_pocket_ic_env, get_new_pock
 fn test_notification_authorization() {
     let (pic, known_principals) = get_new_pocket_ic_env_with_service_canisters_provisioned();
 
-    let notification_store_canister_id = service_canisters.notification_store_canister_id;
+    let notification_store_canister_id = known_principals.notification_store_canister_id;
 
     let alice_principal = get_mock_user_alice_principal_id();
     let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", candid::encode_one(NotificationType::VideoUpload(VideoUploadPayload {
