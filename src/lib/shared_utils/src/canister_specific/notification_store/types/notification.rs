@@ -24,8 +24,8 @@ pub struct LikedPayload {
 
 #[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]
 pub struct VideoUploadPayload {
-    #[serde(alias = "video_uid")]
-    pub video_id: u64,
+    #[serde(alias = "video_id")]
+    pub video_uid: u64,
 }
 
 #[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]

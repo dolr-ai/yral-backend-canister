@@ -2,7 +2,10 @@ pub mod canister_lifecycle;
 pub mod data_model;
 pub mod api;
 
+use candid::Principal;
 use ic_cdk_macros::export_candid;
+use ic_stable_structures::memory_manager::MemoryManager;
+use ic_stable_structures::DefaultMemoryImpl;
 use shared_utils::canister_specific::notification_store::types::error::NotificationStoreError;
 use shared_utils::canister_specific::notification_store::types::notification::{
     NotificationData, NotificationType,
@@ -15,28 +18,25 @@ use std::time::Duration;
 use crate::data_model::CanisterData;
 
 thread_local! {
-    static CANISTER_DATA: RefCell<CanisterData> = RefCell::new(CanisterData::default());
+    static CANISTER_DATA: RefCell<CanisterData> = RefCell::default();
 }
 
 const THIRTY_DAYS_IN_NANOS: u64 = 30 * 24 * 60 * 60 * 1_000_000_000;
 
 fn set_pruning_timer() {
     ic_cdk_timers::set_timer_interval(Duration::from_secs(60 * 60 * 24 * 30), move || {
-        CANISTER_DATA.with_borrow_mut(|canister_data| {
-            let now_nanos = get_current_system_time_from_ic()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos() as u64;
+        CANISTER_DATA.with_borrow_mut(|map| {
+            let now = get_current_system_time_from_ic();
 
-            for notifications in canister_data.notifications.values_mut() {
-                notifications.0.retain(|n| {
-                    let created_at_nanos = n
-                        .created_at
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap()
-                        .as_nanos() as u64;
-                    now_nanos.saturating_sub(created_at_nanos) < THIRTY_DAYS_IN_NANOS
-                });
+            // Collecting the user principals first to avoid borrowing issues while mutating the map
+            let users: Vec<Principal> = map.notifications.iter().map(|(user, _)| user).collect();
+
+            for user in users {
+                if let Some(mut notifications) = map.notifications.get(&user) {
+                    notifications.0.retain(|n| n.created_at > now);
+
+                    map.notifications.insert(user, notifications);
+                }
             }
         })
     });

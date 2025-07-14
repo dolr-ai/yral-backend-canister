@@ -14,7 +14,7 @@ fn test_crud() {
 
     let alice_principal = get_mock_user_alice_principal_id();
     let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", candid::encode_one(NotificationType::VideoUpload(VideoUploadPayload {
-        video_id: 1,
+        video_uid: 1,
     })).unwrap()).unwrap();
     let res: Result<(), NotificationStoreError> = match res {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
@@ -30,7 +30,7 @@ fn test_crud() {
 
     assert_eq!(notifications.len(), 1);
     assert_eq!(notifications[0].payload, NotificationType::VideoUpload(VideoUploadPayload {
-        video_id: 1,
+        video_uid: 1,
     }));
 
     let res = pic.update_call(notification_store_canister_id, alice_principal, "mark_notification_as_read", candid::encode_one(0u64).unwrap()).unwrap();
@@ -61,7 +61,7 @@ fn test_increment_notification_id() {
 
     let alice_principal = get_mock_user_alice_principal_id();
     let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", candid::encode_one(NotificationType::VideoUpload(VideoUploadPayload {
-        video_id: 1,
+        video_uid: 1,
     })).unwrap()).unwrap();
     let res: Result<(), NotificationStoreError> = match res {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
@@ -70,7 +70,7 @@ fn test_increment_notification_id() {
     res.unwrap();
 
     let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", candid::encode_one(NotificationType::VideoUpload(VideoUploadPayload {
-        video_id: 2,
+        video_uid: 2,
     })).unwrap()).unwrap();
     let res: Result<(), NotificationStoreError> = match res {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
