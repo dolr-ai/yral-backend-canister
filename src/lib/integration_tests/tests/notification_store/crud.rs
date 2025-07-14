@@ -78,11 +78,13 @@ fn test_increment_notification_id() {
     };
     res.unwrap();
 
-    let res = pic.query_call(notification_store_canister_id, alice_principal, "get_next_notification_id", Encode!().unwrap()).unwrap();
-    let next_id: u64 = match res {
+    let notifications = pic.query_call(notification_store_canister_id, alice_principal, "get_notifications", Encode!(&10u64, &0u64).unwrap()).unwrap();
+    let notifications: Vec<NotificationData> = match notifications {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
-        _ => panic!("\n🛑 get next notification id failed\n"),
+        _ => panic!("\n🛑 get notifications failed\n"),
     };
 
-    assert_eq!(next_id, 2);
+    assert_eq!(notifications.len(), 2);
+    assert_eq!(notifications[0].notification_id, 0);
+    assert_eq!(notifications[1].notification_id, 1);
 }
