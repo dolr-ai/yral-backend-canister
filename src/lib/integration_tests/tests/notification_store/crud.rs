@@ -49,3 +49,40 @@ fn test_crud() {
     assert_eq!(notifications.len(), 1);
     assert!(notifications[0].read);
 }
+
+#[test]
+fn test_increment_notification_id() {
+    let (pic, known_principals) = get_new_pocket_ic_env();
+
+    let notification_store_canister_id = known_principals
+        .get(&KnownPrincipalType::CanisterIdNotificationStore)
+        .cloned()
+        .unwrap();
+
+    let alice_principal = get_mock_user_alice_principal_id();
+    let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", candid::encode_one(NotificationType::VideoUpload(VideoUploadPayload {
+        video_id: 1,
+    })).unwrap()).unwrap();
+    let res: Result<(), NotificationStoreError> = match res {
+        WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
+        _ => panic!("\n🛑 add notification failed\n"),
+    };
+    res.unwrap();
+
+    let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", candid::encode_one(NotificationType::VideoUpload(VideoUploadPayload {
+        video_id: 2,
+    })).unwrap()).unwrap();
+    let res: Result<(), NotificationStoreError> = match res {
+        WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
+        _ => panic!("\n🛑 add notification failed\n"),
+    };
+    res.unwrap();
+
+    let res = pic.query_call(notification_store_canister_id, alice_principal, "get_next_notification_id", Encode!().unwrap()).unwrap();
+    let next_id: u64 = match res {
+        WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
+        _ => panic!("\n🛑 get next notification id failed\n"),
+    };
+
+    assert_eq!(next_id, 2);
+}
