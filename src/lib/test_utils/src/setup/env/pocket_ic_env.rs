@@ -1,13 +1,13 @@
 use std::collections::{HashMap, HashSet};
 
 use candid::{utils::ArgumentEncoder, CandidType, Deserialize, Principal};
-use ic_cdk::api::management_canister::main::{CanisterId, LogVisibility};
+use ic_cdk::api::management_canister::main::CanisterId;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{
     management_canister::CanisterSettings, PocketIc, PocketIcBuilder, UserError, WasmResult,
 };
 use shared_utils::{
-    canister_specific::user_info_service::{self, args::UserInfoServiceInitArgs},
+    canister_specific::user_info_service::args::UserInfoServiceInitArgs,
     canister_specific::{
         notification_store::types::args::NotificationStoreInitArgs,
         platform_orchestrator::types::args::PlatformOrchestratorInitArgs,
@@ -22,8 +22,6 @@ use shared_utils::{
 use crate::setup::test_constants::{
     get_global_super_admin_principal_id, v1::CANISTER_INITIAL_CYCLES_FOR_SPAWNING_CANISTERS,
 };
-
-use super::pocket_ic_init::get_initialized_env_with_provisioned_known_canisters;
 
 #[derive(CandidType)]
 struct NnsLedgerCanisterInitPayload {
@@ -51,6 +49,7 @@ struct AuthorizedSubnetWorks {
 pub struct ServiceCanisters {
     pub user_info_service_canister_id: Principal,
     pub notification_store_canister_id: Principal,
+    pub dedup_index_canister_id: Principal,
 }
 
 pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, ServiceCanisters) {
@@ -78,14 +77,26 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         }),
     );
 
+    let dedup_index_canister = pocket_ic.create_canister_with_settings(
+        Some(super_admin),
+        Some(CanisterSettings {
+            controllers: Some(vec![super_admin]),
+            ..Default::default()
+        }),
+    );
+
     pocket_ic.add_cycles(user_servcie_canister, 10_000_000_000_000_000);
     pocket_ic.add_cycles(notification_store_canister, 10_000_000_000_000_000);
+    pocket_ic.add_cycles(dedup_index_canister, 10_000_000_000_000_000);
 
     let user_info_service_canister_wasm = include_bytes!(
         "../../../../../../target/wasm32-unknown-unknown/release/user_info_service.wasm.gz"
     );
 
     let notification_store_canister_wasm = include_bytes!(
+        "../../../../../../target/wasm32-unknown-unknown/release/notification_store.wasm.gz"
+    );
+    let dedup_index_canister_wasm = include_bytes!(
         "../../../../../../target/wasm32-unknown-unknown/release/notification_store.wasm.gz"
     );
 
@@ -110,10 +121,17 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         candid::encode_one(notification_store_canister_init_args).unwrap(),
         Some(super_admin),
     );
+    pocket_ic.install_canister(
+        dedup_index_canister,
+        dedup_index_canister_wasm.to_vec(),
+        candid::encode_one(()).unwrap(),
+        Some(super_admin),
+    );
 
     let service_canisters = ServiceCanisters {
         user_info_service_canister_id: user_servcie_canister,
         notification_store_canister_id: notification_store_canister,
+        dedup_index_canister_id: dedup_index_canister,
     };
 
     (pocket_ic, service_canisters)
@@ -169,7 +187,7 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
         candid::encode_one(platform_orchestrator_init_args).unwrap(),
         Some(super_admin),
     );
-    for i in 0..30 {
+    for _ in 0..30 {
         pocket_ic.tick()
     }
     pocket_ic
@@ -240,7 +258,7 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
         CANISTER_INITIAL_CYCLES_FOR_SPAWNING_CANISTERS,
     );
     let cycles_minting_canister_init_args = CyclesMintingCanisterInitPayload {
-        ledger_canister_id: ledger_canister_id,
+        ledger_canister_id,
         governance_canister_id: CanisterId::anonymous(),
         minting_account_id: Some(minting_account.to_string()),
         last_purged_notification: Some(0),
@@ -266,7 +284,7 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
         )
         .unwrap();
 
-    for i in 0..50 {
+    for _ in 0..50 {
         pocket_ic.tick();
     }
 
