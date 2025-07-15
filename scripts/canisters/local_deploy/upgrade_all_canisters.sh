@@ -24,15 +24,26 @@ done
 dfx build platform_orchestrator
 gzip -f -1 ./target/wasm32-unknown-unknown/release/platform_orchestrator.wasm
 
+
+dfx build user_info_service
+gzip -f -1 .target/wasm32-unknown-unknown/release/user_info_service.wasm
+
 if [[ $skip_test != true ]]
 then
   cargo test
 fi
 
+dfx canister install user_info_service --argument "(record {
+  version = \"v2.2.0\"
+})"
+
 dfx canister install platform_orchestrator --mode upgrade --argument "(record {
   version= \"v2.2.0\"
 })"
 
+dfx canister install notification_store --mode upgrade --argument "(record {
+  version= \"v2.2.0\"
+})"
 
 scripts/canisters/local_deploy/upgrade_subnet_orchestrator.sh
 

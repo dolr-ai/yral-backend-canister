@@ -4,6 +4,7 @@
 target
 internet_identity.did
 quill
+.direnv/
 **/*.pem
 sns-testing/**
 msg.json

@@ -5,6 +5,8 @@ members = [
     "src/canister/individual_user_template",
     "src/canister/user_index",
     "src/canister/platform_orchestrator",
+    "src/canister/notification_store",
+    "src/canister/user_info_service",
     "src/lib/integration_tests",
     "src/lib/shared_utils",
     "src/lib/test_utils", "src/canister/dedup_index",
