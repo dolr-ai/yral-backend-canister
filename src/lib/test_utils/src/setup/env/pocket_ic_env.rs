@@ -7,9 +7,10 @@ use pocket_ic::{
     management_canister::CanisterSettings, PocketIc, PocketIcBuilder, UserError, WasmResult,
 };
 use shared_utils::{
-    canister_specific::{notification_store::types::args::NotificationStoreInitArgs, platform_orchestrator::types::args::PlatformOrchestratorInitArgs},
+    canister_specific::user_info_service::{self, args::UserInfoServiceInitArgs},
     canister_specific::{
-        user_info_service::{self, args::UserInfoServiceInitArgs},
+        notification_store::types::args::NotificationStoreInitArgs,
+        platform_orchestrator::types::args::PlatformOrchestratorInitArgs,
     },
     common::types::{
         known_principal::{KnownPrincipalMap, KnownPrincipalType},
@@ -168,7 +169,6 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
         candid::encode_one(platform_orchestrator_init_args).unwrap(),
         Some(super_admin),
     );
-
     for i in 0..30 {
         pocket_ic.tick()
     }
@@ -184,9 +184,6 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
             .unwrap(),
         )
         .unwrap();
-    for i in 0..30 {
-        pocket_ic.tick()
-    }
     pocket_ic
         .update_call(
             platform_canister_id,
@@ -199,14 +196,8 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
             .unwrap(),
         )
         .unwrap();
+    pocket_ic.add_cycles(platform_canister_id, 10_000_000_000_000_000);
 
-    for i in 0..30 {
-        pocket_ic.tick()
-    }
-    pocket_ic.add_cycles(platform_canister_id, 10_000_000_000_000_000_000_000);
-    for i in 0..30 {
-        pocket_ic.tick()
-    }
     //Ledger Canister
     let minting_account = AccountIdentifier::new(&super_admin, &DEFAULT_SUBACCOUNT);
     let ledger_canister_wasm = include_bytes!("../../../ledger-canister.wasm");
