@@ -141,6 +141,7 @@ fn download_snapshot_test() {
         .unwrap()
         .unwrap();
 
+
     // Create posts
     // Alice creates a post
     let alice_post_1 = PostDetailsFromFrontend {
@@ -166,6 +167,7 @@ fn download_snapshot_test() {
         })
         .unwrap();
 
+
     let alice_post_2 = PostDetailsFromFrontend {
         is_nsfw: false,
         description: "This is a fun video to watch 2".to_string(),
@@ -189,6 +191,7 @@ fn download_snapshot_test() {
         })
         .unwrap();
 
+
     // Top up Bob's account
     let reward = pic.update_call(
         bob_individual_template_canister_id,
@@ -197,6 +200,7 @@ fn download_snapshot_test() {
         encode_one(()).unwrap(),
     );
 
+
     // Top up Dan's account
     let reward = pic.update_call(
         dan_individual_template_canister_id,
@@ -204,6 +208,7 @@ fn download_snapshot_test() {
         "get_rewarded_for_signing_up",
         encode_one(()).unwrap(),
     );
+
 
     // Upgrade canister
     // Individual template canisters

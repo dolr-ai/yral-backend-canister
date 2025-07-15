@@ -25,6 +25,17 @@
       "candid": "./src/lib/integration_tests/tests/pump_n_dump/mock_ledger/ledger.did",
       "wasm": "./src/lib/integration_tests/tests/pump_n_dump/mock_ledger/ic-icrc1-ledger.wasm.gz"
     },
+    "notification_store": {
+      "candid": "./src/canister/notification_store/can.did",
+      "declaration": {
+        "node_compatibility": true,
+        "output": "./export/declarations/notification_store"
+      },
+      "gzip": true,
+      "optimize": "size",
+      "package": "notification_store",
+      "type": "rust"
+    },
     "configuration": {
       "candid": "./src/canister/configuration/can.did",
       "declarations": {

@@ -26,6 +26,7 @@ scripts/canisters/local_deploy/create_sns_wasm.sh
 dfx canister create --no-wallet individual_user_template
 dfx canister create --no-wallet user_index
 dfx canister create --no-wallet platform_orchestrator
+dfx canister create --no-wallet notification_store
 dfx canister create --no-wallet user_info_service
 
 gzip_canister() {
@@ -37,6 +38,7 @@ scripts/candid_generator.sh
 gzip_canister individual_user_template
 gzip_canister user_index
 gzip_canister platform_orchestrator
+gzip_canister notification_store
 gzip_canister user_info_service
 
 if [[ $skip_test != true ]]
@@ -85,6 +87,11 @@ dfx canister install user_index --argument "(record {
   };
   version= \"v1.0.0\"
 })"
+
+dfx canister install notification_store --argument "(record {
+  version= \"v1.0.0\"
+})"
+
 scripts/canisters/local_deploy/create_pool_of_individual_canister_user_index.sh
 
 dfx canister update-settings user_index --set-controller $(dfx canister id platform_orchestrator) --yes 
