@@ -10,7 +10,7 @@ use ic_cdk::{api::is_controller, caller};
 pub fn is_reclaim_canister_id() -> Result<(), String> {
     let caller = ic_cdk::caller();
 
-    let valid_principals = vec![RECLAIM_CANISTER_PRINCIPAL_ID, GLOBAL_SUPER_ADMIN_USER_ID_V1];
+    let valid_principals = [RECLAIM_CANISTER_PRINCIPAL_ID, GLOBAL_SUPER_ADMIN_USER_ID_V1];
 
     if valid_principals.contains(&caller.to_string().as_ref()) {
         Ok(())
@@ -20,7 +20,7 @@ pub fn is_reclaim_canister_id() -> Result<(), String> {
 }
 
 pub fn is_caller_global_admin() -> Result<(), String> {
-    let valid_canisters = vec![GLOBAL_SUPER_ADMIN_USER_ID_V1, GLOBAL_SUPER_ADMIN_USER_ID];
+    let valid_canisters = [GLOBAL_SUPER_ADMIN_USER_ID_V1, GLOBAL_SUPER_ADMIN_USER_ID];
 
     if !valid_canisters.contains(&caller().to_string().as_str()) {
         return Err("Unauthorized".into());
