@@ -1,72 +1,22 @@
-use std::{
-    cell::RefCell,
-    collections::BTreeSet,
-    ops::{Deref, DerefMut},
-    time::SystemTime,
+mod data_model;
+
+use std::cell::RefCell;
+
+use data_model::CanisterData;
+use ic_cdk::{export_candid, update};
+use ic_cdk_macros::query;
+use shared_utils::{
+    canister_specific::dedup_index::types::{Video, VideoHash, Videos},
+    common::utils::permissions::is_caller_controller_or_global_admin,
 };
-
-use candid::CandidType;
-use ic_cdk::export_candid;
-use ic_stable_structures::{
-    DefaultMemoryImpl, StableBTreeMap, Storable,
-    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
-    storable::Bound,
-};
-use serde::{Deserialize, Serialize};
-
-pub type Memory = VirtualMemory<DefaultMemoryImpl>;
-type VideoId = String;
-type VideoHash = String;
-
-type Video = (VideoId, SystemTime);
-#[derive(Clone, Debug, Serialize, Deserialize, CandidType, Default)]
-struct Videos(pub BTreeSet<Video>);
-
-impl Deref for Videos {
-    type Target = BTreeSet<Video>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Videos {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl Storable for Videos {
-    const BOUND: Bound = Bound::Unbounded;
-
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        let mut bytes = vec![];
-        ciborium::ser::into_writer(self, &mut bytes).unwrap();
-
-        std::borrow::Cow::Owned(bytes)
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        let value: Self = ciborium::de::from_reader(bytes.as_ref()).unwrap();
-        value
-    }
-}
 
 thread_local! {
-    static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-
-    static DEDUP_INDEX: RefCell<StableBTreeMap<VideoHash, Videos, Memory>> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(0))),
-        )
-    );
+    static DEDUP_INDEX: RefCell<CanisterData> = RefCell::default();
 }
 
-#[ic_cdk_macros::update]
-fn add_video_to_index(video_hash: String, video: Video) {
-    // bar behind off-chain's caller id
-
-    DEDUP_INDEX.with_borrow_mut(|index| {
+#[update(guard = "is_caller_controller_or_global_admin")]
+fn add_video_to_index(video_hash: VideoHash, video: Video) {
+    DEDUP_INDEX.with_borrow_mut(|CanisterData { index, .. }| {
         let Some(ref mut videos) = index.get(&video_hash) else {
             index.insert(video_hash, Videos([video].into()));
             return;
@@ -76,9 +26,9 @@ fn add_video_to_index(video_hash: String, video: Video) {
     })
 }
 
-#[ic_cdk_macros::query]
+#[query]
 fn is_duplicate(video_hash: String) -> bool {
-    DEDUP_INDEX.with_borrow_mut(|index| index.contains_key(&video_hash))
+    DEDUP_INDEX.with_borrow_mut(|CanisterData { index, .. }| index.contains_key(&video_hash))
 }
 
 export_candid!();
