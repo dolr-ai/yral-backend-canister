@@ -1,0 +1,37 @@
+type LikedPayload = record { post_id : nat64; by_user_principal : principal };
+type NotificationData = record {
+  read : bool;
+  created_at : SystemTime;
+  notification_id : nat64;
+  payload : NotificationType;
+};
+type NotificationStoreError = variant {
+  Unauthorized;
+  CallError : record { RejectionCode; text };
+};
+type NotificationStoreInitArgs = record { version : text };
+type NotificationType = variant {
+  Liked : LikedPayload;
+  VideoUpload : VideoUploadPayload;
+};
+type RejectionCode = variant {
+  NoError;
+  CanisterError;
+  SysTransient;
+  DestinationInvalid;
+  Unknown;
+  SysFatal;
+  CanisterReject;
+};
+type Result = variant { Ok; Err : NotificationStoreError };
+type SystemTime = record {
+  nanos_since_epoch : nat32;
+  secs_since_epoch : nat64;
+};
+type VideoUploadPayload = record { video_id : nat64 };
+service : (NotificationStoreInitArgs) -> {
+  add_notification : (NotificationType) -> (Result);
+  get_notifications : (nat64, nat64) -> (vec NotificationData) query;
+  get_version : () -> (text) query;
+  mark_notification_as_read : (nat64) -> (Result);
+}
