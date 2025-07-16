@@ -4,8 +4,7 @@ use ic_stable_structures::{
 };
 use std::cell::RefCell;
 
-// reserving lower 16 slots for future use
-const INDEX: MemoryId = MemoryId::new(0x10);
+const INDEX: MemoryId = MemoryId::new(0);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
