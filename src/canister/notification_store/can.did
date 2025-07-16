@@ -28,7 +28,7 @@ type SystemTime = record {
   nanos_since_epoch : nat32;
   secs_since_epoch : nat64;
 };
-type VideoUploadPayload = record { video_id : nat64 };
+type VideoUploadPayload = record { video_uid : nat64 };
 service : (NotificationStoreInitArgs) -> {
   add_notification : (NotificationType) -> (Result);
   get_notifications : (nat64, nat64) -> (vec NotificationData) query;

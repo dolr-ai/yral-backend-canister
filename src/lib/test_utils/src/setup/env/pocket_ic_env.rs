@@ -97,7 +97,7 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         "../../../../../../target/wasm32-unknown-unknown/release/notification_store.wasm.gz"
     );
     let dedup_index_canister_wasm = include_bytes!(
-        "../../../../../../target/wasm32-unknown-unknown/release/notification_store.wasm.gz"
+        "../../../../../../target/wasm32-unknown-unknown/release/dedup_index.wasm.gz"
     );
 
     let user_info_service_canister_init_args = UserInfoServiceInitArgs {
