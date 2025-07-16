@@ -71,7 +71,7 @@ jobs:
           gzip -f -1 ./target/wasm32-unknown-unknown/release/notification_store.wasm
       - name: Build dedup_index canister
         run: |
-          nix-shell --run "dfx build notification_store"
+          nix-shell --run "dfx build dedup_index"
           gzip -f -1 ./target/wasm32-unknown-unknown/release/dedup_index.wasm
       - name: Build user_info_service canister
         run: |
