@@ -1,8 +1,10 @@
+type ServiceInitArgs = record { version : text };
 type SystemTime = record {
   nanos_since_epoch : nat32;
   secs_since_epoch : nat64;
 };
-service : {
+service : (ServiceInitArgs) -> {
   add_video_to_index : (text, record { text; SystemTime }) -> ();
+  get_version : () -> (text) query;
   is_duplicate : (text) -> (bool) query;
 }

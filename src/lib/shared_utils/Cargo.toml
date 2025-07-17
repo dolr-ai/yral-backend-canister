@@ -17,6 +17,7 @@ ciborium = { workspace = true }
 serde_json_any_key = "2.0.0"
 serde_bytes = "0.11.14"
 icrc-ledger-types = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 test_utils = { workspace = true }

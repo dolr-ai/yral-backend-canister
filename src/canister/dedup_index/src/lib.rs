@@ -1,3 +1,4 @@
+mod canister_lifecycle;
 mod data_model;
 
 use std::cell::RefCell;
@@ -5,6 +6,7 @@ use std::cell::RefCell;
 use data_model::CanisterData;
 use ic_cdk::{export_candid, update};
 use ic_cdk_macros::query;
+use shared_utils::service::ServiceInitArgs;
 use shared_utils::{
     canister_specific::dedup_index::{Video, VideoId, Videos},
     common::utils::permissions::is_caller_controller_or_global_admin,

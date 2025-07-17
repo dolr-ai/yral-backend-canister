@@ -5,6 +5,7 @@ use ic_stable_structures::{
 use std::cell::RefCell;
 
 const INDEX: MemoryId = MemoryId::new(0);
+const UPGRADES: MemoryId = MemoryId::new(1);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -17,4 +18,8 @@ thread_local! {
 
 pub fn get_dedup_index_memory() -> Memory {
     MEMORY_MANAGER.with_borrow_mut(|m| m.get(INDEX))
+}
+
+pub fn get_upgrades_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(UPGRADES))
 }
