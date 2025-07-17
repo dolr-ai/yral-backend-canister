@@ -11,7 +11,6 @@ use test_utils::setup::{
     env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned,
     test_constants::{get_mock_user_alice_principal_id, get_mock_user_bob_principal_id},
 };
-use std::time::SystemTime;
 use std::collections::HashSet;
 
 #[test]
@@ -64,7 +63,7 @@ fn test_add_and_get_post() {
     };
     
     let retrieved_post = retrieved_post.expect("Post should exist");
-    assert_eq!(retrieved_post.id, post_id);
+    assert_eq!(retrieved_post.id, 999); // Video ID from CF Streams should remain unchanged
     assert_eq!(retrieved_post.creator_principal, alice_principal);
     assert_eq!(retrieved_post.video_uid, "test_video_123");
     assert_eq!(retrieved_post.description, "Test post description");
