@@ -1,13 +1,13 @@
 use candid::Principal;
 use ic_cdk::caller;
 use ic_cdk_macros::update;
-use shared_utils::{canister_specific::notification_store::types::{error::NotificationStoreError, notification::{Notification, NotificationData, NotificationType}}, common::utils::{permissions::is_caller_controller, system_time::get_current_system_time_from_ic}};
+use shared_utils::{canister_specific::notification_store::types::{error::NotificationStoreError, notification::{Notification, NotificationData, NotificationType}}, common::utils::{permissions::{is_caller_controller, is_caller_controller_or_global_admin}, system_time::get_current_system_time_from_ic}};
 
 use crate::{CANISTER_DATA};
 
 #[update]
 fn add_notification(user_principal: Principal, notification_type: NotificationType) -> Result<(), NotificationStoreError> {
-    if user_principal != caller() || is_caller_controller().is_err() {
+    if user_principal != caller() || is_caller_controller_or_global_admin().is_err() {
         return Err(NotificationStoreError::Unauthorized);
     }
 
