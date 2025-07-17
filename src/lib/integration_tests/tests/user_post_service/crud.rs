@@ -185,7 +185,7 @@ fn test_post_id_increment() {
         description: "Bob's post".to_string(),
         hashtags: vec![],
         status: PostStatus::ReadyToView,
-        created_at: SystemTime::now(),
+        created_at: get_current_system_time_from_ic(),
         likes: HashSet::new(),
         share_count: 0,
         view_stats: Default::default(),
