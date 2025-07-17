@@ -10,6 +10,7 @@ members = [
     "src/lib/integration_tests",
     "src/lib/shared_utils",
     "src/lib/test_utils",
+    "src/canister/dedup_index",
 ]
 
 [workspace.dependencies]
@@ -24,6 +25,7 @@ ic-ledger-types = "0.9.0"
 ic-test-state-machine-client = "3.0.0"
 rmp-serde = "1.1.2"
 serde = "1.0.186"
+thiserror = "2.0.12"
 futures = "0.3.29"
 shared_utils = { path = "./src/lib/shared_utils" }
 test_utils = { path = "./src/lib/test_utils" }
