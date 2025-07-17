@@ -9,7 +9,7 @@ function generate_did() {
 }
 
 # The list of canisters of your project
-CANISTERS=user_index,platform_orchestrator,individual_user_template,user_info_service,notification_store
+CANISTERS=user_index,platform_orchestrator,individual_user_template,user_info_service,notification_store,user_post_service
 
 for canister in $(echo $CANISTERS | sed "s/,/ /g")
 do
