@@ -10,7 +10,7 @@ fn test_notification_authorization() {
     let notification_store_canister_id = known_principals.notification_store_canister_id;
 
     let alice_principal = get_mock_user_alice_principal_id();
-    let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", candid::encode_one(NotificationType::VideoUpload(VideoUploadPayload {
+    let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", Encode!(&alice_principal, &NotificationType::VideoUpload(VideoUploadPayload {
         video_uid: 1,
     })).unwrap()).unwrap();
     let res: Result<(), NotificationStoreError> = match res {
