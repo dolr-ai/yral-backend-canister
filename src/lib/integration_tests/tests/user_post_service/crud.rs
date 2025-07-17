@@ -5,13 +5,13 @@ use shared_utils::{
         error::UserPostServiceError,
         storage::Post,
     },
-    common::{types::top_posts::post_score_index_item::PostStatus, utils::system_time::get_current_system_time_from_ic},
+    common::types::top_posts::post_score_index_item::PostStatus
 };
 use test_utils::setup::{
     env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned,
     test_constants::{get_mock_user_alice_principal_id, get_mock_user_bob_principal_id},
 };
-use std::collections::HashSet;
+use std::{collections::HashSet, time::SystemTime};
 
 #[test]
 fn test_add_and_get_post() {
@@ -29,7 +29,7 @@ fn test_add_and_get_post() {
         description: "Test post description".to_string(),
         hashtags: vec!["test".to_string(), "integration".to_string()],
         status: PostStatus::ReadyToView,
-        created_at: get_current_system_time_from_ic(),
+        created_at: SystemTime::now(),
         likes: HashSet::new(),
         share_count: 0,
         view_stats: Default::default(),
@@ -86,7 +86,7 @@ fn test_get_posts_by_creator() {
             description: format!("Post {}", i),
             hashtags: vec![],
             status: PostStatus::ReadyToView,
-            created_at: get_current_system_time_from_ic(),
+            created_at: SystemTime::now(),
             likes: HashSet::new(),
             share_count: 0,
             view_stats: Default::default(),
@@ -157,7 +157,7 @@ fn test_post_id_increment() {
         description: "Alice's post".to_string(),
         hashtags: vec![],
         status: PostStatus::ReadyToView,
-        created_at: get_current_system_time_from_ic(),
+        created_at: SystemTime::now(),
         likes: HashSet::new(),
         share_count: 0,
         view_stats: Default::default(),
@@ -184,7 +184,7 @@ fn test_post_id_increment() {
         description: "Bob's post".to_string(),
         hashtags: vec![],
         status: PostStatus::ReadyToView,
-        created_at: get_current_system_time_from_ic(),
+        created_at: SystemTime::now(),
         likes: HashSet::new(),
         share_count: 0,
         view_stats: Default::default(),
