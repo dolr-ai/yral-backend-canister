@@ -7,16 +7,17 @@ use pocket_ic::{
     management_canister::CanisterSettings, PocketIc, PocketIcBuilder, UserError, WasmResult,
 };
 use shared_utils::{
-    canister_specific::user_info_service::args::UserInfoServiceInitArgs,
     canister_specific::{
         notification_store::types::args::NotificationStoreInitArgs,
         platform_orchestrator::types::args::PlatformOrchestratorInitArgs,
+        user_info_service::args::UserInfoServiceInitArgs,
     },
     common::types::{
         known_principal::{KnownPrincipalMap, KnownPrincipalType},
         wasm::WasmType,
     },
     constant::{GLOBAL_SUPER_ADMIN_USER_ID_V1, NNS_CYCLE_MINTING_CANISTER, NNS_LEDGER_CANISTER_ID},
+    service::ServiceInitArgs,
 };
 
 use crate::setup::test_constants::{
@@ -124,7 +125,10 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
     pocket_ic.install_canister(
         dedup_index_canister,
         dedup_index_canister_wasm.to_vec(),
-        candid::encode_one(()).unwrap(),
+        candid::encode_one(ServiceInitArgs {
+            version: "v1.0.0".into(),
+        })
+        .unwrap(),
         Some(super_admin),
     );
 
