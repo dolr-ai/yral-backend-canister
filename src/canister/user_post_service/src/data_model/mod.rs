@@ -1,9 +1,9 @@
 pub mod memory;
 
 use candid::Principal;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap,};
 use serde::{Deserialize, Serialize};
-use crate::types::storage::{PostWrapper, PostIdList};
+use shared_utils::canister_specific::user_post_service::types::storage::{Post, PostIdList};
 
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -11,7 +11,7 @@ type Memory = VirtualMemory<DefaultMemoryImpl>;
 pub struct CanisterData {
     /// Map of post_id -> Post details
     #[serde(skip, default = "_init_posts")]
-    pub posts: StableBTreeMap<u64, PostWrapper, Memory>,
+    pub posts: StableBTreeMap<u64, Post, Memory>,
 
     /// Index: creator principal -> vector of post ids (most-recent first)
     #[serde(skip, default = "_init_posts_by_creator")]
@@ -35,7 +35,7 @@ impl Default for CanisterData {
     }
 }
 
-fn _init_posts() -> StableBTreeMap<u64, PostWrapper, Memory> {
+fn _init_posts() -> StableBTreeMap<u64, Post, Memory> {
     StableBTreeMap::init(memory::get_posts_memory())
 }
 

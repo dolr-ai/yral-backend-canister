@@ -2,7 +2,7 @@ use crate::{data_model::memory, CANISTER_DATA};
 use ciborium::de;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::Memory;
-use crate::types::args::UserPostServiceInitArgs;
+use shared_utils::canister_specific::user_post_service::types::args::UserPostServiceInitArgs;
 
 #[post_upgrade]
 pub fn post_upgrade() {

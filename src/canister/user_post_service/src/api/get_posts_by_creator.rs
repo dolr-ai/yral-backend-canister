@@ -1,9 +1,8 @@
 use candid::Principal;
 use ic_cdk_macros::query;
-use shared_utils::canister_specific::individual_user_template::types::post::Post;
+use shared_utils::canister_specific::user_post_service::types::storage::Post;
 
 use crate::CANISTER_DATA;
-use crate::types::storage::{PostIdList};
 
 #[query]
 fn get_posts_by_creator(creator: Principal, limit: usize, offset: usize) -> Vec<Post> {
@@ -18,7 +17,7 @@ fn get_posts_by_creator(creator: Principal, limit: usize, offset: usize) -> Vec<
             .iter()
             .skip(offset)
             .take(limit)
-            .filter_map(|id| canister_data.posts.get(id).map(|w| w.0.clone()))
+            .filter_map(|id| canister_data.posts.get(id))
             .collect()
     })
 } 
