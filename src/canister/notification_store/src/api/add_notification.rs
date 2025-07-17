@@ -7,7 +7,7 @@ use crate::{CANISTER_DATA};
 
 #[update]
 fn add_notification(user_principal: Principal, notification_type: NotificationType) -> Result<(), NotificationStoreError> {
-    if user_principal != caller() || is_caller_controller_or_global_admin().is_err() {
+    if user_principal != caller() && is_caller_controller_or_global_admin().is_err() {
         return Err(NotificationStoreError::Unauthorized);
     }
 
