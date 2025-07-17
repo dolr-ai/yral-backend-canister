@@ -9,7 +9,7 @@ use shared_utils::{
 };
 use test_utils::setup::{
     env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned,
-    test_constants::{get_mock_user_alice_principal_id, get_mock_user_charlie_principal_id},
+    test_constants::{get_global_super_admin_principal_id, get_mock_user_alice_principal_id, get_mock_user_charlie_principal_id},
 };
 use std::time::SystemTime;
 use std::collections::HashSet;
@@ -71,7 +71,7 @@ fn test_controller_can_add_post() {
     let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
 
     let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
-    let controller_principal = pic.get_controllers(&user_post_service_canister_id)[0];
+    let controller_principal = get_global_super_admin_principal_id();
     let alice_principal = get_mock_user_alice_principal_id();
     
     // Create a test post for Alice

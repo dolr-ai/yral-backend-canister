@@ -23,7 +23,7 @@ fn test_add_and_get_post() {
     let alice_principal = get_mock_user_alice_principal_id();
     
     // Create a test post
-    let mut test_post = Post {
+    let test_post = Post {
         id: 999,
         creator_principal: alice_principal,
         video_uid: "test_video_123".to_string(),
@@ -75,13 +75,13 @@ fn test_add_and_get_post() {
 fn test_get_posts_by_creator() {
     let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
 
-    let user_post_service_canister_id = service_canisters.user_post;
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
     let alice_principal = get_mock_user_alice_principal_id();
     
     // Add multiple posts
     for i in 0..5 {
-        let mut test_post = Post {
-            id: 999, // Ignored by canister
+        let test_post = Post {
+            id: 999,
             creator_principal: alice_principal,
             video_uid: format!("video_{}", i),
             description: format!("Post {}", i),
@@ -146,13 +146,13 @@ fn test_get_posts_by_creator() {
 fn test_post_id_increment() {
     let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
 
-    let user_post_service_canister_id = service_canisters.user_post;
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
     let alice_principal = get_mock_user_alice_principal_id();
     let bob_principal = get_mock_user_bob_principal_id();
     
     // Add posts from different users
-    let mut test_post = Post {
-        id: 999, // Ignored by canister
+    let test_post = Post {
+        id: 999,
         creator_principal: alice_principal,
         video_uid: "alice_video".to_string(),
         description: "Alice's post".to_string(),
@@ -178,8 +178,8 @@ fn test_post_id_increment() {
     assert_eq!(alice_post_id.unwrap(), 0);
 
     // Bob's post
-    let mut test_post = Post {
-        id: 999, // Ignored by canister
+    let test_post = Post {
+        id: 999,
         creator_principal: bob_principal,
         video_uid: "bob_video".to_string(),
         description: "Bob's post".to_string(),
@@ -209,7 +209,7 @@ fn test_post_id_increment() {
 fn test_nonexistent_post() {
     let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
 
-    let user_post_service_canister_id = service_canisters.user_post;
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
     let alice_principal = get_mock_user_alice_principal_id();
     
     // Try to get a non-existent post

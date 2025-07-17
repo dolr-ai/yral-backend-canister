@@ -1,18 +1,29 @@
-type LikedPayload = record { post_id : nat64; by_user_principal : principal };
-type NotificationData = record {
-  read : bool;
+type Post = record {
+  id : nat64;
+  is_nsfw : bool;
+  status : PostStatus;
+  share_count : nat64;
+  hashtags : vec text;
+  description : text;
   created_at : SystemTime;
-  notification_id : nat64;
-  payload : NotificationType;
+  likes : vec principal;
+  video_uid : text;
+  view_stats : PostViewStatistics;
+  creator_principal : principal;
 };
-type NotificationStoreError = variant {
-  Unauthorized;
-  CallError : record { RejectionCode; text };
+type PostStatus = variant {
+  BannedForExplicitness;
+  BannedDueToUserReporting;
+  Uploaded;
+  CheckingExplicitness;
+  ReadyToView;
+  Transcoding;
+  Deleted;
 };
-type NotificationStoreInitArgs = record { version : text };
-type NotificationType = variant {
-  Liked : LikedPayload;
-  VideoUpload : VideoUploadPayload;
+type PostViewStatistics = record {
+  total_view_count : nat64;
+  average_watch_percentage : nat8;
+  threshold_view_count : nat64;
 };
 type RejectionCode = variant {
   NoError;
@@ -23,15 +34,20 @@ type RejectionCode = variant {
   SysFatal;
   CanisterReject;
 };
-type Result = variant { Ok; Err : NotificationStoreError };
+type Result = variant { Ok : nat64; Err : UserPostServiceError };
 type SystemTime = record {
   nanos_since_epoch : nat32;
   secs_since_epoch : nat64;
 };
-type VideoUploadPayload = record { video_id : nat64 };
-service : (NotificationStoreInitArgs) -> {
-  add_notification : (NotificationType) -> (Result);
-  get_notifications : (nat64, nat64) -> (vec NotificationData) query;
+type UserPostServiceError = variant {
+  Unauthorized;
+  CallError : record { RejectionCode; text };
+  PostNotFound;
+};
+type UserPostServiceInitArgs = record { version : text };
+service : (UserPostServiceInitArgs) -> {
+  add_post : (principal, Post) -> (Result);
+  get_post : (nat64) -> (opt Post) query;
+  get_posts_by_creator : (principal, nat64, nat64) -> (vec Post) query;
   get_version : () -> (text) query;
-  mark_notification_as_read : (nat64) -> (Result);
 }
