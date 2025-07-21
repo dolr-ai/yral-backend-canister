@@ -4827,6 +4827,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rate_limits"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ciborium",
+ "futures",
+ "ic-cdk 0.15.1",
+ "ic-cdk-macros 0.16.0",
+ "ic-stable-structures",
+ "serde",
+ "serde_json",
+ "serde_json_any_key",
+ "shared_utils",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

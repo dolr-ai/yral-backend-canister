@@ -11,6 +11,7 @@ members = [
     "src/lib/shared_utils",
     "src/lib/test_utils",
     "src/canister/dedup_index",
+    "src/canister/rate_limits",
 ]
 
 [workspace.dependencies]
