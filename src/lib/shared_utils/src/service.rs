@@ -34,8 +34,8 @@ pub fn update_version_from_args<Args>(state: &'static LocalKey<RefCell<impl SetV
 where
     for<'a> Args: GetVersion + candid::CandidType + candid::Deserialize<'a>,
 {
-    let raw_args = ic_cdk::api::call::arg_data_raw();
-    let (args,): (Args,) = candid::decode_one(&raw_args).expect("Failed to decode upgrade args");
+    let (args,) =
+        ic_cdk::api::call::arg_data::<(Args,)>(ic_cdk::api::call::ArgDecoderConfig::default());
     let version = args.get_version();
 
     state.with_borrow_mut(|state| {

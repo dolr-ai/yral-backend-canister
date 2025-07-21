@@ -95,7 +95,7 @@ dfx canister install notification_store --argument "(record {
 })"
 
 dfx canister install dedup_index --argument "(record {
-  version= \"v1.0.0\"
+  version= \"v1.1.0\"
 })"
 
 scripts/canisters/local_deploy/create_pool_of_individual_canister_user_index.sh

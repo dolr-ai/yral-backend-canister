@@ -11,6 +11,21 @@ use serde::{Deserialize, Serialize};
 pub type VideoId = String;
 pub type VideoHash = String;
 
+pub const LISTING_SIZE_LIMIT_EXCLUSIVE: usize = 50;
+
+#[derive(Debug, candid::CandidType, Deserialize)]
+pub enum ListError {
+    PageOutOfRange,
+    SizeNotAllowed,
+    WillOverflow,
+}
+
+#[derive(Debug, candid::CandidType, Serialize, Deserialize)]
+pub struct ListArgs {
+    pub page: usize,
+    pub size: usize,
+}
+
 pub type Video = (VideoId, SystemTime);
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType, Default)]
 pub struct Videos(pub BTreeSet<Video>);
