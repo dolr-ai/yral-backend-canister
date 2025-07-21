@@ -1,0 +1,51 @@
+type RateLimitResult = variant {
+    Ok : text;
+    Err : text;
+};
+
+type RateLimitStatus = record {
+    principal : principal;
+    request_count : nat64;
+    window_start : nat64;
+    is_limited : bool;
+};
+
+type GlobalRateLimitConfig = record {
+    max_requests_per_window_registered : nat64;
+    max_requests_per_window_unregistered : nat64;
+    window_duration_seconds : nat64;
+};
+
+type RateLimitConfig = record {
+    max_requests_per_window : nat64;
+    window_duration_seconds : nat64;
+};
+
+service : {
+    // Check if a principal has exceeded rate limits
+    check_rate_limit : (principal) -> (RateLimitResult);
+    
+    // Increment the request count for a principal
+    increment_request_count : (principal) -> (RateLimitResult);
+    
+    // Get the current rate limit status for a principal
+    get_rate_limit_status : (principal) -> (opt RateLimitStatus) query;
+    
+    // Reset rate limits for a specific principal (admin only)
+    reset_rate_limit : (principal) -> (RateLimitResult);
+    
+    // Clear all rate limits (admin only)
+    clear_all_rate_limits : () -> (RateLimitResult);
+    
+    // Get default configuration
+    get_default_rate_limit_config : () -> (GlobalRateLimitConfig) query;
+    
+    // Update default configuration (admin only)
+    update_default_rate_limit_config : (nat64, nat64, nat64) -> (RateLimitResult);
+    
+    // Get configuration for a specific principal
+    get_principal_rate_limit_config : (principal) -> (opt RateLimitConfig) query;
+    
+    // Set custom rate limit for a specific principal (admin only)
+    set_principal_rate_limit : (principal, nat64, nat64) -> (RateLimitResult);
+}
