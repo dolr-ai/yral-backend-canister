@@ -7,8 +7,11 @@ use crate::{utils, CANISTER_DATA, RateLimitResult, RateLimitStatus};
 /// Check if a principal has exceeded rate limits
 #[update]
 pub async fn check_rate_limit(principal: Principal) -> RateLimitResult {
+    // Get user_info_canister from CANISTER_DATA
+    let user_info_canister = CANISTER_DATA.with(|data| data.borrow().user_info_canister);
+    
     // Get session type from user_info_service
-    let is_registered = match utils::get_session_type_for_principal(principal).await {
+    let is_registered = match utils::get_session_type_for_principal(user_info_canister, principal).await {
         Ok(session_type) => match session_type {
             SessionType::RegisteredSession => true,
             SessionType::AnonymousSession => false,
@@ -33,8 +36,11 @@ pub async fn check_rate_limit(principal: Principal) -> RateLimitResult {
 /// Increment the request count for a principal
 #[update]
 pub async fn increment_request_count(principal: Principal) -> RateLimitResult {
+    // Get user_info_canister from CANISTER_DATA
+    let user_info_canister = CANISTER_DATA.with(|data| data.borrow().user_info_canister);
+    
     // Get session type from user_info_service
-    let is_registered = match utils::get_session_type_for_principal(principal).await {
+    let is_registered = match utils::get_session_type_for_principal(user_info_canister, principal).await {
         Ok(session_type) => match session_type {
             SessionType::RegisteredSession => true,
             SessionType::AnonymousSession => false,

@@ -101,7 +101,8 @@ dfx canister install dedup_index --argument "(record {
 })"
 
 dfx canister install rate_limits --argument "(record {
-  version= \"v1.0.0\"
+  version= \"v1.0.0\";
+  user_info_canister= principal \"$(dfx canister id user_info_service)\"
 })"
 
 scripts/canisters/local_deploy/create_pool_of_individual_canister_user_index.sh

@@ -1,14 +1,15 @@
 use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::export_candid;
-use shared_utils::service::ServiceInitArgs;
 use std::cell::RefCell;
 
 pub mod api;
 pub mod canister_lifecycle;
 pub mod data_model;
+pub mod types;
 pub mod utils;
 
 pub use data_model::{CanisterData, GlobalRateLimitConfig, RateLimitConfig};
+pub use types::RateLimitsInitArgs;
 
 thread_local! {
     pub static CANISTER_DATA: RefCell<CanisterData> = RefCell::default();

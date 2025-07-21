@@ -21,7 +21,12 @@ type RateLimitConfig = record {
     window_duration_seconds : nat64;
 };
 
-service : {
+type RateLimitsInitArgs = record {
+    version : text;
+    user_info_canister : principal;
+};
+
+service : (RateLimitsInitArgs) -> {
     // Check if a principal has exceeded rate limits
     check_rate_limit : (principal) -> (RateLimitResult);
     

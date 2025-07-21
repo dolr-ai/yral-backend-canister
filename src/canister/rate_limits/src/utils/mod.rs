@@ -2,21 +2,18 @@ use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::api::call::CallResult;
 use shared_utils::canister_specific::individual_user_template::types::session::SessionType;
 
-// User info service canister ID
-pub const USER_INFO_SERVICE_CANISTER_ID: &str = "qhbym-qaaaa-aaaaa-aaafq-cai";
-
 #[derive(CandidType, Deserialize, Debug)]
 pub enum GetSessionTypeResult {
     Ok(SessionType),
     Err(String),
 }
 
-pub async fn get_session_type_for_principal(principal: Principal) -> Result<SessionType, String> {
-    let canister_id = Principal::from_text(USER_INFO_SERVICE_CANISTER_ID)
-        .expect("Invalid user info service canister ID");
-    
+pub async fn get_session_type_for_principal(
+    user_info_canister: Principal,
+    principal: Principal,
+) -> Result<SessionType, String> {
     let result: CallResult<(GetSessionTypeResult,)> = ic_cdk::call(
-        canister_id,
+        user_info_canister,
         "get_session_type_principal",
         (principal,),
     )

@@ -57,6 +57,7 @@ pub struct CanisterData {
     pub rate_limits: StableBTreeMap<Principal, RateLimitEntry, Memory>,
     pub version: String,
     pub default_config: GlobalRateLimitConfig,
+    pub user_info_canister: Principal,
 }
 
 impl SetVersion for CanisterData {
@@ -75,6 +76,7 @@ impl Default for CanisterData {
             rate_limits: init_rate_limits(),
             version: "v1.0.0".into(),
             default_config: GlobalRateLimitConfig::default(),
+            user_info_canister: Principal::anonymous(), // Will be set during init
         }
     }
 }
