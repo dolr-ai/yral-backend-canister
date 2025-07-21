@@ -21,8 +21,11 @@ fn test_get_version() {
     // Version should not be empty
     assert!(!version.is_empty(), "Version should not be empty");
     
+    // The version format is "v1.0.0" not "1.0.0", so we need to handle the 'v' prefix
+    let version_without_prefix = version.strip_prefix('v').unwrap_or(&version);
+    
     // Version should follow semantic versioning format (e.g., "1.0.0")
-    let parts: Vec<&str> = version.split('.').collect();
+    let parts: Vec<&str> = version_without_prefix.split('.').collect();
     assert!(parts.len() >= 2, "Version should have at least major.minor format");
     
     // Each part should be a valid number

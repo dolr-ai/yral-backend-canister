@@ -3,7 +3,7 @@ use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_ca
 use test_utils::setup::test_constants::{
     get_global_super_admin_principal_id, get_mock_user_charlie_principal_id,
 };
-use super::common::RateLimitResult;
+use super::common::{RateLimitResult, register_user_for_testing};
 
 #[test]
 fn test_check_rate_limit() {
@@ -11,6 +11,10 @@ fn test_check_rate_limit() {
     
     let rate_limits_canister = service_canisters.rate_limits_canister_id;
     let charlie_principal_id = get_mock_user_charlie_principal_id();
+    
+    // Register user in user_info_service
+    register_user_for_testing(&pocket_ic, &service_canisters, charlie_principal_id)
+        .expect("Failed to register user");
     
     // Check rate limit for a user who hasn't made any requests
     let result = update::<_, RateLimitResult>(
@@ -23,7 +27,7 @@ fn test_check_rate_limit() {
     .expect("Failed to check rate limit");
     
     match result {
-        RateLimitResult::Ok(msg) => assert!(msg.contains("Rate limit check passed")),
+        RateLimitResult::Ok(msg) => assert!(msg.contains("Within rate limit")),
         RateLimitResult::Err(e) => panic!("Rate limit check failed: {}", e),
     }
 }
@@ -36,13 +40,17 @@ fn test_check_rate_limit_exceeds_limit() {
     let charlie_principal_id = get_mock_user_charlie_principal_id();
     let global_admin = get_global_super_admin_principal_id();
     
+    // Register user in user_info_service
+    register_user_for_testing(&pocket_ic, &service_canisters, charlie_principal_id)
+        .expect("Failed to register user");
+    
     // First, set a very low rate limit for testing
     let _ = update::<_, RateLimitResult>(
         &pocket_ic,
         rate_limits_canister,
         global_admin,
         "set_principal_rate_limit",
-        (charlie_principal_id, 60u64, 2u64), // 2 requests per 60 seconds
+        (charlie_principal_id, 2u64, 60u64), // 2 requests per 60 seconds
     )
     .expect("Failed to set rate limit");
     
@@ -69,7 +77,7 @@ fn test_check_rate_limit_exceeds_limit() {
     .expect("Failed to check rate limit");
     
     match result {
-        RateLimitResult::Ok(_) => panic!("Expected rate limit to be exceeded"),
+        RateLimitResult::Ok(msg) => panic!("Expected rate limit to be exceeded, got: {}", msg),
         RateLimitResult::Err(msg) => assert!(msg.contains("Rate limit exceeded")),
     }
 }

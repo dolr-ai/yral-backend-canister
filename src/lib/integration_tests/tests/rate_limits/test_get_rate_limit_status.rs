@@ -9,6 +9,8 @@ fn test_get_rate_limit_status() {
 
     let rate_limits_canister = service_canisters.rate_limits_canister_id;
     let charlie_principal_id = get_mock_user_charlie_principal_id();
+    
+    // Note: We don't register the user initially to test the 'no status' case
 
     // Initially, there should be no status for the principal
     let status = query::<_, Option<RateLimitStatus>>(

@@ -31,7 +31,7 @@ fn test_get_principal_rate_limit_config() {
         rate_limits_canister,
         global_admin,
         "set_principal_rate_limit",
-        (charlie_principal_id, 120u64, 100u64),
+        (charlie_principal_id, 100u64, 120u64), // 100 requests per 120 seconds
     )
     .expect("Failed to set principal rate limit");
     

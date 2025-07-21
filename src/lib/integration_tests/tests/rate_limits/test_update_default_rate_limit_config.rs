@@ -28,12 +28,12 @@ fn test_update_default_rate_limit_config() {
         rate_limits_canister,
         global_admin,
         "update_default_rate_limit_config",
-        (600u64, 1000u64, 500u64), // window: 600s, registered: 1000, unregistered: 500
+        (1000u64, 500u64, 600u64), // registered: 1000, unregistered: 500, window: 600s
     )
     .expect("Failed to update default rate limit config");
     
     match result {
-        RateLimitResult::Ok(msg) => assert!(msg.contains("Default rate limit config updated")),
+        RateLimitResult::Ok(msg) => assert!(msg.contains("Default configuration updated"), "Unexpected message: {}", msg),
         RateLimitResult::Err(e) => panic!("Failed to update config: {}", e),
     }
     
@@ -88,7 +88,7 @@ fn test_update_default_rate_limit_config_invalid_params() {
         rate_limits_canister,
         global_admin,
         "update_default_rate_limit_config",
-        (0u64, 1000u64, 500u64),
+        (1000u64, 500u64, 0u64), // 0 window duration
     )
     .expect("Failed to call update_default_rate_limit_config");
     
@@ -98,12 +98,12 @@ fn test_update_default_rate_limit_config_invalid_params() {
     }
     
     // Try to set invalid config (registered limit lower than unregistered)
-    let result = update::<_, RateLimitResult>(
+    let _result = update::<_, RateLimitResult>(
         &pocket_ic,
         rate_limits_canister,
         global_admin,
         "update_default_rate_limit_config",
-        (600u64, 100u64, 200u64), // registered < unregistered
+        (100u64, 200u64, 600u64), // registered < unregistered
     )
     .expect("Failed to call update_default_rate_limit_config");
     

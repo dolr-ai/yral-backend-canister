@@ -3,7 +3,7 @@ use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_ca
 use test_utils::setup::test_constants::{
     get_global_super_admin_principal_id, get_mock_user_charlie_principal_id,
 };
-use super::common::RateLimitResult;
+use super::common::{RateLimitResult, register_user_for_testing};
 
 #[test]
 fn test_clear_all_rate_limits() {
@@ -12,6 +12,10 @@ fn test_clear_all_rate_limits() {
     let rate_limits_canister = service_canisters.rate_limits_canister_id;
     let charlie_principal_id = get_mock_user_charlie_principal_id();
     let global_admin = get_global_super_admin_principal_id();
+    
+    // Register user in user_info_service
+    register_user_for_testing(&pocket_ic, &service_canisters, charlie_principal_id)
+        .expect("Failed to register user");
     
     // First, increment request count for a user
     let _ = update::<_, RateLimitResult>(
@@ -34,7 +38,7 @@ fn test_clear_all_rate_limits() {
     .expect("Failed to clear all rate limits");
     
     match result {
-        RateLimitResult::Ok(msg) => assert!(msg.contains("All rate limits cleared")),
+        RateLimitResult::Ok(msg) => assert!(msg.contains("All rate limits cleared"), "Unexpected message: {}", msg),
         RateLimitResult::Err(e) => panic!("Failed to clear rate limits: {}", e),
     }
 }
