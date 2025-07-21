@@ -46,7 +46,7 @@ dfx canister install notification_store --mode upgrade --argument "(record {
 })"
 
 dfx canister install dedup_index --mode upgrade --argument "(record {
-  version= \"v1.0.0\"
+  version= \"v1.1.0\"
 })"
 
 scripts/canisters/local_deploy/upgrade_subnet_orchestrator.sh
