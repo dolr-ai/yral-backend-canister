@@ -7,7 +7,12 @@ use pocket_ic::{
     management_canister::CanisterSettings, PocketIc, PocketIcBuilder, UserError, WasmResult,
 };
 use shared_utils::{
-    canister_specific::{notification_store::types::args::NotificationStoreInitArgs, platform_orchestrator::types::args::PlatformOrchestratorInitArgs, user_info_service::{self, args::UserInfoServiceInitArgs}, user_post_service::types::args::UserPostServiceInitArgs},
+    canister_specific::{
+        notification_store::types::args::NotificationStoreInitArgs,
+        platform_orchestrator::types::args::PlatformOrchestratorInitArgs,
+        user_info_service::{self, args::UserInfoServiceInitArgs},
+        user_post_service::types::args::UserPostServiceInitArgs,
+    },
     common::types::{
         known_principal::{KnownPrincipalMap, KnownPrincipalType},
         wasm::WasmType,
@@ -118,19 +123,19 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         Some(super_admin),
     );
 
-        pocket_ic.install_canister(
-            notification_store_canister,
-            notification_store_canister_wasm.to_vec(),
-            candid::encode_one(notification_store_canister_init_args).unwrap(),
-            Some(super_admin),
-        );
+    pocket_ic.install_canister(
+        notification_store_canister,
+        notification_store_canister_wasm.to_vec(),
+        candid::encode_one(notification_store_canister_init_args).unwrap(),
+        Some(super_admin),
+    );
 
-        pocket_ic.install_canister(
-            user_post_service_canister,
-            user_post_service_canister_wasm.to_vec(),
-            candid::encode_one(user_post_service_canister_init_args).unwrap(),
-            Some(super_admin),
-        );
+    pocket_ic.install_canister(
+        user_post_service_canister,
+        user_post_service_canister_wasm.to_vec(),
+        candid::encode_one(user_post_service_canister_init_args).unwrap(),
+        Some(super_admin),
+    );
 
     let service_canisters = ServiceCanisters {
         user_info_service_canister_id: user_servcie_canister,

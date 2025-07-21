@@ -3,17 +3,14 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-use candid::{Principal};
+use candid::Principal;
 use std::{collections::HashSet, time::SystemTime};
 
-use crate::{
-    common::types::top_posts::post_score_index_item::PostStatus,
-};
-
+use crate::common::types::top_posts::post_score_index_item::PostStatus;
 
 #[derive(CandidType, Clone, Deserialize, Debug, Serialize)]
 pub struct Post {
-    pub id: u64,
+    pub id: String,
     pub creator_principal: Principal,
     pub video_uid: String,
     pub description: String,
@@ -23,7 +20,6 @@ pub struct Post {
     pub likes: HashSet<Principal>,
     pub share_count: u64,
     pub view_stats: PostViewStatistics,
-    pub is_nsfw: bool
 }
 
 #[derive(Deserialize, CandidType)]
@@ -134,4 +130,4 @@ impl Storable for PostIdList {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         ciborium::de::from_reader(bytes.as_ref()).unwrap()
     }
-} 
+}

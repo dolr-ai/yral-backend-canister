@@ -1,6 +1,5 @@
 type Post = record {
-  id : nat64;
-  is_nsfw : bool;
+  id : text;
   status : PostStatus;
   share_count : nat64;
   hashtags : vec text;
@@ -11,6 +10,13 @@ type Post = record {
   view_stats : PostViewStatistics;
   creator_principal : principal;
 };
+type PostDetailsFromFrontend = record {
+  id : text;
+  hashtags : vec text;
+  description : text;
+  video_uid : text;
+  creator_principal : principal;
+};
 type PostStatus = variant {
   BannedForExplicitness;
   BannedDueToUserReporting;
@@ -19,6 +25,13 @@ type PostStatus = variant {
   ReadyToView;
   Transcoding;
   Deleted;
+};
+type PostViewDetailsFromFrontend = variant {
+  WatchedMultipleTimes : record {
+    percentage_watched : nat8;
+    watch_count : nat8;
+  };
+  WatchedPartially : record { percentage_watched : nat8 };
 };
 type PostViewStatistics = record {
   total_view_count : nat64;
@@ -34,20 +47,34 @@ type RejectionCode = variant {
   SysFatal;
   CanisterReject;
 };
-type Result = variant { Ok : nat64; Err : UserPostServiceError };
+type Result = variant { Ok; Err : UserPostServiceError };
+type Result_1 = variant { Ok : Post; Err : UserPostServiceError };
+type Result_2 = variant { Ok : nat64; Err : UserPostServiceError };
+type Result_3 = variant { Ok : bool; Err : UserPostServiceError };
 type SystemTime = record {
   nanos_since_epoch : nat32;
   secs_since_epoch : nat64;
 };
 type UserPostServiceError = variant {
+  DuplicatePostId;
   Unauthorized;
   CallError : record { RejectionCode; text };
   PostNotFound;
 };
 type UserPostServiceInitArgs = record { version : text };
 service : (UserPostServiceInitArgs) -> {
-  add_post : (principal, Post) -> (Result);
-  get_post : (nat64) -> (opt Post) query;
-  get_posts_by_creator : (principal, nat64, nat64) -> (vec Post) query;
+  add_post : (PostDetailsFromFrontend) -> (Result);
+  delete_post : (text) -> (Result);
+  get_individual_post_details_by_id : (text) -> (Result_1) query;
+  get_posts_of_this_user_profile_with_pagination_cursor : (
+      principal,
+      nat64,
+      nat64,
+    ) -> (vec Post) query;
   get_version : () -> (text) query;
+  update_post_add_view_details : (text, PostViewDetailsFromFrontend) -> (
+      Result,
+    );
+  update_post_increment_share_count : (text) -> (Result_2);
+  update_post_toggle_like_status_by_caller : (text) -> (Result_3);
 }

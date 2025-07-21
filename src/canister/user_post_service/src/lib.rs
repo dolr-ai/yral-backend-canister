@@ -1,6 +1,6 @@
+pub mod api;
 pub mod canister_lifecycle;
 pub mod data_model;
-pub mod api;
 
 use std::cell::RefCell;
 
@@ -8,8 +8,12 @@ use std::cell::RefCell;
 use candid::Principal;
 
 // Types exposed in public Candid interface
-use shared_utils::canister_specific::user_post_service::types::{args::UserPostServiceInitArgs, error::UserPostServiceError};
+use shared_utils::canister_specific::user_post_service::types::args::PostDetailsFromFrontend;
 use shared_utils::canister_specific::user_post_service::types::storage::Post;
+use shared_utils::canister_specific::user_post_service::types::storage::PostViewDetailsFromFrontend;
+use shared_utils::canister_specific::user_post_service::types::{
+    args::UserPostServiceInitArgs, error::UserPostServiceError,
+};
 
 use crate::data_model::CanisterData;
 
@@ -21,4 +25,3 @@ thread_local! {
 // -------- Candid export --------
 use ic_cdk_macros::export_candid;
 export_candid!();
-
