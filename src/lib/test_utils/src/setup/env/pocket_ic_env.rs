@@ -51,6 +51,7 @@ pub struct ServiceCanisters {
     pub user_info_service_canister_id: Principal,
     pub notification_store_canister_id: Principal,
     pub dedup_index_canister_id: Principal,
+    pub rate_limits_canister_id: Principal,
 }
 
 pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, ServiceCanisters) {
@@ -86,9 +87,18 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         }),
     );
 
+    let rate_limits_canister = pocket_ic.create_canister_with_settings(
+        Some(super_admin),
+        Some(CanisterSettings {
+            controllers: Some(vec![super_admin]),
+            ..Default::default()
+        }),
+    );
+
     pocket_ic.add_cycles(user_servcie_canister, 10_000_000_000_000_000);
     pocket_ic.add_cycles(notification_store_canister, 10_000_000_000_000_000);
     pocket_ic.add_cycles(dedup_index_canister, 10_000_000_000_000_000);
+    pocket_ic.add_cycles(rate_limits_canister, 10_000_000_000_000_000);
 
     let user_info_service_canister_wasm = include_bytes!(
         "../../../../../../target/wasm32-unknown-unknown/release/user_info_service.wasm.gz"
@@ -99,6 +109,9 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
     );
     let dedup_index_canister_wasm = include_bytes!(
         "../../../../../../target/wasm32-unknown-unknown/release/dedup_index.wasm.gz"
+    );
+    let rate_limits_canister_wasm = include_bytes!(
+        "../../../../../../target/wasm32-unknown-unknown/release/rate_limits.wasm.gz"
     );
 
     let user_info_service_canister_init_args = UserInfoServiceInitArgs {
@@ -131,11 +144,30 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         .unwrap(),
         Some(super_admin),
     );
+    
+    pocket_ic.install_canister(
+        rate_limits_canister,
+        rate_limits_canister_wasm.to_vec(),
+        {
+            #[derive(candid::CandidType)]
+            struct RateLimitsInitArgs {
+                version: String,
+                user_info_canister: Principal,
+            }
+            candid::encode_one(RateLimitsInitArgs {
+                version: "v1.0.0".into(),
+                user_info_canister: user_servcie_canister,
+            })
+        }
+        .unwrap(),
+        Some(super_admin),
+    );
 
     let service_canisters = ServiceCanisters {
         user_info_service_canister_id: user_servcie_canister,
         notification_store_canister_id: notification_store_canister,
         dedup_index_canister_id: dedup_index_canister,
+        rate_limits_canister_id: rate_limits_canister,
     };
 
     (pocket_ic, service_canisters)
@@ -177,7 +209,7 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
         "../../../../../../target/wasm32-unknown-unknown/release/platform_orchestrator.wasm.gz"
     );
     let individual_user_template = include_bytes!(
-        "../../../../../../target/wasm32-unknown-unknown/release/individual_user_template.wasm.gz"
+        "../../../../../../target/wasm32-unknown-unknown/release/libindividual_user_template.wasm.gz"
     );
     let subnet_orchestrator_canister_wasm = include_bytes!(
         "../../../../../../target/wasm32-unknown-unknown/release/user_index.wasm.gz"

@@ -27,8 +27,13 @@ ic-sns-governance = { workspace = true }
 [dev-dependencies]
 ic-test-state-machine-client = { workspace = true }
 test_utils = { workspace = true }
+rate_limits = { path = "../../canister/rate_limits" }
 
 
 [features]
 feed_filter_upgrade_test = []
 bet_details_heap_to_stable_mem_upgrade = []
+
+[[test]]
+name = "rate_limits"
+path = "tests/rate_limits/main.rs"
