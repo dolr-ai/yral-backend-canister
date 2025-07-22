@@ -3763,7 +3763,6 @@ dependencies = [
  "ic-test-state-machine-client",
  "icp-ledger",
  "pocket-ic",
- "rate_limits",
  "serde",
  "serde_bytes",
  "sha2",
@@ -5817,7 +5816,6 @@ dependencies = [
  "ic-ledger-types",
  "ic-test-state-machine-client",
  "pocket-ic",
- "rate_limits",
  "shared_utils",
 ]
 

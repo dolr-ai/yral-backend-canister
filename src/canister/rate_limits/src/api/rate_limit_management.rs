@@ -38,12 +38,6 @@ pub fn set_principal_rate_limit(
     max_requests_per_window: u64,
     window_duration_seconds: u64,
 ) -> RateLimitResult {
-    if max_requests_per_window == 0 || window_duration_seconds == 0 {
-        return RateLimitResult::Err(
-            "Invalid configuration: values must be greater than 0".to_string(),
-        );
-    }
-
     CANISTER_DATA.with(|data| {
         let mut data = data.borrow_mut();
         let config = RateLimitConfig {
@@ -66,15 +60,6 @@ pub fn set_property_rate_limit_config(
     max_requests_per_window_unregistered: u64,
     window_duration_seconds: u64,
 ) -> RateLimitResult {
-    if max_requests_per_window_registered == 0
-        || max_requests_per_window_unregistered == 0
-        || window_duration_seconds == 0
-    {
-        return RateLimitResult::Err(
-            "Invalid configuration: values must be greater than 0".to_string(),
-        );
-    }
-
     CANISTER_DATA.with(|data| {
         let mut data = data.borrow_mut();
         let config = PropertyRateLimitConfig {

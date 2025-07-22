@@ -144,7 +144,7 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         .unwrap(),
         Some(super_admin),
     );
-    
+
     pocket_ic.install_canister(
         rate_limits_canister,
         rate_limits_canister_wasm.to_vec(),
@@ -209,7 +209,7 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
         "../../../../../../target/wasm32-unknown-unknown/release/platform_orchestrator.wasm.gz"
     );
     let individual_user_template = include_bytes!(
-        "../../../../../../target/wasm32-unknown-unknown/release/libindividual_user_template.wasm.gz"
+        "../../../../../../target/wasm32-unknown-unknown/release/individual_user_template.wasm.gz"
     );
     let subnet_orchestrator_canister_wasm = include_bytes!(
         "../../../../../../target/wasm32-unknown-unknown/release/user_index.wasm.gz"

@@ -69,9 +69,11 @@ pub struct RateLimitStatus {
 impl Default for GlobalRateLimitConfig {
     fn default() -> Self {
         GlobalRateLimitConfig {
-            max_requests_per_window_registered: 5,
-            max_requests_per_window_unregistered: 1,
-            window_duration_seconds: 86400,
+            max_requests_per_window_registered:
+                super::consts::DEFAULT_MAX_REQUESTS_PER_WINDOW_REGISTERED,
+            max_requests_per_window_unregistered:
+                super::consts::DEFAULT_MAX_REQUESTS_PER_WINDOW_UNREGISTERED,
+            window_duration_seconds: super::consts::DEFAULT_WINDOW_DURATION_SECONDS,
         }
     }
 }
