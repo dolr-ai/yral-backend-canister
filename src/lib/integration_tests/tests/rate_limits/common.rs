@@ -1,9 +1,9 @@
 use candid::{CandidType, Deserialize, Principal};
 use pocket_ic::PocketIc;
-use test_utils::canister_calls::{update, query};
+use shared_utils::canister_specific::individual_user_template::types::session::SessionType;
+use test_utils::canister_calls::{query, update};
 use test_utils::setup::env::pocket_ic_env::ServiceCanisters;
 use test_utils::setup::test_constants::get_global_super_admin_principal_id;
-use shared_utils::canister_specific::individual_user_template::types::session::SessionType;
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum RateLimitResult {
@@ -47,7 +47,7 @@ pub fn register_user_for_testing(
     user_principal: Principal,
 ) -> Result<(), String> {
     let global_admin = get_global_super_admin_principal_id();
-    
+
     update::<_, Result<(), String>>(
         pocket_ic,
         service_canisters.user_info_service_canister_id,
@@ -62,25 +62,4 @@ pub fn register_user_for_testing(
 pub enum GetSessionTypeResult {
     Ok(SessionType),
     Err(String),
-}
-
-/// Helper function to get the session type for a principal
-pub fn get_session_type_for_principal(
-    pocket_ic: &PocketIc,
-    service_canisters: &ServiceCanisters,
-    user_principal: Principal,
-) -> Result<SessionType, String> {
-    let result = query::<_, GetSessionTypeResult>(
-        pocket_ic,
-        service_canisters.user_info_service_canister_id,
-        user_principal,
-        "get_session_type_principal",
-        (user_principal,),
-    )
-    .expect("Failed to call get_session_type_principal");
-    
-    match result {
-        GetSessionTypeResult::Ok(session_type) => Ok(session_type),
-        GetSessionTypeResult::Err(e) => Err(e),
-    }
 }

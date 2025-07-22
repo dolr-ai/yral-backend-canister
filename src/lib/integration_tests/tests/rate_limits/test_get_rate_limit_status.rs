@@ -1,5 +1,5 @@
 use super::common::{RateLimitResult, RateLimitStatus};
-use test_utils::canister_calls::{query, update};
+use test_utils::canister_calls::update;
 use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned;
 use test_utils::setup::test_constants::get_mock_user_charlie_principal_id;
 
@@ -13,7 +13,7 @@ fn test_get_rate_limit_status() {
     // Note: We don't register the user initially to test the 'no status' case
 
     // Initially, there should be no status for the principal
-    let status = query::<_, Option<RateLimitStatus>>(
+    let status = update::<_, Option<RateLimitStatus>>(
         &pocket_ic,
         rate_limits_canister,
         charlie_principal_id,
@@ -30,12 +30,12 @@ fn test_get_rate_limit_status() {
         rate_limits_canister,
         charlie_principal_id,
         "increment_request_count",
-        (charlie_principal_id, "default".to_string()),
+        (charlie_principal_id, "default".to_string(), false),
     )
     .expect("Failed to increment request count");
 
     // Now there should be a status
-    let status = query::<_, Option<RateLimitStatus>>(
+    let status = update::<_, Option<RateLimitStatus>>(
         &pocket_ic,
         rate_limits_canister,
         charlie_principal_id,

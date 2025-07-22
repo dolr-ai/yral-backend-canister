@@ -17,7 +17,6 @@ pub struct CanisterData {
     pub property_configs: StableBTreeMap<String, PropertyRateLimitConfig, Memory>,
     pub version: String,
     pub default_config: GlobalRateLimitConfig,
-    pub user_info_canister: Principal,
 }
 
 impl SetVersion for CanisterData {
@@ -41,7 +40,6 @@ impl Default for CanisterData {
             property_configs: init_property_configs(),
             version: "v1.0.0".into(),
             default_config: GlobalRateLimitConfig::default(),
-            user_info_canister: Principal::anonymous(), // Will be set during init
         }
     }
 }

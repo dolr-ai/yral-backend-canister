@@ -1,4 +1,4 @@
-use test_utils::canister_calls::{query, update};
+use test_utils::canister_calls::update;
 use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned;
 use test_utils::setup::test_constants::{
     get_global_super_admin_principal_id, get_mock_user_charlie_principal_id,
@@ -39,7 +39,7 @@ fn test_reset_rate_limit() {
             rate_limits_canister,
             charlie_principal_id,
             "increment_request_count",
-            (charlie_principal_id, "default".to_string()),
+            (charlie_principal_id, "default".to_string(), false),
         )
         .expect("Failed to increment request count");
         
@@ -50,12 +50,12 @@ fn test_reset_rate_limit() {
     }
     
     // Verify the count is 3
-    let status = query::<_, Option<RateLimitStatus>>(
+    let status = update::<_, Option<RateLimitStatus>>(
         &pocket_ic,
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "default".to_string(), true),
+        (charlie_principal_id, "default".to_string(), false),
     )
     .expect("Failed to get rate limit status")
     .expect("Expected status after increments");
@@ -78,12 +78,12 @@ fn test_reset_rate_limit() {
     }
     
     // Verify the rate limit is reset
-    let status = query::<_, Option<RateLimitStatus>>(
+    let status = update::<_, Option<RateLimitStatus>>(
         &pocket_ic,
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "default".to_string(), true),
+        (charlie_principal_id, "default".to_string(), false),
     );
     
     // After reset, the status might be None or have count 0

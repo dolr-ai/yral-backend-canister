@@ -7,7 +7,6 @@ use std::borrow::Cow;
 #[derive(CandidType, Deserialize)]
 pub struct RateLimitsInitArgs {
     pub version: String,
-    pub user_info_canister: Principal,
 }
 
 impl GetVersion for RateLimitsInitArgs {

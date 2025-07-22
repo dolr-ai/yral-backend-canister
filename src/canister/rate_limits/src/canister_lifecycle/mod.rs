@@ -2,7 +2,7 @@ use ic_cdk::{init, post_upgrade, pre_upgrade};
 use ic_cdk_macros::query;
 use shared_utils::service::{StableState, update_version_from_args};
 
-use crate::{CANISTER_DATA, data_model::memory, RateLimitsInitArgs};
+use crate::{CANISTER_DATA, RateLimitsInitArgs, data_model::memory};
 
 #[query]
 fn get_version() -> String {
@@ -14,13 +14,13 @@ fn init(args: RateLimitsInitArgs) {
     CANISTER_DATA.with(|data| {
         let mut data = data.borrow_mut();
         data.version = args.version;
-        data.user_info_canister = args.user_info_canister;
     });
 }
 
 #[pre_upgrade]
 fn pre_upgrade() {
-    StableState::save(&CANISTER_DATA, &mut memory::get_upgrades_memory()).expect("state to be saved");
+    StableState::save(&CANISTER_DATA, &mut memory::get_upgrades_memory())
+        .expect("state to be saved");
 }
 
 #[post_upgrade]

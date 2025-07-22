@@ -23,7 +23,7 @@ fn test_clear_all_rate_limits() {
         rate_limits_canister,
         charlie_principal_id,
         "increment_request_count",
-        (charlie_principal_id, "default".to_string()),
+        (charlie_principal_id, "default".to_string(), false),
     )
     .expect("Failed to increment request count");
     

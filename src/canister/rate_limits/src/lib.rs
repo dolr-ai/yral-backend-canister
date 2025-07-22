@@ -6,7 +6,6 @@ pub mod api;
 pub mod canister_lifecycle;
 pub mod data_model;
 pub mod types;
-pub mod utils;
 
 pub use data_model::CanisterData;
 pub use shared_utils::canister_specific::rate_limits::{
