@@ -5524,6 +5524,7 @@ dependencies = [
  "rmp-serde",
  "serde",
  "serde_bytes",
+ "serde_json",
  "serde_json_any_key",
  "test_utils",
  "thiserror 2.0.12",

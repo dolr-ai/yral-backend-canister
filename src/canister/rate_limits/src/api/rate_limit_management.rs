@@ -1,8 +1,11 @@
 use candid::Principal;
 use ic_cdk_macros::{query, update};
-use shared_utils::common::utils::permissions::is_caller_controller_or_global_admin;
+use shared_utils::{
+    canister_specific::rate_limits::PropertyRateLimitConfig,
+    common::utils::permissions::is_caller_controller_or_global_admin,
+};
 
-use crate::{CANISTER_DATA, RateLimitConfig, RateLimitResult, SharedPropertyRateLimitConfig};
+use crate::{CANISTER_DATA, RateLimitConfig, RateLimitResult};
 
 /// Reset rate limit for a specific principal on a specific property (admin only)
 #[update(guard = "is_caller_controller_or_global_admin")]
@@ -74,7 +77,7 @@ pub fn set_property_rate_limit_config(
 
     CANISTER_DATA.with(|data| {
         let mut data = data.borrow_mut();
-        let config = SharedPropertyRateLimitConfig {
+        let config = PropertyRateLimitConfig {
             property: property.clone(),
             max_requests_per_window_registered,
             max_requests_per_window_unregistered,
@@ -113,12 +116,12 @@ pub fn reset_all_principal_rate_limits(principal: Principal) -> RateLimitResult 
 
 /// Get all property rate limit configurations
 #[query]
-pub fn get_property_rate_limit_configs() -> Vec<SharedPropertyRateLimitConfig> {
+pub fn get_property_rate_limit_configs() -> Vec<PropertyRateLimitConfig> {
     CANISTER_DATA.with(|data| data.borrow().get_all_property_configs())
 }
 
 /// Get property rate limit configuration for a specific property
 #[query]
-pub fn get_property_rate_limit_config(property: String) -> Option<SharedPropertyRateLimitConfig> {
+pub fn get_property_rate_limit_config(property: String) -> Option<PropertyRateLimitConfig> {
     CANISTER_DATA.with(|data| data.borrow().get_property_config(&property))
 }

@@ -8,11 +8,10 @@ pub mod data_model;
 pub mod types;
 pub mod utils;
 
-pub use data_model::{CanisterData, GlobalRateLimitConfig, PropertyRateLimitConfig};
+pub use data_model::CanisterData;
 pub use shared_utils::canister_specific::rate_limits::{
-    RateLimitConfig, RateLimitResult, RateLimitStatus, RateLimitsInitArgs,
-    GlobalRateLimitConfig as SharedGlobalRateLimitConfig,
-    PropertyRateLimitConfig as SharedPropertyRateLimitConfig,
+    GlobalRateLimitConfig, PropertyRateLimitConfig, RateLimitConfig, RateLimitResult,
+    RateLimitStatus, RateLimitsInitArgs,
 };
 
 thread_local! {

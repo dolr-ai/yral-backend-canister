@@ -1,6 +1,7 @@
-use candid::{CandidType, Deserialize, Principal};
-use serde::Serialize;
 use crate::service::GetVersion;
+use candid::{CandidType, Deserialize, Principal};
+use ic_stable_structures::{storable::Bound, Storable};
+use serde::Serialize;
 use std::borrow::Cow;
 
 #[derive(CandidType, Deserialize)]
@@ -36,6 +37,21 @@ pub struct PropertyRateLimitConfig {
     pub window_duration_seconds: u64,
 }
 
+impl Storable for PropertyRateLimitConfig {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        let bytes = serde_json::to_vec(&self).expect("Failed to serialize PropertyRateLimitConfig");
+        Cow::Owned(bytes)
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        let inner: PropertyRateLimitConfig =
+            serde_json::from_slice(&bytes).expect("Failed to deserialize PropertyRateLimitConfig");
+        inner
+    }
+
+    const BOUND: Bound = Bound::Unbounded;
+}
+
 #[derive(CandidType, Deserialize, Clone)]
 pub enum RateLimitResult {
     Ok(String),
@@ -48,4 +64,14 @@ pub struct RateLimitStatus {
     pub request_count: u64,
     pub window_start: u64,
     pub is_limited: bool,
+}
+
+impl Default for GlobalRateLimitConfig {
+    fn default() -> Self {
+        GlobalRateLimitConfig {
+            max_requests_per_window_registered: 5,
+            max_requests_per_window_unregistered: 1,
+            window_duration_seconds: 86400,
+        }
+    }
 }

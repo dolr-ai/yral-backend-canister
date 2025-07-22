@@ -2,60 +2,13 @@ pub mod memory;
 use candid::Principal;
 use ic_stable_structures::Storable;
 use ic_stable_structures::{StableBTreeMap, storable::Bound};
-use memory::{Memory, get_rate_limits_memory, get_property_configs_memory};
+use memory::{Memory, get_property_configs_memory, get_rate_limits_memory};
 use serde::{Deserialize, Serialize};
 use shared_utils::canister_specific::rate_limits::{
-    GlobalRateLimitConfig as SharedGlobalRateLimitConfig, 
-    PropertyRateLimitConfig as SharedPropertyRateLimitConfig, 
-    RateLimitConfig, RateLimitStatus,
+    GlobalRateLimitConfig, PropertyRateLimitConfig, RateLimitConfig, RateLimitStatus,
 };
 use shared_utils::service::SetVersion;
 use std::borrow::Cow;
-
-// Wrapper types to implement local traits
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct GlobalRateLimitConfig(pub SharedGlobalRateLimitConfig);
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct PropertyRateLimitConfig(pub SharedPropertyRateLimitConfig);
-
-impl Default for GlobalRateLimitConfig {
-    fn default() -> Self {
-        GlobalRateLimitConfig(SharedGlobalRateLimitConfig {
-            max_requests_per_window_registered: 5,
-            max_requests_per_window_unregistered: 1,
-            window_duration_seconds: 86400,
-        })
-    }
-}
-
-impl std::ops::Deref for GlobalRateLimitConfig {
-    type Target = SharedGlobalRateLimitConfig;
-    
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::DerefMut for GlobalRateLimitConfig {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl std::ops::Deref for PropertyRateLimitConfig {
-    type Target = SharedPropertyRateLimitConfig;
-    
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::DerefMut for PropertyRateLimitConfig {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct RateLimitKey {
@@ -65,9 +18,12 @@ pub struct RateLimitKey {
 
 impl RateLimitKey {
     pub fn new(principal: Principal, property: String) -> Self {
-        Self { principal, property }
+        Self {
+            principal,
+            property,
+        }
     }
-    
+
     pub fn default_property(principal: Principal) -> Self {
         Self {
             principal,
@@ -88,22 +44,6 @@ impl Storable for RateLimitKey {
 
     const BOUND: Bound = Bound::Unbounded;
 }
-
-impl Storable for PropertyRateLimitConfig {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        let bytes = serde_json::to_vec(&self.0).expect("Failed to serialize PropertyRateLimitConfig");
-        Cow::Owned(bytes)
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        let inner: SharedPropertyRateLimitConfig = serde_json::from_slice(&bytes).expect("Failed to deserialize PropertyRateLimitConfig");
-        PropertyRateLimitConfig(inner)
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
-}
-
-
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RateLimitEntry {
@@ -163,27 +103,47 @@ impl Default for CanisterData {
 }
 
 impl CanisterData {
-    pub fn is_rate_limited_with_property(&self, principal: &Principal, property: &str, is_registered: bool) -> bool {
+    pub fn is_rate_limited_with_property(
+        &self,
+        principal: &Principal,
+        property: &str,
+        is_registered: bool,
+    ) -> bool {
         let current_time = ic_cdk::api::time() / 1_000_000_000; // Convert nanoseconds to seconds
         let key = RateLimitKey::new(*principal, property.to_string());
 
         if let Some(entry) = self.rate_limits.get(&key) {
             // Use custom config if available, otherwise check property config, then default
             let (max_requests, window_duration) = if let Some(config) = &entry.config {
-                (config.max_requests_per_window, config.window_duration_seconds)
+                (
+                    config.max_requests_per_window,
+                    config.window_duration_seconds,
+                )
             } else if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
                 // Use property-specific config based on registration status
                 if is_registered {
-                    (prop_config.max_requests_per_window_registered, prop_config.window_duration_seconds)
+                    (
+                        prop_config.max_requests_per_window_registered,
+                        prop_config.window_duration_seconds,
+                    )
                 } else {
-                    (prop_config.max_requests_per_window_unregistered, prop_config.window_duration_seconds)
+                    (
+                        prop_config.max_requests_per_window_unregistered,
+                        prop_config.window_duration_seconds,
+                    )
                 }
             } else {
                 // Use default config based on registration status
                 if is_registered {
-                    (self.default_config.max_requests_per_window_registered, self.default_config.window_duration_seconds)
+                    (
+                        self.default_config.max_requests_per_window_registered,
+                        self.default_config.window_duration_seconds,
+                    )
                 } else {
-                    (self.default_config.max_requests_per_window_unregistered, self.default_config.window_duration_seconds)
+                    (
+                        self.default_config.max_requests_per_window_unregistered,
+                        self.default_config.window_duration_seconds,
+                    )
                 }
             };
 
@@ -231,7 +191,11 @@ impl CanisterData {
         self.rate_limits.insert(key, entry);
     }
 
-    pub fn get_rate_limit_status_with_property(&self, principal: &Principal, property: &str) -> Option<RateLimitStatus> {
+    pub fn get_rate_limit_status_with_property(
+        &self,
+        principal: &Principal,
+        property: &str,
+    ) -> Option<RateLimitStatus> {
         let key = RateLimitKey::new(*principal, property.to_string());
         self.rate_limits.get(&key).map(|entry| {
             // Get max requests from custom config, property config, or default
@@ -244,7 +208,7 @@ impl CanisterData {
                 // For status reporting, we'll use the registered limit as a default
                 self.default_config.max_requests_per_window_registered
             };
-            
+
             let is_limited = entry.request_count >= max_requests;
             RateLimitStatus {
                 principal: *principal,
@@ -262,12 +226,13 @@ impl CanisterData {
 
     pub fn reset_all_principal_rate_limits(&mut self, principal: &Principal) {
         // Remove all entries for a principal across all properties
-        let keys_to_remove: Vec<RateLimitKey> = self.rate_limits
+        let keys_to_remove: Vec<RateLimitKey> = self
+            .rate_limits
             .iter()
             .filter(|(k, _)| k.principal == *principal)
             .map(|(k, _)| k)
             .collect();
-        
+
         for key in keys_to_remove {
             self.rate_limits.remove(&key);
         }
@@ -281,7 +246,12 @@ impl CanisterData {
         }
     }
 
-    pub fn set_principal_property_rate_limit(&mut self, principal: &Principal, property: &str, config: RateLimitConfig) {
+    pub fn set_principal_property_rate_limit(
+        &mut self,
+        principal: &Principal,
+        property: &str,
+        config: RateLimitConfig,
+    ) {
         let key = RateLimitKey::new(*principal, property.to_string());
         if let Some(mut entry) = self.rate_limits.get(&key) {
             entry.config = Some(config);
@@ -297,26 +267,36 @@ impl CanisterData {
         }
     }
 
-    pub fn get_principal_property_config(&self, principal: &Principal, property: &str) -> Option<RateLimitConfig> {
+    pub fn get_principal_property_config(
+        &self,
+        principal: &Principal,
+        property: &str,
+    ) -> Option<RateLimitConfig> {
         let key = RateLimitKey::new(*principal, property.to_string());
         self.rate_limits
             .get(&key)
             .and_then(|entry| entry.config.clone())
     }
 
-    pub fn set_property_config(&mut self, config: SharedPropertyRateLimitConfig) {
-        self.property_configs.insert(config.property.clone(), PropertyRateLimitConfig(config));
+    pub fn set_property_config(&mut self, config: PropertyRateLimitConfig) {
+        self.property_configs
+            .insert(config.property.clone(), config);
     }
 
-    pub fn get_property_config(&self, property: &str) -> Option<SharedPropertyRateLimitConfig> {
-        self.property_configs.get(&property.to_string()).map(|c| c.0.clone())
+    pub fn get_property_config(&self, property: &str) -> Option<PropertyRateLimitConfig> {
+        self.property_configs
+            .get(&property.to_string())
+            .map(|c| c.clone())
     }
 
     pub fn remove_property_config(&mut self, property: &str) {
         self.property_configs.remove(&property.to_string());
     }
 
-    pub fn get_all_property_configs(&self) -> Vec<SharedPropertyRateLimitConfig> {
-        self.property_configs.iter().map(|(_, v)| v.0.clone()).collect()
+    pub fn get_all_property_configs(&self) -> Vec<PropertyRateLimitConfig> {
+        self.property_configs
+            .iter()
+            .map(|(_, v)| v.clone())
+            .collect()
     }
 }
