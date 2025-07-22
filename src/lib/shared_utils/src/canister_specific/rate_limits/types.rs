@@ -75,3 +75,58 @@ impl Default for GlobalRateLimitConfig {
         }
     }
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct RateLimitKey {
+    pub principal: Principal,
+    pub property: String,
+}
+
+impl RateLimitKey {
+    pub fn new(principal: Principal, property: String) -> Self {
+        Self {
+            principal,
+            property,
+        }
+    }
+
+    pub fn default_property(principal: Principal) -> Self {
+        Self {
+            principal,
+            property: "default".to_string(),
+        }
+    }
+}
+
+impl Storable for RateLimitKey {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        let bytes = serde_json::to_vec(self).expect("Failed to serialize RateLimitKey");
+        Cow::Owned(bytes)
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        serde_json::from_slice(&bytes).expect("Failed to deserialize RateLimitKey")
+    }
+
+    const BOUND: Bound = Bound::Unbounded;
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct RateLimitEntry {
+    pub request_count: u64,
+    pub window_start: u64,
+    pub config: Option<RateLimitConfig>,
+}
+
+impl Storable for RateLimitEntry {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        let bytes = serde_json::to_vec(self).expect("Failed to serialize RateLimitEntry");
+        Cow::Owned(bytes)
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        serde_json::from_slice(&bytes).expect("Failed to deserialize RateLimitEntry")
+    }
+
+    const BOUND: Bound = Bound::Unbounded;
+}

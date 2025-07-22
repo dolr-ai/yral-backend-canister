@@ -71,7 +71,7 @@ fn test_increment_request_count() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "default".to_string()),
+        (charlie_principal_id, "default".to_string(), true),
     )
     .expect("Failed to get rate limit status")
     .expect("Expected status after increment");
@@ -99,7 +99,7 @@ fn test_increment_request_count() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "default".to_string()),
+        (charlie_principal_id, "default".to_string(), true),
     )
     .expect("Failed to get rate limit status")
     .expect("Expected status after second increment");

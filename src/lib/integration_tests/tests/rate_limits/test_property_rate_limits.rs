@@ -89,7 +89,7 @@ fn test_property_based_rate_limiting() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "upload_video".to_string()),
+        (charlie_principal_id, "upload_video".to_string(), true),
     )
     .expect("Failed to get upload_video status")
     .expect("Expected upload_video status");
@@ -104,7 +104,7 @@ fn test_property_based_rate_limiting() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "create_post".to_string()),
+        (charlie_principal_id, "create_post".to_string(), true),
     )
     .expect("Failed to get create_post status")
     .expect("Expected create_post status");

@@ -18,7 +18,7 @@ fn test_get_rate_limit_status() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "default".to_string()),
+        (charlie_principal_id, "default".to_string(), false),
     )
     .expect("Failed to get rate limit status");
 
@@ -40,7 +40,7 @@ fn test_get_rate_limit_status() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "default".to_string()),
+        (charlie_principal_id, "default".to_string(), false),
     )
     .expect("Failed to get rate limit status");
 
@@ -48,6 +48,7 @@ fn test_get_rate_limit_status() {
     let status = status.unwrap();
     assert_eq!(status.principal, charlie_principal_id);
     assert_eq!(status.request_count, 1);
-    assert!(!status.is_limited);
+    // Since the user is unregistered (is_registered: false), they should be rate limited after 1 request
+    assert!(status.is_limited, "Unregistered user should be rate limited after 1 request");
     assert!(status.window_start > 0);
 }

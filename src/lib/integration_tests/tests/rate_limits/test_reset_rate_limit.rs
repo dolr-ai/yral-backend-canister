@@ -55,7 +55,7 @@ fn test_reset_rate_limit() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "default".to_string()),
+        (charlie_principal_id, "default".to_string(), true),
     )
     .expect("Failed to get rate limit status")
     .expect("Expected status after increments");
@@ -83,7 +83,7 @@ fn test_reset_rate_limit() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "default".to_string()),
+        (charlie_principal_id, "default".to_string(), true),
     );
     
     // After reset, the status might be None or have count 0

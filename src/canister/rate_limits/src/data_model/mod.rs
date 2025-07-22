@@ -1,69 +1,13 @@
 pub mod memory;
 use candid::Principal;
-use ic_stable_structures::Storable;
-use ic_stable_structures::{StableBTreeMap, storable::Bound};
+use ic_stable_structures::StableBTreeMap;
 use memory::{Memory, get_property_configs_memory, get_rate_limits_memory};
 use serde::{Deserialize, Serialize};
+use shared_utils::canister_specific::rate_limits::types::{RateLimitEntry, RateLimitKey};
 use shared_utils::canister_specific::rate_limits::{
     GlobalRateLimitConfig, PropertyRateLimitConfig, RateLimitConfig, RateLimitStatus,
 };
 use shared_utils::service::SetVersion;
-use std::borrow::Cow;
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct RateLimitKey {
-    pub principal: Principal,
-    pub property: String,
-}
-
-impl RateLimitKey {
-    pub fn new(principal: Principal, property: String) -> Self {
-        Self {
-            principal,
-            property,
-        }
-    }
-
-    pub fn default_property(principal: Principal) -> Self {
-        Self {
-            principal,
-            property: "default".to_string(),
-        }
-    }
-}
-
-impl Storable for RateLimitKey {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        let bytes = serde_json::to_vec(self).expect("Failed to serialize RateLimitKey");
-        Cow::Owned(bytes)
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Failed to deserialize RateLimitKey")
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct RateLimitEntry {
-    pub request_count: u64,
-    pub window_start: u64,
-    pub config: Option<RateLimitConfig>,
-}
-
-impl Storable for RateLimitEntry {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        let bytes = serde_json::to_vec(self).expect("Failed to serialize RateLimitEntry");
-        Cow::Owned(bytes)
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Failed to deserialize RateLimitEntry")
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct CanisterData {
@@ -109,50 +53,13 @@ impl CanisterData {
         property: &str,
         is_registered: bool,
     ) -> bool {
-        let current_time = ic_cdk::api::time() / 1_000_000_000; // Convert nanoseconds to seconds
-        let key = RateLimitKey::new(*principal, property.to_string());
-
-        if let Some(entry) = self.rate_limits.get(&key) {
-            // Use custom config if available, otherwise check property config, then default
-            let (max_requests, window_duration) = if let Some(config) = &entry.config {
-                (
-                    config.max_requests_per_window,
-                    config.window_duration_seconds,
-                )
-            } else if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
-                // Use property-specific config based on registration status
-                if is_registered {
-                    (
-                        prop_config.max_requests_per_window_registered,
-                        prop_config.window_duration_seconds,
-                    )
-                } else {
-                    (
-                        prop_config.max_requests_per_window_unregistered,
-                        prop_config.window_duration_seconds,
-                    )
-                }
-            } else {
-                // Use default config based on registration status
-                if is_registered {
-                    (
-                        self.default_config.max_requests_per_window_registered,
-                        self.default_config.window_duration_seconds,
-                    )
-                } else {
-                    (
-                        self.default_config.max_requests_per_window_unregistered,
-                        self.default_config.window_duration_seconds,
-                    )
-                }
-            };
-
-            // Check if we're still in the same window
-            if current_time < entry.window_start + window_duration {
-                return entry.request_count >= max_requests;
-            }
+        if let Some(status) =
+            self.get_rate_limit_status_with_property(principal, property, is_registered)
+        {
+            status.is_limited
+        } else {
+            false
         }
-        false
     }
 
     pub fn increment_request_with_property(&mut self, principal: &Principal, property: &str) {
@@ -195,18 +102,27 @@ impl CanisterData {
         &self,
         principal: &Principal,
         property: &str,
+        is_registered: bool,
     ) -> Option<RateLimitStatus> {
         let key = RateLimitKey::new(*principal, property.to_string());
         self.rate_limits.get(&key).map(|entry| {
-            // Get max requests from custom config, property config, or default
+            // Get max requests from custom config, property config, or default based on registration status
             let max_requests = if let Some(config) = &entry.config {
                 config.max_requests_per_window
             } else if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
-                // For status reporting, we'll use the registered limit as a default
-                prop_config.max_requests_per_window_registered
+                // Use property-specific config based on registration status
+                if is_registered {
+                    prop_config.max_requests_per_window_registered
+                } else {
+                    prop_config.max_requests_per_window_unregistered
+                }
             } else {
-                // For status reporting, we'll use the registered limit as a default
-                self.default_config.max_requests_per_window_registered
+                // Use default config based on registration status
+                if is_registered {
+                    self.default_config.max_requests_per_window_registered
+                } else {
+                    self.default_config.max_requests_per_window_unregistered
+                }
             };
 
             let is_limited = entry.request_count >= max_requests;

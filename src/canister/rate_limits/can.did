@@ -35,7 +35,9 @@ service : (RateLimitsInitArgs) -> {
       opt PropertyRateLimitConfig,
     ) query;
   get_property_rate_limit_configs : () -> (vec PropertyRateLimitConfig) query;
-  get_rate_limit_status : (principal, text) -> (opt RateLimitStatus) query;
+  get_rate_limit_status : (principal, text, bool) -> (
+      opt RateLimitStatus,
+    ) query;
   get_version : () -> (text) query;
   increment_request_count : (principal, text) -> (RateLimitResult);
   remove_property_rate_limit_config : (text) -> (RateLimitResult);
