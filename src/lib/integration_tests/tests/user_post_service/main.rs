@@ -1,2 +1,1 @@
-pub mod crud;
-pub mod guard;
+pub mod api_tests;
