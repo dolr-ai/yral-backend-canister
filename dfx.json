@@ -102,6 +102,17 @@
       "package": "platform_orchestrator",
       "type": "rust"
     },
+    "dedup_index": {
+      "candid": "./src/canister/dedup_index/can.did",
+      "declaration": {
+        "node_compatibility": true,
+        "output": "./export/declarations/dedup_index"
+      },
+      "gzip": true,
+      "optimize": "size",
+      "package": "dedup_index",
+      "type": "rust"
+    },
     "sns_governance": {
       "build": "",
       "candid": "candid/sns_governance.did",

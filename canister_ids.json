@@ -14,6 +14,9 @@
   "platform_orchestrator": {
     "ic": "74zq4-iqaaa-aaaam-ab53a-cai"
   },
+  "dedup_index": {
+    "ic": "4drz6-pyaaa-aaaas-qbfoa-cai"
+  },
   "user_index": {
     "ic": "rimrc-piaaa-aaaao-aaljq-cai"
   }

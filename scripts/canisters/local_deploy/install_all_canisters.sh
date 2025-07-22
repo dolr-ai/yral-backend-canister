@@ -28,6 +28,7 @@ dfx canister create --no-wallet user_index
 dfx canister create --no-wallet platform_orchestrator
 dfx canister create --no-wallet notification_store
 dfx canister create --no-wallet user_post_service
+dfx canister create --no-wallet dedup_index
 dfx canister create --no-wallet user_info_service
 
 gzip_canister() {
@@ -41,6 +42,7 @@ gzip_canister user_index
 gzip_canister platform_orchestrator
 gzip_canister notification_store
 gzip_canister user_post_service
+gzip_canister dedup_index
 gzip_canister user_info_service
 
 if [[ $skip_test != true ]]
@@ -94,8 +96,13 @@ dfx canister install notification_store --argument "(record {
   version= \"v1.0.0\"
 })"
 
+<<<<<<< HEAD
 dfx canister install user_post_service --argument "(record {
   version= \"v1.0.0\"
+=======
+dfx canister install dedup_index --argument "(record {
+  version= \"v1.1.0\"
+>>>>>>> main
 })"
 
 scripts/canisters/local_deploy/create_pool_of_individual_canister_user_index.sh

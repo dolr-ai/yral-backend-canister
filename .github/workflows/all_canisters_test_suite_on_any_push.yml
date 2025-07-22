@@ -50,6 +50,7 @@ jobs:
           nix-shell --run "dfx canister create --no-wallet platform_orchestrator"
           nix-shell --run "dfx canister create --no-wallet notification_store"
           nix-shell --run "dfx canister create --no-wallet user_post_service"
+          nix-shell --run "dfx canister create --no-wallet dedup_index"
           nix-shell --run "dfx canister create --no-wallet user_info_service"
       - name: Stop local replica
         run: nix-shell --run "dfx stop"
@@ -73,6 +74,10 @@ jobs:
         run: |
           nix-shell --run "dfx build user_post_service"
           gzip -f -1 ./target/wasm32-unknown-unknown/release/user_post_service.wasm
+      - name: Build dedup_index canister
+        run: |
+          nix-shell --run "dfx build dedup_index"
+          gzip -f -1 ./target/wasm32-unknown-unknown/release/dedup_index.wasm
       - name: Build user_info_service canister
         run: |
           nix-shell --run "dfx build user_info_service"
