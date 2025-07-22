@@ -25,7 +25,7 @@ type RateLimitsInitArgs = record {
   user_info_canister : principal;
 };
 service : (RateLimitsInitArgs) -> {
-  check_rate_limit : (principal, text) -> (RateLimitResult);
+  check_rate_limit : (principal, text) -> (RateLimitResult) query;
   clear_all_rate_limits : () -> (RateLimitResult);
   get_default_rate_limit_config : () -> (GlobalRateLimitConfig) query;
   get_principal_rate_limit_config : (principal, text) -> (
