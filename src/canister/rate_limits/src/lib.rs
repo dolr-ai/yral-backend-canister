@@ -1,4 +1,4 @@
-use candid::{CandidType, Deserialize, Principal};
+use candid::Principal;
 use ic_cdk::export_candid;
 use std::cell::RefCell;
 
@@ -8,25 +8,15 @@ pub mod data_model;
 pub mod types;
 pub mod utils;
 
-pub use data_model::{CanisterData, GlobalRateLimitConfig, RateLimitConfig};
-pub use types::RateLimitsInitArgs;
+pub use data_model::{CanisterData, GlobalRateLimitConfig, PropertyRateLimitConfig};
+pub use shared_utils::canister_specific::rate_limits::{
+    RateLimitConfig, RateLimitResult, RateLimitStatus, RateLimitsInitArgs,
+    GlobalRateLimitConfig as SharedGlobalRateLimitConfig,
+    PropertyRateLimitConfig as SharedPropertyRateLimitConfig,
+};
 
 thread_local! {
     pub static CANISTER_DATA: RefCell<CanisterData> = RefCell::default();
-}
-
-#[derive(CandidType, Deserialize, Clone)]
-pub enum RateLimitResult {
-    Ok(String),
-    Err(String),
-}
-
-#[derive(CandidType, Deserialize, Clone)]
-pub struct RateLimitStatus {
-    pub principal: Principal,
-    pub request_count: u64,
-    pub window_start: u64,
-    pub is_limited: bool,
 }
 
 export_candid!();

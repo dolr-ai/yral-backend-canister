@@ -2,14 +2,14 @@ use candid::Principal;
 use ic_cdk_macros::{query, update};
 use shared_utils::common::utils::permissions::is_caller_controller_or_global_admin;
 
-use crate::{GlobalRateLimitConfig, RateLimitConfig, RateLimitResult, CANISTER_DATA};
+use crate::{SharedGlobalRateLimitConfig, RateLimitConfig, RateLimitResult, CANISTER_DATA};
 
 /// Get default configuration
 #[query]
-pub fn get_default_rate_limit_config() -> GlobalRateLimitConfig {
+pub fn get_default_rate_limit_config() -> SharedGlobalRateLimitConfig {
     CANISTER_DATA.with(|data| {
         let data = data.borrow();
-        data.default_config.clone()
+        data.default_config.0.clone()
     })
 }
 

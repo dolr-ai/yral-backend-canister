@@ -6,6 +6,7 @@ use std::cell::RefCell;
 
 const RATE_LIMITS: MemoryId = MemoryId::new(0);
 const UPGRADES: MemoryId = MemoryId::new(1);
+const PROPERTY_CONFIGS: MemoryId = MemoryId::new(2);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -22,4 +23,8 @@ pub fn get_rate_limits_memory() -> Memory {
 
 pub fn get_upgrades_memory() -> Memory {
     MEMORY_MANAGER.with(|m| m.borrow_mut().get(UPGRADES))
+}
+
+pub fn get_property_configs_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(PROPERTY_CONFIGS))
 }

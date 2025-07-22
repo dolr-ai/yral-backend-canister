@@ -2,7 +2,7 @@ use ic_cdk::{init, post_upgrade, pre_upgrade};
 use ic_cdk_macros::query;
 use shared_utils::service::{StableState, update_version_from_args};
 
-use crate::{CANISTER_DATA, data_model::memory, types::RateLimitsInitArgs};
+use crate::{CANISTER_DATA, data_model::memory, RateLimitsInitArgs};
 
 #[query]
 fn get_version() -> String {

@@ -1,15 +1,3 @@
-use candid::{CandidType, Deserialize, Principal};
-use shared_utils::service::GetVersion;
-use std::borrow::Cow;
-
-#[derive(CandidType, Deserialize, Clone)]
-pub struct RateLimitsInitArgs {
-    pub version: String,
-    pub user_info_canister: Principal,
-}
-
-impl GetVersion for RateLimitsInitArgs {
-    fn get_version(&self) -> Cow<'_, str> {
-        Cow::Borrowed(&self.version)
-    }
-}
+// This file is now mostly empty since types are defined in shared_utils
+// Re-export RateLimitsInitArgs from shared_utils
+pub use shared_utils::canister_specific::rate_limits::RateLimitsInitArgs;
