@@ -41,7 +41,7 @@ fn test_increment_request_count() {
         rate_limits_canister,
         admin_principal,
         "set_principal_rate_limit",
-        (charlie_principal_id, 10u64, 86400u64), // Allow 10 requests per day
+        (charlie_principal_id, "default".to_string(), 10u64, 86400u64), // Allow 10 requests per day
     )
     .expect("Failed to set principal rate limit");
     
@@ -56,7 +56,7 @@ fn test_increment_request_count() {
         rate_limits_canister,
         charlie_principal_id,
         "increment_request_count",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to increment request count");
     
@@ -71,7 +71,7 @@ fn test_increment_request_count() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to get rate limit status")
     .expect("Expected status after increment");
@@ -84,7 +84,7 @@ fn test_increment_request_count() {
         rate_limits_canister,
         charlie_principal_id,
         "increment_request_count",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to increment request count");
     
@@ -99,7 +99,7 @@ fn test_increment_request_count() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to get rate limit status")
     .expect("Expected status after second increment");

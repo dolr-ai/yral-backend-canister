@@ -163,10 +163,6 @@ impl Default for CanisterData {
 }
 
 impl CanisterData {
-    pub fn is_rate_limited(&self, principal: &Principal, is_registered: bool) -> bool {
-        self.is_rate_limited_with_property(principal, "default", is_registered)
-    }
-
     pub fn is_rate_limited_with_property(&self, principal: &Principal, property: &str, is_registered: bool) -> bool {
         let current_time = ic_cdk::api::time() / 1_000_000_000; // Convert nanoseconds to seconds
         let key = RateLimitKey::new(*principal, property.to_string());
@@ -197,10 +193,6 @@ impl CanisterData {
             }
         }
         false
-    }
-
-    pub fn increment_request(&mut self, principal: &Principal) {
-        self.increment_request_with_property(principal, "default");
     }
 
     pub fn increment_request_with_property(&mut self, principal: &Principal, property: &str) {
@@ -239,10 +231,6 @@ impl CanisterData {
         self.rate_limits.insert(key, entry);
     }
 
-    pub fn get_rate_limit_status(&self, principal: &Principal) -> Option<RateLimitStatus> {
-        self.get_rate_limit_status_with_property(principal, "default")
-    }
-
     pub fn get_rate_limit_status_with_property(&self, principal: &Principal, property: &str) -> Option<RateLimitStatus> {
         let key = RateLimitKey::new(*principal, property.to_string());
         self.rate_limits.get(&key).map(|entry| {
@@ -265,10 +253,6 @@ impl CanisterData {
                 is_limited,
             }
         })
-    }
-
-    pub fn reset_rate_limit(&mut self, principal: &Principal) {
-        self.reset_rate_limit_with_property(principal, "default");
     }
 
     pub fn reset_rate_limit_with_property(&mut self, principal: &Principal, property: &str) {
@@ -297,10 +281,6 @@ impl CanisterData {
         }
     }
 
-    pub fn set_principal_rate_limit(&mut self, principal: &Principal, config: RateLimitConfig) {
-        self.set_principal_property_rate_limit(principal, "default", config);
-    }
-
     pub fn set_principal_property_rate_limit(&mut self, principal: &Principal, property: &str, config: RateLimitConfig) {
         let key = RateLimitKey::new(*principal, property.to_string());
         if let Some(mut entry) = self.rate_limits.get(&key) {
@@ -315,10 +295,6 @@ impl CanisterData {
             };
             self.rate_limits.insert(key, entry);
         }
-    }
-
-    pub fn get_principal_config(&self, principal: &Principal) -> Option<RateLimitConfig> {
-        self.get_principal_property_config(principal, "default")
     }
 
     pub fn get_principal_property_config(&self, principal: &Principal, property: &str) -> Option<RateLimitConfig> {

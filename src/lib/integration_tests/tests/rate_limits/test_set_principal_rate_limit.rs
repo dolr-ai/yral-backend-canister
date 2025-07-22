@@ -19,7 +19,7 @@ fn test_set_principal_rate_limit() {
         rate_limits_canister,
         global_admin,
         "set_principal_rate_limit",
-        (charlie_principal_id, 50u64, 300u64), // 50 requests per 300 seconds
+        (charlie_principal_id, "default".to_string(), 50u64, 300u64), // 50 requests per 300 seconds
     )
     .expect("Failed to set principal rate limit");
     
@@ -34,7 +34,7 @@ fn test_set_principal_rate_limit() {
         rate_limits_canister,
         charlie_principal_id,
         "get_principal_rate_limit_config",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to get principal rate limit config")
     .expect("Expected config after setting");
@@ -56,7 +56,7 @@ fn test_set_principal_rate_limit_unauthorized() {
         rate_limits_canister,
         charlie_principal_id,
         "set_principal_rate_limit",
-        (charlie_principal_id, 50u64, 300u64),
+        (charlie_principal_id, "default".to_string(), 50u64, 300u64),
     );
     
     // Should fail due to lack of permissions
@@ -77,7 +77,7 @@ fn test_set_principal_rate_limit_invalid_params() {
         rate_limits_canister,
         global_admin,
         "set_principal_rate_limit",
-        (charlie_principal_id, 0u64, 300u64), // 0 max requests
+        (charlie_principal_id, "default".to_string(), 0u64, 300u64), // 0 max requests
     )
     .expect("Failed to call set_principal_rate_limit");
     

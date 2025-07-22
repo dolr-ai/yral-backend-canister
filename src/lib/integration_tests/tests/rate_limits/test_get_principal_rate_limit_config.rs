@@ -19,7 +19,7 @@ fn test_get_principal_rate_limit_config() {
         rate_limits_canister,
         charlie_principal_id,
         "get_principal_rate_limit_config",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to get principal rate limit config");
     
@@ -31,7 +31,7 @@ fn test_get_principal_rate_limit_config() {
         rate_limits_canister,
         global_admin,
         "set_principal_rate_limit",
-        (charlie_principal_id, 100u64, 120u64), // 100 requests per 120 seconds
+        (charlie_principal_id, "default".to_string(), 100u64, 120u64), // 100 requests per 120 seconds
     )
     .expect("Failed to set principal rate limit");
     
@@ -41,7 +41,7 @@ fn test_get_principal_rate_limit_config() {
         rate_limits_canister,
         charlie_principal_id,
         "get_principal_rate_limit_config",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to get principal rate limit config");
     

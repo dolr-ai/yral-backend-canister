@@ -32,6 +32,14 @@ pub struct GlobalRateLimitConfig {
     pub max_requests_per_window_unregistered: u64,
 }
 
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct PropertyRateLimitConfig {
+    pub property: String,
+    pub window_duration_seconds: u64,
+    pub max_requests_per_window_registered: u64,
+    pub max_requests_per_window_unregistered: u64,
+}
+
 /// Helper function to register a user in the user_info_service
 pub fn register_user_for_testing(
     pocket_ic: &PocketIc,

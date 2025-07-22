@@ -22,7 +22,7 @@ fn test_check_rate_limit() {
         rate_limits_canister,
         charlie_principal_id,
         "check_rate_limit",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to check rate limit");
     
@@ -50,7 +50,7 @@ fn test_check_rate_limit_exceeds_limit() {
         rate_limits_canister,
         global_admin,
         "set_principal_rate_limit",
-        (charlie_principal_id, 2u64, 60u64), // 2 requests per 60 seconds
+        (charlie_principal_id, "default".to_string(), 2u64, 60u64), // 2 requests per 60 seconds
     )
     .expect("Failed to set rate limit");
     
@@ -61,7 +61,7 @@ fn test_check_rate_limit_exceeds_limit() {
             rate_limits_canister,
             charlie_principal_id,
             "increment_request_count",
-            (charlie_principal_id,),
+            (charlie_principal_id, "default".to_string()),
         )
         .expect("Failed to increment request count");
     }
@@ -72,7 +72,7 @@ fn test_check_rate_limit_exceeds_limit() {
         rate_limits_canister,
         charlie_principal_id,
         "check_rate_limit",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to check rate limit");
     

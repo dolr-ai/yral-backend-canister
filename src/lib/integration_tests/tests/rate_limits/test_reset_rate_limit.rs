@@ -23,7 +23,7 @@ fn test_reset_rate_limit() {
         rate_limits_canister,
         global_admin,
         "set_principal_rate_limit",
-        (charlie_principal_id, 10u64, 86400u64), // Allow 10 requests per day
+        (charlie_principal_id, "default".to_string(), 10u64, 86400u64), // Allow 10 requests per day
     )
     .expect("Failed to set principal rate limit");
     
@@ -39,7 +39,7 @@ fn test_reset_rate_limit() {
             rate_limits_canister,
             charlie_principal_id,
             "increment_request_count",
-            (charlie_principal_id,),
+            (charlie_principal_id, "default".to_string()),
         )
         .expect("Failed to increment request count");
         
@@ -55,7 +55,7 @@ fn test_reset_rate_limit() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to get rate limit status")
     .expect("Expected status after increments");
@@ -68,7 +68,7 @@ fn test_reset_rate_limit() {
         rate_limits_canister,
         global_admin,
         "reset_rate_limit",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     )
     .expect("Failed to reset rate limit");
     
@@ -83,7 +83,7 @@ fn test_reset_rate_limit() {
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     );
     
     // After reset, the status might be None or have count 0
@@ -107,7 +107,7 @@ fn test_reset_rate_limit_unauthorized() {
         rate_limits_canister,
         charlie_principal_id,
         "reset_rate_limit",
-        (charlie_principal_id,),
+        (charlie_principal_id, "default".to_string()),
     );
     
     // Should fail due to lack of permissions

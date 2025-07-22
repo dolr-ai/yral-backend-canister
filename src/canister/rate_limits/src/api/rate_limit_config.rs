@@ -2,7 +2,7 @@ use candid::Principal;
 use ic_cdk_macros::{query, update};
 use shared_utils::common::utils::permissions::is_caller_controller_or_global_admin;
 
-use crate::{SharedGlobalRateLimitConfig, RateLimitConfig, RateLimitResult, CANISTER_DATA};
+use crate::{CANISTER_DATA, RateLimitConfig, RateLimitResult, SharedGlobalRateLimitConfig};
 
 /// Get default configuration
 #[query]
@@ -39,11 +39,14 @@ pub fn update_default_rate_limit_config(
     })
 }
 
-/// Get configuration for a specific principal
+/// Get configuration for a specific principal on a specific property
 #[query]
-pub fn get_principal_rate_limit_config(principal: Principal) -> Option<RateLimitConfig> {
+pub fn get_principal_rate_limit_config(
+    principal: Principal,
+    property: String,
+) -> Option<RateLimitConfig> {
     CANISTER_DATA.with(|data| {
         let data = data.borrow();
-        data.get_principal_config(&principal)
+        data.get_principal_property_config(&principal, &property)
     })
 }
