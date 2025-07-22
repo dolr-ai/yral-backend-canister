@@ -96,13 +96,12 @@ dfx canister install notification_store --argument "(record {
   version= \"v1.0.0\"
 })"
 
-<<<<<<< HEAD
 dfx canister install user_post_service --argument "(record {
   version= \"v1.0.0\"
-=======
+})"
+
 dfx canister install dedup_index --argument "(record {
   version= \"v1.1.0\"
->>>>>>> main
 })"
 
 scripts/canisters/local_deploy/create_pool_of_individual_canister_user_index.sh
