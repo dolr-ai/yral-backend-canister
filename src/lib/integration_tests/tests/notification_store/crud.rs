@@ -157,12 +157,12 @@ fn test_prune_notifications_unauthorized() {
     let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
     
     let notification_store_canister_id = service_canisters.notification_store_canister_id;
-    let alice_principal = get_global_super_admin_principal_id();
+    let regular_user = get_mock_user_alice_principal_id(); // Regular user, not admin
     
     // Try to call prune_notifications as regular user (not admin/controller)
     let res = pic.update_call(
         notification_store_canister_id,
-        alice_principal,
+        regular_user,
         "prune_notifications",
         candid::encode_args(()).unwrap()
     );
