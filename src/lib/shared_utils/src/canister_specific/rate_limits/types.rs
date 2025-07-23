@@ -38,14 +38,15 @@ pub struct PropertyRateLimitConfig {
 
 impl Storable for PropertyRateLimitConfig {
     fn to_bytes(&self) -> Cow<[u8]> {
-        let bytes = serde_json::to_vec(&self).expect("Failed to serialize PropertyRateLimitConfig");
+        let mut bytes = Vec::new();
+        ciborium::ser::into_writer(self, &mut bytes)
+            .expect("Failed to serialize PropertyRateLimitConfig");
         Cow::Owned(bytes)
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        let inner: PropertyRateLimitConfig =
-            serde_json::from_slice(&bytes).expect("Failed to deserialize PropertyRateLimitConfig");
-        inner
+        ciborium::de::from_reader(bytes.as_ref())
+            .expect("Failed to deserialize PropertyRateLimitConfig")
     }
 
     const BOUND: Bound = Bound::Unbounded;
@@ -101,12 +102,15 @@ impl RateLimitKey {
 
 impl Storable for RateLimitKey {
     fn to_bytes(&self) -> Cow<[u8]> {
-        let bytes = serde_json::to_vec(self).expect("Failed to serialize RateLimitKey");
+        let mut bytes = Vec::new();
+        ciborium::ser::into_writer(self, &mut bytes)
+            .expect("Failed to serialize RateLimitKey");
         Cow::Owned(bytes)
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Failed to deserialize RateLimitKey")
+        ciborium::de::from_reader(bytes.as_ref())
+            .expect("Failed to deserialize RateLimitKey")
     }
 
     const BOUND: Bound = Bound::Unbounded;
@@ -121,12 +125,15 @@ pub struct RateLimitEntry {
 
 impl Storable for RateLimitEntry {
     fn to_bytes(&self) -> Cow<[u8]> {
-        let bytes = serde_json::to_vec(self).expect("Failed to serialize RateLimitEntry");
+        let mut bytes = Vec::new();
+        ciborium::ser::into_writer(self, &mut bytes)
+            .expect("Failed to serialize RateLimitEntry");
         Cow::Owned(bytes)
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Failed to deserialize RateLimitEntry")
+        ciborium::de::from_reader(bytes.as_ref())
+            .expect("Failed to deserialize RateLimitEntry")
     }
 
     const BOUND: Bound = Bound::Unbounded;
