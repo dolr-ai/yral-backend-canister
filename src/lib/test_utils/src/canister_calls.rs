@@ -14,10 +14,10 @@ pub fn query<A, T>(
     args: A,
 ) -> Result<T, Box<dyn Error>>
 where
-    A: CandidType,
+    A: CandidType + ArgumentEncoder,
     T: CandidType + for<'de> Deserialize<'de>,
 {
-    let encoded_args = candid::encode_args((args,))?;
+    let encoded_args = candid::encode_args(args)?;
     let wasm_result = pocket_ic
         .query_call(canister_id, sender, method_name, encoded_args)
         .map_err(|e| std::convert::Into::<Box<dyn Error>>::into(e.to_string()))?;

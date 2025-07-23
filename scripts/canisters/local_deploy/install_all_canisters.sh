@@ -29,6 +29,7 @@ dfx canister create --no-wallet platform_orchestrator
 dfx canister create --no-wallet notification_store
 dfx canister create --no-wallet dedup_index
 dfx canister create --no-wallet user_info_service
+dfx canister create --no-wallet rate_limits
 
 gzip_canister() {
   gzip -f -1 ./target/wasm32-unknown-unknown/release/$1.wasm
@@ -42,6 +43,7 @@ gzip_canister platform_orchestrator
 gzip_canister notification_store
 gzip_canister dedup_index
 gzip_canister user_info_service
+gzip_canister rate_limits
 
 if [[ $skip_test != true ]]
 then
@@ -96,6 +98,10 @@ dfx canister install notification_store --argument "(record {
 
 dfx canister install dedup_index --argument "(record {
   version= \"v1.1.0\"
+})"
+
+dfx canister install rate_limits --argument "(record {
+  version= \"v1.0.0\";
 })"
 
 scripts/canisters/local_deploy/create_pool_of_individual_canister_user_index.sh
