@@ -159,7 +159,7 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
     );
 
     let service_canisters = ServiceCanisters {
-        user_info_service_canister_id: user_servcie_canister,
+        user_info_service_canister_id: user_service_canister,
         notification_store_canister_id: notification_store_canister,
         user_post_service_canister_id: user_post_service_canister,
         dedup_index_canister_id: dedup_index_canister,
