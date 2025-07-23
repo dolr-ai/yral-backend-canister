@@ -96,7 +96,7 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         }),
     );
 
-    pocket_ic.add_cycles(user_servcie_canister, 10_000_000_000_000_000);
+    pocket_ic.add_cycles(user_service_canister, 10_000_000_000_000_000);
     pocket_ic.add_cycles(notification_store_canister, 10_000_000_000_000_000);
     pocket_ic.add_cycles(user_post_service_canister, 10_000_000_000_000_000);
     pocket_ic.add_cycles(dedup_index_canister, 10_000_000_000_000_000);
