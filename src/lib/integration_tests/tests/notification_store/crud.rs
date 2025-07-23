@@ -129,7 +129,7 @@ fn test_prune_notifications() {
         notification_store_canister,
         global_admin,
         "prune_notifications",
-        vec![]
+        candid::encode_args(()).unwrap()
     ).unwrap();
     match res {
         WasmResult::Reply(_) => {},
@@ -164,7 +164,7 @@ fn test_prune_notifications_unauthorized() {
         notification_store_canister_id,
         alice_principal,
         "prune_notifications",
-        vec![]
+        candid::encode_args(()).unwrap()
     );
     
     // Should fail due to guard
