@@ -1,3 +1,9 @@
+type ListArgs = record { page : nat64; size : nat64 };
+type ListError = variant { SizeNotAllowed; PageOutOfRange; WillOverflow };
+type Result = variant {
+  Ok : vec record { text; vec record { text; SystemTime } };
+  Err : ListError;
+};
 type ServiceInitArgs = record { version : text };
 type SystemTime = record {
   nanos_since_epoch : nat32;
@@ -5,6 +11,9 @@ type SystemTime = record {
 };
 service : (ServiceInitArgs) -> {
   add_video_to_index : (text, record { text; SystemTime }) -> ();
+  drop_hash : (text) -> ();
   get_version : () -> (text) query;
   is_duplicate : (text) -> (bool) query;
+  list_hashes : (ListArgs) -> (Result) query;
+  unique_hash_count : () -> (nat64) query;
 }

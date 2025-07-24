@@ -1,4 +1,4 @@
-use crate::{data_model::memory, set_pruning_timer, CANISTER_DATA};
+use crate::{data_model::memory, CANISTER_DATA};
 use ciborium::de;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::Memory;
@@ -8,7 +8,6 @@ use shared_utils::canister_specific::notification_store::types::args::Notificati
 pub fn post_upgrade() {
     restore_data_from_stable_memory();
     update_version_from_args();
-    set_pruning_timer();
 }
 
 fn restore_data_from_stable_memory() {

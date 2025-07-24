@@ -49,7 +49,12 @@ dfx canister install notification_store --mode upgrade --argument "(record {
 })"
 
 dfx canister install dedup_index --mode upgrade --argument "(record {
-  version= \"v1.0.0\"
+  version= \"v1.1.0\"
+})"
+
+dfx canister install rate_limits --mode upgrade --argument "(record {
+  version= \"v1.0.0\";
+  user_info_canister= principal \"$(dfx canister id user_info_service)\"
 })"
 
 dfx canister install rate_limits --mode upgrade --argument "(record {
