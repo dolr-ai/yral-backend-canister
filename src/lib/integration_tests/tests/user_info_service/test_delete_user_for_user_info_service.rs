@@ -37,8 +37,8 @@ fn test_delete_user_for_user_info_service() {
         &pocket_ic,
         user_service_canister,
         charlie_principal_id,
-        "get_profile_details",
-        (),
+        "get_user_profile_details",
+        (charlie_principal_id,),
     )
     .unwrap()
     .unwrap();
@@ -50,8 +50,8 @@ fn test_delete_user_for_user_info_service() {
         &pocket_ic,
         user_service_canister,
         charlie_principal_id,
-        "get_session_type",
-        (),
+        "get_user_session_type",
+        (charlie_principal_id,),
     )
     .expect("Failed to get session type")
     .unwrap();
@@ -79,8 +79,8 @@ fn test_delete_user_for_user_info_service() {
         &pocket_ic,
         user_service_canister,
         charlie_principal_id,
-        "get_profile_details",
-        (),
+        "get_user_profile_details",
+        (charlie_principal_id,),
     )
     .unwrap()
     .unwrap();
@@ -108,8 +108,8 @@ fn test_delete_user_for_user_info_service() {
         &pocket_ic,
         user_service_canister,
         charlie_principal_id,
-        "get_profile_details",
-        (),
+        "get_user_profile_details",
+        (charlie_principal_id,),
     )
     .expect("Failed to call get_profile_details");
 
@@ -121,8 +121,8 @@ fn test_delete_user_for_user_info_service() {
         &pocket_ic,
         user_service_canister,
         charlie_principal_id,
-        "get_session_type",
-        (),
+        "get_user_session_type",
+        (charlie_principal_id,),
     )
     .expect("Failed to call get_session_type");
 
@@ -186,8 +186,8 @@ fn test_user_can_delete_their_own_info() {
         &pocket_ic,
         user_service_canister,
         charlie_principal_id,
-        "get_profile_details",
-        (),
+        "get_user_profile_details",
+        (charlie_principal_id,),
     )
     .expect("Failed to call get_profile_details");
 

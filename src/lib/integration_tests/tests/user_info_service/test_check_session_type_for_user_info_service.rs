@@ -36,8 +36,8 @@ fn test_check_session_type_for_user_info_service() {
         &pocket_ic,
         user_info_service_canister,
         charlie_principal_id,
-        "get_session_type",
-        (),
+        "get_user_session_type",
+        (charlie_principal_id,),
     )
     .expect("Failed to get session type");
 
@@ -58,8 +58,8 @@ fn test_check_session_type_for_user_info_service() {
         &pocket_ic,
         user_info_service_canister,
         non_existent_user,
-        "get_session_type",
-        (),
+        "get_user_session_type",
+        (non_existent_user,),
     )
     .expect("Failed to call get_session_type for non-existent user");
 
