@@ -110,3 +110,42 @@ pub fn get_property_rate_limit_configs() -> Vec<PropertyRateLimitConfig> {
 pub fn get_property_rate_limit_config(property: String) -> Option<PropertyRateLimitConfig> {
     CANISTER_DATA.with(|data| data.borrow().get_property_config(&property))
 }
+
+/// Add a property to the blacklist (admin only)
+#[update(guard = "is_caller_controller_or_global_admin")]
+pub fn add_to_blacklist(property: String) -> RateLimitResult {
+    CANISTER_DATA.with(|data| {
+        let mut data = data.borrow_mut();
+        data.add_to_blacklist(property.clone());
+        RateLimitResult::Ok(format!("Property '{}' added to blacklist", property))
+    })
+}
+
+/// Remove a property from the blacklist (admin only)
+#[update(guard = "is_caller_controller_or_global_admin")]
+pub fn remove_from_blacklist(property: String) -> RateLimitResult {
+    CANISTER_DATA.with(|data| {
+        let mut data = data.borrow_mut();
+        if data.remove_from_blacklist(&property) {
+            RateLimitResult::Ok(format!("Property '{}' removed from blacklist", property))
+        } else {
+            RateLimitResult::Err(format!("Property '{}' was not in blacklist", property))
+        }
+    })
+}
+
+/// Get all blacklisted properties
+#[query]
+pub fn get_blacklist() -> Vec<String> {
+    CANISTER_DATA.with(|data| data.borrow().get_blacklist())
+}
+
+/// Clear all blacklisted properties (admin only)
+#[update(guard = "is_caller_controller_or_global_admin")]
+pub fn clear_blacklist() -> RateLimitResult {
+    CANISTER_DATA.with(|data| {
+        let mut data = data.borrow_mut();
+        data.clear_blacklist();
+        RateLimitResult::Ok("Blacklist cleared".to_string())
+    })
+}

@@ -1,4 +1,5 @@
 pub mod common;
+pub mod test_blacklist;
 pub mod test_check_rate_limit;
 pub mod test_clear_all_rate_limits;
 pub mod test_get_default_rate_limit_config;

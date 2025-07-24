@@ -1,4 +1,5 @@
 pub mod memory;
+pub mod tests;
 use candid::Principal;
 use ic_stable_structures::StableBTreeMap;
 use memory::{Memory, get_property_configs_memory, get_rate_limits_memory};
@@ -8,6 +9,7 @@ use shared_utils::canister_specific::rate_limits::{
     GlobalRateLimitConfig, PropertyRateLimitConfig, RateLimitConfig, RateLimitStatus,
 };
 use shared_utils::service::SetVersion;
+use std::collections::HashSet;
 
 #[derive(Serialize, Deserialize)]
 pub struct CanisterData {
@@ -17,6 +19,7 @@ pub struct CanisterData {
     pub property_configs: StableBTreeMap<String, PropertyRateLimitConfig, Memory>,
     pub version: String,
     pub default_config: GlobalRateLimitConfig,
+    pub blacklist: HashSet<String>,
 }
 
 impl SetVersion for CanisterData {
@@ -40,6 +43,7 @@ impl Default for CanisterData {
             property_configs: init_property_configs(),
             version: "v1.0.0".into(),
             default_config: GlobalRateLimitConfig::default(),
+            blacklist: HashSet::new(),
         }
     }
 }
@@ -51,6 +55,11 @@ impl CanisterData {
         property: &str,
         is_registered: bool,
     ) -> bool {
+        // Check blacklist first - if property or "all" is blacklisted, always return true (rate limited)
+        if self.blacklist.contains(property) || self.blacklist.contains("all") {
+            return true;
+        }
+        
         if let Some(status) =
             self.get_rate_limit_status_with_property(principal, property, is_registered)
         {
@@ -103,8 +112,20 @@ impl CanisterData {
         is_registered: bool,
     ) -> Option<RateLimitStatus> {
         let key = RateLimitKey::new(*principal, property.to_string());
+        
+        // Check if blacklisted first - if so, always return a status showing rate limit exceeded
+        if self.blacklist.contains(property) || self.blacklist.contains("all") {
+            let current_time = ic_cdk::api::time() / 1_000_000_000;
+            return Some(RateLimitStatus {
+                principal: *principal,
+                request_count: 1, // Any value >= 0 will exceed max_requests of 0
+                window_start: current_time,
+                is_limited: true, // Always limited when blacklisted
+            });
+        }
+        
+        // If not blacklisted, proceed with normal rate limiting logic
         self.rate_limits.get(&key).map(|entry| {
-            // Get max requests from custom config, property config, or default based on registration status
             let max_requests = if let Some(config) = &entry.config {
                 config.max_requests_per_window
             } else if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
@@ -212,5 +233,25 @@ impl CanisterData {
             .iter()
             .map(|(_, v)| v.clone())
             .collect()
+    }
+
+    pub fn add_to_blacklist(&mut self, property: String) {
+        self.blacklist.insert(property);
+    }
+
+    pub fn remove_from_blacklist(&mut self, property: &str) -> bool {
+        self.blacklist.remove(property)
+    }
+
+    pub fn get_blacklist(&self) -> Vec<String> {
+        self.blacklist.iter().cloned().collect()
+    }
+
+    pub fn clear_blacklist(&mut self) {
+        self.blacklist.clear();
+    }
+
+    pub fn is_blacklisted(&self, property: &str) -> bool {
+        self.blacklist.contains(property) || self.blacklist.contains("all")
     }
 }
