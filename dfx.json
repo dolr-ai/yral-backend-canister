@@ -113,6 +113,17 @@
       "package": "dedup_index",
       "type": "rust"
     },
+    "rate_limits": {
+      "candid": "./src/canister/rate_limits/can.did",
+      "declaration": {
+        "node_compatibility": true,
+        "output": "./export/declarations/rate_limits"
+      },
+      "gzip": true,
+      "optimize": "size",
+      "package": "rate_limits",
+      "type": "rust"
+    },
     "sns_governance": {
       "build": "",
       "candid": "candid/sns_governance.did",

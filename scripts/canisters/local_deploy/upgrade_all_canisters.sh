@@ -28,6 +28,9 @@ gzip -f -1 ./target/wasm32-unknown-unknown/release/platform_orchestrator.wasm
 dfx build user_info_service
 gzip -f -1 .target/wasm32-unknown-unknown/release/user_info_service.wasm
 
+dfx build rate_limits
+gzip -f -1 ./target/wasm32-unknown-unknown/release/rate_limits.wasm
+
 if [[ $skip_test != true ]]
 then
   cargo test
@@ -51,6 +54,11 @@ dfx canister install user_post_service --mode upgrade --argument "(record {
 
 dfx canister install dedup_index --mode upgrade --argument "(record {
   version= \"v1.1.0\"
+})"
+
+dfx canister install rate_limits --mode upgrade --argument "(record {
+  version= \"v1.0.0\";
+  user_info_canister= principal \"$(dfx canister id user_info_service)\"
 })"
 
 scripts/canisters/local_deploy/upgrade_subnet_orchestrator.sh

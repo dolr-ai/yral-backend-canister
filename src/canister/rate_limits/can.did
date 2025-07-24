@@ -1,0 +1,48 @@
+type GlobalRateLimitConfig = record {
+  window_duration_seconds : nat64;
+  max_requests_per_window_registered : nat64;
+  max_requests_per_window_unregistered : nat64;
+};
+type PropertyRateLimitConfig = record {
+  window_duration_seconds : nat64;
+  max_requests_per_window_registered : nat64;
+  property : text;
+  max_requests_per_window_unregistered : nat64;
+};
+type RateLimitConfig = record {
+  window_duration_seconds : nat64;
+  max_requests_per_window : nat64;
+};
+type RateLimitResult = variant { Ok : text; Err : text };
+type RateLimitStatus = record {
+  "principal" : principal;
+  window_start : nat64;
+  is_limited : bool;
+  request_count : nat64;
+};
+type RateLimitsInitArgs = record { version : text };
+service : (RateLimitsInitArgs) -> {
+  check_rate_limit : (principal, text, bool) -> (RateLimitResult);
+  clear_all_rate_limits : () -> (RateLimitResult);
+  get_default_rate_limit_config : () -> (GlobalRateLimitConfig) query;
+  get_principal_rate_limit_config : (principal, text) -> (
+      opt RateLimitConfig,
+    ) query;
+  get_property_rate_limit_config : (text) -> (
+      opt PropertyRateLimitConfig,
+    ) query;
+  get_property_rate_limit_configs : () -> (vec PropertyRateLimitConfig) query;
+  get_rate_limit_status : (principal, text, bool) -> (opt RateLimitStatus);
+  get_version : () -> (text) query;
+  increment_request_count : (principal, text, bool) -> (RateLimitResult);
+  remove_property_rate_limit_config : (text) -> (RateLimitResult);
+  reset_all_principal_rate_limits : (principal) -> (RateLimitResult);
+  reset_rate_limit : (principal, text) -> (RateLimitResult);
+  set_principal_rate_limit : (principal, text, nat64, nat64) -> (
+      RateLimitResult,
+    );
+  set_property_rate_limit_config : (text, nat64, nat64, nat64) -> (
+      RateLimitResult,
+    );
+  update_default_rate_limit_config : (nat64, nat64, nat64) -> (RateLimitResult);
+}
