@@ -14,11 +14,10 @@ type UserProfileGlobalStats = record {
 };
 service : (UserInfoServiceInitArgs) -> {
   delete_user_info : (principal) -> (Result);
-  get_profile_details : () -> (Result_1) query;
-  get_session_type : () -> (Result_2) query;
-  get_session_type_principal : (principal) -> (Result_2) query;
+  get_user_profile_details : (principal) -> (Result_1) query;
+  get_user_session_type : (principal) -> (Result_2) query;
   get_version : () -> (text) query;
   register_new_user : (principal) -> (Result);
-  update_last_access_time : () -> (Result);
   update_session_type : (principal, SessionType) -> (Result);
+  update_user_last_access_time : (principal) -> (Result);
 }

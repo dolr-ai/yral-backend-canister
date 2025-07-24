@@ -37,8 +37,8 @@ fn test_update_session_type_for_user_info_service() {
         &pocket_ic,
         user_info_service_canister,
         charlie_principal_id,
-        "get_session_type",
-        (),
+        "get_user_session_type",
+        (charlie_principal_id,),
     )
     .unwrap()
     .unwrap();
@@ -62,8 +62,8 @@ fn test_update_session_type_for_user_info_service() {
         &pocket_ic,
         user_info_service_canister,
         charlie_principal_id,
-        "get_session_type",
-        (),
+        "get_user_session_type",
+        (charlie_principal_id,),
     )
     .unwrap()
     .unwrap();
@@ -94,8 +94,8 @@ fn test_update_session_type_for_user_info_service() {
         &pocket_ic,
         user_info_service_canister,
         charlie_principal_id,
-        "get_session_type",
-        (),
+        "get_user_session_type",
+        (charlie_principal_id,),
     )
     .unwrap()
     .unwrap();
@@ -122,8 +122,8 @@ fn test_update_session_type_for_user_info_service() {
         &pocket_ic,
         user_info_service_canister,
         charlie_principal_id,
-        "get_session_type",
-        (),
+        "get_user_session_type",
+        (charlie_principal_id,),
     )
     .unwrap()
     .unwrap();
