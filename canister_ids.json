@@ -5,6 +5,9 @@
   "data_backup": {
     "ic": "jwktp-qyaaa-aaaag-abcfa-cai"
   },
+  "dedup_index": {
+    "ic": "4drz6-pyaaa-aaaas-qbfoa-cai"
+  },
   "individual_user_template": {
     "ic": "dc47w-kaaaa-aaaak-qav3q-cai"
   },
@@ -14,13 +17,13 @@
   "platform_orchestrator": {
     "ic": "74zq4-iqaaa-aaaam-ab53a-cai"
   },
-  "dedup_index": {
-    "ic": "4drz6-pyaaa-aaaas-qbfoa-cai"
-  },
   "user_index": {
     "ic": "rimrc-piaaa-aaaao-aaljq-cai"
   },
   "user_info_service": {
     "ic": "ivkka-7qaaa-aaaas-qbg3q-cai"
+  },
+  "user_post_service": {
+    "ic": "gxhc3-pqaaa-aaaas-qbh3q-cai"
   }
 }
