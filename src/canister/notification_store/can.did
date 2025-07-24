@@ -34,4 +34,5 @@ service : (NotificationStoreInitArgs) -> {
   get_notifications : (nat64, nat64) -> (vec NotificationData) query;
   get_version : () -> (text) query;
   mark_notification_as_read : (nat64) -> (Result);
+  prune_notifications : () -> ();
 }
