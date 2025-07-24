@@ -1,5 +1,6 @@
 use candid::Principal;
 use ic_cdk_macros::update;
+use shared_utils::canister_specific::notification_store::types::notification::Notification;
 use shared_utils::common::utils::system_time::get_current_system_time_from_ic;
 use shared_utils::common::utils::permissions::is_caller_controller_or_global_admin;
 use std::time::Duration;
