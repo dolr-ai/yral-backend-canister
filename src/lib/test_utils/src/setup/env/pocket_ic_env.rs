@@ -64,7 +64,7 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
 
     let super_admin = get_global_super_admin_principal_id();
 
-    let user_servcie_canister = pocket_ic.create_canister_with_settings(
+    let user_service_canister = pocket_ic.create_canister_with_settings(
         Some(super_admin),
         Some(CanisterSettings {
             controllers: Some(vec![super_admin]),
