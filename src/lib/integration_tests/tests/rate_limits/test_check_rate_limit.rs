@@ -17,6 +17,7 @@ fn test_check_rate_limit() {
         .expect("Failed to register user");
     
     // Check rate limit for a user who hasn't made any requests
+    // Note: Unregistered users have max_requests=0 by default, so they are always rate limited
     let result = update::<_, RateLimitResult>(
         &pocket_ic,
         rate_limits_canister,
@@ -27,8 +28,23 @@ fn test_check_rate_limit() {
     .expect("Failed to check rate limit");
     
     match result {
+        RateLimitResult::Ok(msg) => panic!("Expected rate limit to be exceeded for unregistered user, got: {}", msg),
+        RateLimitResult::Err(e) => assert!(e.contains("Rate limit exceeded")),
+    }
+    
+    // Now check for a registered user
+    let result = update::<_, RateLimitResult>(
+        &pocket_ic,
+        rate_limits_canister,
+        charlie_principal_id,
+        "check_rate_limit",
+        (charlie_principal_id, "default".to_string(), true),
+    )
+    .expect("Failed to check rate limit");
+    
+    match result {
         RateLimitResult::Ok(msg) => assert!(msg.contains("Within rate limit")),
-        RateLimitResult::Err(e) => panic!("Rate limit check failed: {}", e),
+        RateLimitResult::Err(e) => panic!("Rate limit check failed for registered user: {}", e),
     }
 }
 

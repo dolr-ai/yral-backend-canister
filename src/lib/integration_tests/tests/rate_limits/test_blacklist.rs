@@ -19,12 +19,13 @@ fn test_blacklist_property_blocks_requests() {
         .expect("Failed to register user");
     
     // First, verify the user can normally make requests to the property
+    // Use registered=true since unregistered users are rate limited by default (max_requests=0)
     let result = update::<_, RateLimitResult>(
         &pocket_ic,
         rate_limits_canister,
         charlie_principal_id,
         "check_rate_limit",
-        (charlie_principal_id, test_property.clone(), false),
+        (charlie_principal_id, test_property.clone(), true),
     )
     .expect("Failed to check rate limit");
     
@@ -96,7 +97,7 @@ fn test_blacklist_property_blocks_requests() {
         rate_limits_canister,
         charlie_principal_id,
         "check_rate_limit",
-        (charlie_principal_id, test_property, false),
+        (charlie_principal_id, test_property, true), // Use registered=true since unregistered users are always rate limited
     )
     .expect("Failed to check rate limit after removal");
     
@@ -122,13 +123,14 @@ fn test_blacklist_all_blocks_all_properties() {
     let properties = vec!["property1".to_string(), "property2".to_string(), "default".to_string()];
     
     // First, verify all properties work normally
+    // Use registered=true since unregistered users are rate limited by default (max_requests=0)
     for property in &properties {
         let result = update::<_, RateLimitResult>(
             &pocket_ic,
             rate_limits_canister,
             charlie_principal_id,
             "check_rate_limit",
-            (charlie_principal_id, property.clone(), false),
+            (charlie_principal_id, property.clone(), true),
         )
         .expect("Failed to check rate limit");
         
@@ -198,13 +200,14 @@ fn test_blacklist_all_blocks_all_properties() {
     assert!(blacklist.is_empty(), "Blacklist should be empty after clearing");
     
     // All properties should work normally again
+    // Use registered=true since unregistered users are always rate limited
     for property in &properties {
         let result = update::<_, RateLimitResult>(
             &pocket_ic,
             rate_limits_canister,
             charlie_principal_id,
             "check_rate_limit",
-            (charlie_principal_id, property.clone(), false),
+            (charlie_principal_id, property.clone(), true),
         )
         .expect("Failed to check rate limit after clearing");
         

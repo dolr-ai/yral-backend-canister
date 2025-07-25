@@ -59,7 +59,7 @@ impl CanisterData {
         if self.blacklist.contains(property) || self.blacklist.contains("all") {
             return true;
         }
-        
+
         if let Some(status) =
             self.get_rate_limit_status_with_property(principal, property, is_registered)
         {
@@ -112,10 +112,10 @@ impl CanisterData {
         is_registered: bool,
     ) -> Option<RateLimitStatus> {
         let key = RateLimitKey::new(*principal, property.to_string());
-        
+        let current_time = ic_cdk::api::time() / 1_000_000_000;
+
         // Check if blacklisted first - if so, always return a status showing rate limit exceeded
         if self.blacklist.contains(property) || self.blacklist.contains("all") {
-            let current_time = ic_cdk::api::time() / 1_000_000_000;
             return Some(RateLimitStatus {
                 principal: *principal,
                 request_count: 1, // Any value >= 0 will exceed max_requests of 0
@@ -123,34 +123,42 @@ impl CanisterData {
                 is_limited: true, // Always limited when blacklisted
             });
         }
-        
-        // If not blacklisted, proceed with normal rate limiting logic
-        self.rate_limits.get(&key).map(|entry| {
-            let max_requests = if let Some(config) = &entry.config {
-                config.max_requests_per_window
-            } else if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
-                // Use property-specific config based on registration status
-                if is_registered {
-                    prop_config.max_requests_per_window_registered
-                } else {
-                    prop_config.max_requests_per_window_unregistered
-                }
-            } else {
-                // Use default config based on registration status
-                if is_registered {
-                    self.default_config.max_requests_per_window_registered
-                } else {
-                    self.default_config.max_requests_per_window_unregistered
-                }
-            };
 
-            let is_limited = entry.request_count >= max_requests;
-            RateLimitStatus {
-                principal: *principal,
-                request_count: entry.request_count,
-                window_start: entry.window_start,
-                is_limited,
+        // Create dummy entry for when no entry exists
+        let dummy_entry = RateLimitEntry {
+            request_count: 0,
+            window_start: current_time,
+            config: None,
+        };
+
+        // Get entry or use dummy
+        let entry = self.rate_limits.get(&key).unwrap_or(dummy_entry);
+
+        let max_requests = if let Some(config) = &entry.config {
+            config.max_requests_per_window
+        } else if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
+            // Use property-specific config based on registration status
+            if is_registered {
+                prop_config.max_requests_per_window_registered
+            } else {
+                prop_config.max_requests_per_window_unregistered
             }
+        } else {
+            // Use default config based on registration status
+            if is_registered {
+                self.default_config.max_requests_per_window_registered
+            } else {
+                self.default_config.max_requests_per_window_unregistered
+            }
+        };
+
+        let is_limited = max_requests == 0 || entry.request_count >= max_requests;
+
+        Some(RateLimitStatus {
+            principal: *principal,
+            request_count: entry.request_count,
+            window_start: entry.window_start,
+            is_limited,
         })
     }
 
@@ -231,7 +239,8 @@ impl CanisterData {
     pub fn get_all_property_configs(&self) -> Vec<PropertyRateLimitConfig> {
         self.property_configs
             .iter()
-            .map(|(_, v)| v.clone())
+            .map(|(_, v)| v)
+            .cloned()
             .collect()
     }
 

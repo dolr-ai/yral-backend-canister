@@ -12,7 +12,7 @@ fn test_get_rate_limit_status() {
     
     // Note: We don't register the user initially to test the 'no status' case
 
-    // Initially, there should be no status for the principal
+    // Initially, there should be a default status for the principal (after the change)
     let status = update::<_, Option<RateLimitStatus>>(
         &pocket_ic,
         rate_limits_canister,
@@ -22,25 +22,35 @@ fn test_get_rate_limit_status() {
     )
     .expect("Failed to get rate limit status");
 
-    assert!(status.is_none(), "Expected no status initially");
+    assert!(status.is_some(), "Expected a default status");
+    let initial_status = status.unwrap();
+    assert_eq!(initial_status.principal, charlie_principal_id);
+    assert_eq!(initial_status.request_count, 0);
+    // Unregistered users with max_requests=0 are always rate limited
+    assert!(initial_status.is_limited, "Unregistered user should be rate limited with max_requests=0");
 
-    // Increment request count to create a status
-    let _ = update::<_, RateLimitResult>(
+    // Test with registered user to increment request count
+    let result = update::<_, RateLimitResult>(
         &pocket_ic,
         rate_limits_canister,
         charlie_principal_id,
         "increment_request_count",
-        (charlie_principal_id, "default".to_string(), false),
+        (charlie_principal_id, "default".to_string(), true), // registered=true
     )
     .expect("Failed to increment request count");
+    
+    match result {
+        RateLimitResult::Ok(msg) => println!("Increment result: {}", msg),
+        RateLimitResult::Err(e) => panic!("Failed to increment: {}", e),
+    }
 
-    // Now there should be a status
+    // Check status after incrementing for registered user
     let status = update::<_, Option<RateLimitStatus>>(
         &pocket_ic,
         rate_limits_canister,
         charlie_principal_id,
         "get_rate_limit_status",
-        (charlie_principal_id, "default".to_string(), false),
+        (charlie_principal_id, "default".to_string(), true),
     )
     .expect("Failed to get rate limit status");
 
@@ -48,7 +58,7 @@ fn test_get_rate_limit_status() {
     let status = status.unwrap();
     assert_eq!(status.principal, charlie_principal_id);
     assert_eq!(status.request_count, 1);
-    // Since the user is unregistered (is_registered: false), they should be rate limited after 1 request
-    assert!(status.is_limited, "Unregistered user should be rate limited after 1 request");
+    // Registered users have max_requests=1 by default, so they should be rate limited after 1 request
+    assert!(status.is_limited, "Registered user should be rate limited after 1 request with default config");
     assert!(status.window_start > 0);
 }
