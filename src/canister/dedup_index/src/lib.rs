@@ -7,7 +7,8 @@ use data_model::CanisterData;
 use ic_cdk::{export_candid, update};
 use ic_cdk_macros::query;
 use shared_utils::canister_specific::dedup_index::{
-    LISTING_SIZE_LIMIT_EXCLUSIVE, ListArgs, ListError, VideoHash,
+    LISTING_SIZE_LIMIT_EXCLUSIVE, ListArgs, ListError, RemoveVideoIdArgs, VideoHash,
+    VideoListByHash,
 };
 use shared_utils::service::ServiceInitArgs;
 use shared_utils::{
@@ -22,17 +23,20 @@ thread_local! {
 #[update(guard = "is_caller_controller_or_global_admin")]
 fn add_video_to_index(video_id: VideoId, (video_hash, timestamp): Video) {
     DEDUP_INDEX.with_borrow_mut(|CanisterData { index, .. }| {
-        let Some(ref mut videos) = index.get(&video_id) else {
+        let Some(mut videos) = index.get(&video_hash) else {
             index.insert(video_hash, Videos([(video_id, timestamp)].into()));
             return;
         };
 
-        videos.insert((video_id, timestamp));
+        videos.insert((video_id.clone(), timestamp));
+
+        index.remove(&video_hash);
+        index.insert(video_hash, videos);
     })
 }
 
 #[query]
-fn is_duplicate(video_hash: String) -> bool {
+fn is_duplicate(video_hash: VideoHash) -> bool {
     DEDUP_INDEX.with_borrow(|CanisterData { index, .. }| index.contains_key(&video_hash))
 }
 
@@ -54,6 +58,45 @@ fn list_hashes(ListArgs { page, size }: ListArgs) -> Result<Vec<(VideoHash, Vide
             return Err(ListError::PageOutOfRange);
         }
         Ok(index.iter().skip(start_idx).take(size).collect())
+    })
+}
+
+#[query]
+fn get_videos_for_hash(video_hash: VideoHash) -> Option<VideoListByHash> {
+    DEDUP_INDEX.with_borrow(|CanisterData { index, .. }| {
+        index
+            .get(&video_hash)
+            .map(|tree| tree.iter().cloned().collect())
+    })
+}
+
+#[update(guard = "is_caller_controller_or_global_admin")]
+fn remove_video_id(
+    RemoveVideoIdArgs {
+        video_id,
+        video_hash,
+    }: RemoveVideoIdArgs,
+) -> bool {
+    DEDUP_INDEX.with_borrow_mut(|CanisterData { index, .. }| {
+        let Some(mut videos) = index.get(&video_hash) else {
+            return false;
+        };
+
+        let prev_len = videos.len();
+
+        videos.retain(|(existing_id, _)| existing_id.as_str() != video_id.as_str());
+
+        // something was removed if the lengths do not match
+        let removed = prev_len != videos.len();
+
+        if videos.is_empty() {
+            // no videos for this hash so remove this hash altogether
+            index.remove(&video_hash);
+        } else {
+            index.insert(video_hash, videos);
+        }
+
+        removed
     })
 }
 
