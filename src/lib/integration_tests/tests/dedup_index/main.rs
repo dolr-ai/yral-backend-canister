@@ -135,8 +135,6 @@ fn test_dedup_index_multi_insertion() {
     let list_by_hash = helper::get_video_by_hash(&pic, canister_id, sender, "video_hash")
         .expect("a list must exist");
 
-    println!("list {list_by_hash:?}");
-
     assert_eq!(list_by_hash.len(), 2);
 
     let ids: Vec<_> = list_by_hash.into_iter().map(|(id, _)| id).collect();

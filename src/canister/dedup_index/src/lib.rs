@@ -30,7 +30,6 @@ fn add_video_to_index(video_id: VideoId, (video_hash, timestamp): Video) {
 
         videos.insert((video_id.clone(), timestamp));
 
-        index.remove(&video_hash);
         index.insert(video_hash, videos);
     })
 }
