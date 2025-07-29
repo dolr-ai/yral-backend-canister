@@ -36,6 +36,17 @@
       "package": "notification_store",
       "type": "rust"
     },
+    "user_post_service": {
+      "candid": "./src/canister/user_post_service/can.did",
+      "declaration": {
+        "node_compatibility": true,
+        "output": "./export/declarations/user_post_service"
+      },
+      "gzip": true,
+      "optimize": "size",
+      "package": "user_post_service",
+      "type": "rust"
+    },
     "configuration": {
       "candid": "./src/canister/configuration/can.did",
       "declarations": {

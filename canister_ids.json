@@ -5,14 +5,17 @@
   "data_backup": {
     "ic": "jwktp-qyaaa-aaaag-abcfa-cai"
   },
+  "dedup_index": {
+    "ic": "4drz6-pyaaa-aaaas-qbfoa-cai"
+  },
   "individual_user_template": {
     "ic": "dc47w-kaaaa-aaaak-qav3q-cai"
   },
+  "notification_store": {
+    "ic": "mlj75-eyaaa-aaaaa-qbn5q-cai"
+  },
   "platform_orchestrator": {
     "ic": "74zq4-iqaaa-aaaam-ab53a-cai"
-  },
-  "dedup_index": {
-    "ic": "4drz6-pyaaa-aaaas-qbfoa-cai"
   },
   "user_index": {
     "ic": "rimrc-piaaa-aaaao-aaljq-cai"
@@ -22,5 +25,8 @@
   },
   "rate_limits": {
     "ic": "h2jgv-ayaaa-aaaas-qbh4a-cai"
+  },
+  "user_post_service": {
+    "ic": "gxhc3-pqaaa-aaaas-qbh3q-cai"
   }
 }

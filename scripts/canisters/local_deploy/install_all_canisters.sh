@@ -27,6 +27,7 @@ dfx canister create --no-wallet individual_user_template
 dfx canister create --no-wallet user_index
 dfx canister create --no-wallet platform_orchestrator
 dfx canister create --no-wallet notification_store
+dfx canister create --no-wallet user_post_service
 dfx canister create --no-wallet dedup_index
 dfx canister create --no-wallet user_info_service
 dfx canister create --no-wallet rate_limits
@@ -41,6 +42,7 @@ gzip_canister individual_user_template
 gzip_canister user_index
 gzip_canister platform_orchestrator
 gzip_canister notification_store
+gzip_canister user_post_service
 gzip_canister dedup_index
 gzip_canister user_info_service
 gzip_canister rate_limits
@@ -93,6 +95,10 @@ dfx canister install user_index --argument "(record {
 })"
 
 dfx canister install notification_store --argument "(record {
+  version= \"v1.0.0\"
+})"
+
+dfx canister install user_post_service --argument "(record {
   version= \"v1.0.0\"
 })"
 

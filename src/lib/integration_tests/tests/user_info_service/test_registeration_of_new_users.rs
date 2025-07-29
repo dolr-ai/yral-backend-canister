@@ -30,8 +30,8 @@ fn test_registration_of_new_users() {
         &pocket_ic,
         user_service_canister,
         charlie_principal_id,
-        "get_profile_details",
-        (),
+        "get_user_profile_details",
+        (charlie_principal_id,),
     )
     .unwrap()
     .unwrap();
