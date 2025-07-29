@@ -59,6 +59,8 @@ pub fn set_property_rate_limit_config(
     max_requests_per_window_registered: u64,
     max_requests_per_window_unregistered: u64,
     window_duration_seconds: u64,
+    max_requests_per_property_all_users: Option<u64>,
+    property_rate_limit_window_duration_seconds: Option<u64>,
 ) -> RateLimitResult {
     CANISTER_DATA.with(|data| {
         let mut data = data.borrow_mut();
@@ -67,6 +69,8 @@ pub fn set_property_rate_limit_config(
             max_requests_per_window_registered,
             max_requests_per_window_unregistered,
             window_duration_seconds,
+            max_requests_per_property_all_users,
+            property_rate_limit_window_duration_seconds,
         };
         data.set_property_config(config);
         RateLimitResult::Ok(format!("Property rate limit config set for: {}", property))
@@ -147,5 +151,24 @@ pub fn clear_blacklist() -> RateLimitResult {
         let mut data = data.borrow_mut();
         data.clear_blacklist();
         RateLimitResult::Ok("Blacklist cleared".to_string())
+    })
+}
+
+/// Get the current usage count for a property across all users
+#[query]
+pub fn get_property_daily_usage(property: String) -> u64 {
+    CANISTER_DATA.with(|data| data.borrow().get_property_daily_usage(&property))
+}
+
+/// Reset the property-wide rate limit counter (admin only)
+#[update(guard = "is_caller_controller_or_global_admin")]
+pub fn reset_property_daily_limit(property: String) -> RateLimitResult {
+    CANISTER_DATA.with(|data| {
+        let mut data = data.borrow_mut();
+        data.reset_property_daily_limit(&property);
+        RateLimitResult::Ok(format!(
+            "Property-wide rate limit counter reset for: {}",
+            property
+        ))
     })
 }

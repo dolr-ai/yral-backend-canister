@@ -34,6 +34,8 @@ pub struct PropertyRateLimitConfig {
     pub max_requests_per_window_registered: u64,
     pub max_requests_per_window_unregistered: u64,
     pub window_duration_seconds: u64,
+    pub max_requests_per_property_all_users: Option<u64>,
+    pub property_rate_limit_window_duration_seconds: Option<u64>,
 }
 
 impl Storable for PropertyRateLimitConfig {

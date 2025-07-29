@@ -19,5 +19,8 @@
   },
   "user_info_service": {
     "ic": "ivkka-7qaaa-aaaas-qbg3q-cai"
+  },
+  "rate_limits": {
+    "ic": "h2jgv-ayaaa-aaaas-qbh4a-cai"
   }
 }

@@ -1,8 +1,7 @@
 pub mod memory;
-pub mod tests;
 use candid::Principal;
 use ic_stable_structures::StableBTreeMap;
-use memory::{Memory, get_property_configs_memory, get_rate_limits_memory};
+use memory::{Memory, get_property_configs_memory, get_rate_limits_memory, get_property_rate_limits_memory};
 use serde::{Deserialize, Serialize};
 use shared_utils::canister_specific::rate_limits::types::{RateLimitEntry, RateLimitKey};
 use shared_utils::canister_specific::rate_limits::{
@@ -17,6 +16,8 @@ pub struct CanisterData {
     pub rate_limits: StableBTreeMap<RateLimitKey, RateLimitEntry, Memory>,
     #[serde(skip, default = "init_property_configs")]
     pub property_configs: StableBTreeMap<String, PropertyRateLimitConfig, Memory>,
+    #[serde(skip, default = "init_property_rate_limits")]
+    pub property_rate_limits: StableBTreeMap<String, RateLimitEntry, Memory>,
     pub version: String,
     pub default_config: GlobalRateLimitConfig,
     pub blacklist: HashSet<String>,
@@ -36,11 +37,16 @@ fn init_property_configs() -> StableBTreeMap<String, PropertyRateLimitConfig, Me
     StableBTreeMap::init(get_property_configs_memory())
 }
 
+fn init_property_rate_limits() -> StableBTreeMap<String, RateLimitEntry, Memory> {
+    StableBTreeMap::init(get_property_rate_limits_memory())
+}
+
 impl Default for CanisterData {
     fn default() -> Self {
         Self {
             rate_limits: init_rate_limits(),
             property_configs: init_property_configs(),
+            property_rate_limits: init_property_rate_limits(),
             version: "v1.0.0".into(),
             default_config: GlobalRateLimitConfig::default(),
             blacklist: HashSet::new(),
@@ -60,6 +66,11 @@ impl CanisterData {
             return true;
         }
 
+        // Check property-wide daily rate limit first
+        if self.is_property_daily_rate_limited(property) {
+            return true;
+        }
+
         if let Some(status) =
             self.get_rate_limit_status_with_property(principal, property, is_registered)
         {
@@ -73,6 +84,7 @@ impl CanisterData {
         let current_time = ic_cdk::api::time() / 1_000_000_000; // Convert nanoseconds to seconds
         let key = RateLimitKey::new(*principal, property.to_string());
 
+        // First, increment the per-principal counter
         let entry = if let Some(mut existing) = self.rate_limits.get(&key) {
             // Determine window duration from config, property config, or default
             let window_duration = if let Some(config) = &existing.config {
@@ -103,6 +115,36 @@ impl CanisterData {
         };
 
         self.rate_limits.insert(key, entry);
+
+        // Then, increment the property-wide counter if configured
+        if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
+            if prop_config.max_requests_per_property_all_users.is_some() {
+                let window_duration = prop_config.property_rate_limit_window_duration_seconds
+                    .unwrap_or(86400); // Default to 24 hours
+                
+                let property_entry = if let Some(mut existing) = self.property_rate_limits.get(&property.to_string()) {
+                    // Check if we need to reset the window
+                    if current_time >= existing.window_start + window_duration {
+                        RateLimitEntry {
+                            request_count: 1,
+                            window_start: current_time,
+                            config: None,
+                        }
+                    } else {
+                        existing.request_count += 1;
+                        existing
+                    }
+                } else {
+                    RateLimitEntry {
+                        request_count: 1,
+                        window_start: current_time,
+                        config: None,
+                    }
+                };
+
+                self.property_rate_limits.insert(property.to_string(), property_entry);
+            }
+        }
     }
 
     pub fn get_rate_limit_status_with_property(
@@ -124,6 +166,23 @@ impl CanisterData {
             });
         }
 
+        // Check property-wide daily rate limit
+        if self.is_property_daily_rate_limited(property) {
+            // Get the principal's current count for the status
+            let entry = self.rate_limits.get(&key).unwrap_or(RateLimitEntry {
+                request_count: 0,
+                window_start: current_time,
+                config: None,
+            });
+            
+            return Some(RateLimitStatus {
+                principal: *principal,
+                request_count: entry.request_count,
+                window_start: entry.window_start,
+                is_limited: true, // Limited due to property-wide limit
+            });
+        }
+
         // Create dummy entry for when no entry exists
         let dummy_entry = RateLimitEntry {
             request_count: 0,
@@ -134,25 +193,31 @@ impl CanisterData {
         // Get entry or use dummy
         let entry = self.rate_limits.get(&key).unwrap_or(dummy_entry);
 
-        let max_requests = if let Some(config) = &entry.config {
-            config.max_requests_per_window
+        let (max_requests, window_duration) = if let Some(config) = &entry.config {
+            (config.max_requests_per_window, config.window_duration_seconds)
         } else if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
             // Use property-specific config based on registration status
-            if is_registered {
+            let max_req = if is_registered {
                 prop_config.max_requests_per_window_registered
             } else {
                 prop_config.max_requests_per_window_unregistered
-            }
+            };
+            (max_req, prop_config.window_duration_seconds)
         } else {
             // Use default config based on registration status
-            if is_registered {
+            let max_req = if is_registered {
                 self.default_config.max_requests_per_window_registered
             } else {
                 self.default_config.max_requests_per_window_unregistered
-            }
+            };
+            (max_req, self.default_config.window_duration_seconds)
         };
 
-        let is_limited = max_requests == 0 || entry.request_count >= max_requests;
+        // Check if we're still within the window
+        let within_window = current_time < entry.window_start + window_duration;
+        
+        // Only limited if within window AND exceeded max requests
+        let is_limited = within_window && (max_requests == 0 || entry.request_count >= max_requests);
 
         Some(RateLimitStatus {
             principal: *principal,
@@ -227,9 +292,7 @@ impl CanisterData {
     }
 
     pub fn get_property_config(&self, property: &str) -> Option<PropertyRateLimitConfig> {
-        self.property_configs
-            .get(&property.to_string())
-            .map(|c| c.clone())
+        self.property_configs.get(&property.to_string()).map(|c| c)
     }
 
     pub fn remove_property_config(&mut self, property: &str) {
@@ -239,8 +302,7 @@ impl CanisterData {
     pub fn get_all_property_configs(&self) -> Vec<PropertyRateLimitConfig> {
         self.property_configs
             .iter()
-            .map(|(_, v)| v)
-            .cloned()
+            .map(|(_, v)| v.clone())
             .collect()
     }
 
@@ -262,5 +324,50 @@ impl CanisterData {
 
     pub fn is_blacklisted(&self, property: &str) -> bool {
         self.blacklist.contains(property) || self.blacklist.contains("all")
+    }
+
+    fn is_property_daily_rate_limited(&self, property: &str) -> bool {
+        // First check if property has a property-wide limit configured
+        if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
+            if let Some(property_limit) = prop_config.max_requests_per_property_all_users {
+                // Get the window duration (default to 24 hours if not specified)
+                let window_duration = prop_config.property_rate_limit_window_duration_seconds
+                    .unwrap_or(86400); // Default to 24 hours
+                
+                let current_time = ic_cdk::api::time() / 1_000_000_000;
+                
+                if let Some(entry) = self.property_rate_limits.get(&property.to_string()) {
+                    // Check if we're still within the same window
+                    if current_time < entry.window_start + window_duration {
+                        // Within same window, check if limit exceeded
+                        return entry.request_count >= property_limit;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    pub fn get_property_daily_usage(&self, property: &str) -> u64 {
+        let current_time = ic_cdk::api::time() / 1_000_000_000;
+        
+        if let Some(entry) = self.property_rate_limits.get(&property.to_string()) {
+            // Get the window duration from config
+            let window_duration = if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
+                prop_config.property_rate_limit_window_duration_seconds.unwrap_or(86400)
+            } else {
+                86400 // Default to 24 hours
+            };
+            
+            // Check if we're still within the same window
+            if current_time < entry.window_start + window_duration {
+                return entry.request_count;
+            }
+        }
+        0
+    }
+
+    pub fn reset_property_daily_limit(&mut self, property: &str) {
+        self.property_rate_limits.remove(&property.to_string());
     }
 }
