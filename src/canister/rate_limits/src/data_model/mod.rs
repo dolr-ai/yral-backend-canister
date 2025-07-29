@@ -1,11 +1,12 @@
 pub mod memory;
 use candid::Principal;
 use ic_stable_structures::StableBTreeMap;
-use memory::{Memory, get_property_configs_memory, get_rate_limits_memory, get_property_rate_limits_memory};
+use memory::{Memory, get_property_configs_memory, get_rate_limits_memory, get_property_rate_limits_memory, get_video_gen_requests_memory, get_user_request_counters_memory};
 use serde::{Deserialize, Serialize};
 use shared_utils::canister_specific::rate_limits::types::{RateLimitEntry, RateLimitKey};
 use shared_utils::canister_specific::rate_limits::{
     GlobalRateLimitConfig, PropertyRateLimitConfig, RateLimitConfig, RateLimitStatus,
+    VideoGenRequest, VideoGenRequestKey, VideoGenRequestStatus,
 };
 use shared_utils::service::SetVersion;
 use std::collections::HashSet;
@@ -18,6 +19,10 @@ pub struct CanisterData {
     pub property_configs: StableBTreeMap<String, PropertyRateLimitConfig, Memory>,
     #[serde(skip, default = "init_property_rate_limits")]
     pub property_rate_limits: StableBTreeMap<String, RateLimitEntry, Memory>,
+    #[serde(skip, default = "init_video_gen_requests")]
+    pub video_gen_requests: StableBTreeMap<VideoGenRequestKey, VideoGenRequest, Memory>,
+    #[serde(skip, default = "init_user_request_counters")]
+    pub user_request_counters: StableBTreeMap<Principal, u64, Memory>,
     pub version: String,
     pub default_config: GlobalRateLimitConfig,
     pub blacklist: HashSet<String>,
@@ -41,12 +46,22 @@ fn init_property_rate_limits() -> StableBTreeMap<String, RateLimitEntry, Memory>
     StableBTreeMap::init(get_property_rate_limits_memory())
 }
 
+fn init_video_gen_requests() -> StableBTreeMap<VideoGenRequestKey, VideoGenRequest, Memory> {
+    StableBTreeMap::init(get_video_gen_requests_memory())
+}
+
+fn init_user_request_counters() -> StableBTreeMap<Principal, u64, Memory> {
+    StableBTreeMap::init(get_user_request_counters_memory())
+}
+
 impl Default for CanisterData {
     fn default() -> Self {
         Self {
             rate_limits: init_rate_limits(),
             property_configs: init_property_configs(),
             property_rate_limits: init_property_rate_limits(),
+            video_gen_requests: init_video_gen_requests(),
+            user_request_counters: init_user_request_counters(),
             version: "v1.0.0".into(),
             default_config: GlobalRateLimitConfig::default(),
             blacklist: HashSet::new(),
@@ -369,5 +384,93 @@ impl CanisterData {
 
     pub fn reset_property_daily_limit(&mut self, property: &str) {
         self.property_rate_limits.remove(&property.to_string());
+    }
+
+    // Video generation request methods
+    pub fn create_video_gen_request(
+        &mut self,
+        principal: Principal,
+        model_name: String,
+        prompt: String,
+    ) -> VideoGenRequestKey {
+        let current_time = ic_cdk::api::time() / 1_000_000_000; // Convert nanoseconds to seconds
+        
+        // Get current counter for user or initialize to 0
+        let counter = self.user_request_counters.get(&principal).unwrap_or(0);
+        let new_counter = counter + 1;
+        self.user_request_counters.insert(principal, new_counter);
+        
+        let key = VideoGenRequestKey::new(principal, new_counter);
+        let request = VideoGenRequest {
+            model_name,
+            prompt,
+            status: VideoGenRequestStatus::Pending,
+            created_at: current_time,
+            updated_at: current_time,
+        };
+        
+        self.video_gen_requests.insert(key.clone(), request);
+        key
+    }
+
+    pub fn update_video_gen_request_status(
+        &mut self,
+        key: &VideoGenRequestKey,
+        status: VideoGenRequestStatus,
+    ) -> Result<(), String> {
+        let current_time = ic_cdk::api::time() / 1_000_000_000;
+        
+        if let Some(mut request) = self.video_gen_requests.get(key) {
+            request.status = status;
+            request.updated_at = current_time;
+            self.video_gen_requests.insert(key.clone(), request);
+            Ok(())
+        } else {
+            Err("Video generation request not found".to_string())
+        }
+    }
+
+    pub fn get_video_gen_request(&self, key: &VideoGenRequestKey) -> Option<VideoGenRequest> {
+        self.video_gen_requests.get(key)
+    }
+
+    pub fn get_user_video_gen_requests(
+        &self,
+        principal: Principal,
+        start: Option<u64>,
+        limit: Option<u64>,
+    ) -> Vec<(VideoGenRequestKey, VideoGenRequest)> {
+        let max_counter = self.user_request_counters.get(&principal).unwrap_or(0);
+        if max_counter == 0 {
+            return Vec::new();
+        }
+        
+        let limit = limit.unwrap_or(10).min(100); // Default 10, max 100
+        
+        // If start is not provided, start from the most recent (max_counter)
+        // Otherwise, start from the provided counter going backwards
+        let start_counter = start.unwrap_or(max_counter);
+        
+        // Ensure start_counter doesn't exceed max_counter
+        let start_counter = start_counter.min(max_counter);
+        
+        // Calculate the end counter (going backwards)
+        let end_counter = if start_counter > limit {
+            start_counter - limit + 1
+        } else {
+            1
+        };
+        
+        let mut results = Vec::new();
+        
+        // Iterate backwards from start_counter to end_counter
+        for counter in (end_counter..=start_counter).rev() {
+            let key = VideoGenRequestKey::new(principal, counter);
+            if let Some(request) = self.video_gen_requests.get(&key) {
+                results.push((key, request));
+            }
+        }
+        
+        results
     }
 }

@@ -23,11 +23,31 @@ type RateLimitStatus = record {
   request_count : nat64;
 };
 type RateLimitsInitArgs = record { version : text };
+type Result = variant { Ok : VideoGenRequestKey; Err : text };
+type Result_1 = variant { Ok : VideoGenRequestStatus; Err : text };
+type Result_2 = variant { Ok; Err : text };
+type VideoGenRequest = record {
+  status : VideoGenRequestStatus;
+  updated_at : nat64;
+  model_name : text;
+  created_at : nat64;
+  prompt : text;
+};
+type VideoGenRequestKey = record { "principal" : principal; counter : nat64 };
+type VideoGenRequestStatus = variant {
+  Failed : text;
+  Complete : text;
+  Processing;
+  Pending;
+};
 service : (RateLimitsInitArgs) -> {
   add_to_blacklist : (text) -> (RateLimitResult);
   check_rate_limit : (principal, text, bool) -> (RateLimitResult);
   clear_all_rate_limits : () -> (RateLimitResult);
   clear_blacklist : () -> (RateLimitResult);
+  create_video_generation_request : (principal, text, text, text, bool) -> (
+      Result,
+    );
   get_blacklist : () -> (vec text) query;
   get_default_rate_limit_config : () -> (GlobalRateLimitConfig) query;
   get_principal_rate_limit_config : (principal, text) -> (
@@ -39,8 +59,15 @@ service : (RateLimitsInitArgs) -> {
     ) query;
   get_property_rate_limit_configs : () -> (vec PropertyRateLimitConfig) query;
   get_rate_limit_status : (principal, text, bool) -> (opt RateLimitStatus);
+  get_user_video_generation_requests : (principal, opt nat64, opt nat64) -> (
+      vec record { VideoGenRequestKey; VideoGenRequest },
+    ) query;
   get_version : () -> (text) query;
+  get_video_generation_request : (VideoGenRequestKey) -> (
+      opt VideoGenRequest,
+    ) query;
   increment_request_count : (principal, text, bool) -> (RateLimitResult);
+  poll_video_generation_status : (VideoGenRequestKey) -> (Result_1) query;
   remove_from_blacklist : (text) -> (RateLimitResult);
   remove_property_rate_limit_config : (text) -> (RateLimitResult);
   reset_all_principal_rate_limits : (principal) -> (RateLimitResult);
@@ -58,4 +85,8 @@ service : (RateLimitsInitArgs) -> {
       opt nat64,
     ) -> (RateLimitResult);
   update_default_rate_limit_config : (nat64, nat64, nat64) -> (RateLimitResult);
+  update_video_generation_status : (
+      VideoGenRequestKey,
+      VideoGenRequestStatus,
+    ) -> (Result_2);
 }
