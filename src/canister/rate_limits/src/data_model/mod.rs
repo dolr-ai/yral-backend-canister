@@ -162,6 +162,45 @@ impl CanisterData {
         }
     }
 
+    pub fn decrement_request_with_property(&mut self, principal: &Principal, property: &str) {
+        let current_time = ic_cdk::api::time() / 1_000_000_000; // Convert nanoseconds to seconds
+        let key = RateLimitKey::new(*principal, property.to_string());
+
+        // First, decrement the per-principal counter
+        if let Some(mut entry) = self.rate_limits.get(&key) {
+            // Determine window duration from config, property config, or default
+            let window_duration = if let Some(config) = &entry.config {
+                config.window_duration_seconds
+            } else if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
+                prop_config.window_duration_seconds
+            } else {
+                self.default_config.window_duration_seconds
+            };
+
+            // Only decrement if we're still within the same window and count is greater than 0
+            if current_time < entry.window_start + window_duration && entry.request_count > 0 {
+                entry.request_count -= 1;
+                self.rate_limits.insert(key, entry);
+            }
+        }
+
+        // Then, decrement the property-wide counter if configured
+        if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
+            if prop_config.max_requests_per_property_all_users.is_some() {
+                let window_duration = prop_config.property_rate_limit_window_duration_seconds
+                    .unwrap_or(86400); // Default to 24 hours
+                
+                if let Some(mut entry) = self.property_rate_limits.get(&property.to_string()) {
+                    // Only decrement if we're still within the same window and count is greater than 0
+                    if current_time < entry.window_start + window_duration && entry.request_count > 0 {
+                        entry.request_count -= 1;
+                        self.property_rate_limits.insert(property.to_string(), entry);
+                    }
+                }
+            }
+        }
+    }
+
     pub fn get_rate_limit_status_with_property(
         &self,
         principal: &Principal,

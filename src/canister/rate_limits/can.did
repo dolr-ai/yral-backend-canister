@@ -24,8 +24,8 @@ type RateLimitStatus = record {
 };
 type RateLimitsInitArgs = record { version : text };
 type Result = variant { Ok : VideoGenRequestKey; Err : text };
-type Result_1 = variant { Ok : VideoGenRequestStatus; Err : text };
-type Result_2 = variant { Ok; Err : text };
+type Result_1 = variant { Ok; Err : text };
+type Result_2 = variant { Ok : VideoGenRequestStatus; Err : text };
 type VideoGenRequest = record {
   status : VideoGenRequestStatus;
   updated_at : nat64;
@@ -48,6 +48,7 @@ service : (RateLimitsInitArgs) -> {
   create_video_generation_request : (principal, text, text, text, bool) -> (
       Result,
     );
+  decrement_video_generation_counter : (VideoGenRequestKey, text) -> (Result_1);
   get_blacklist : () -> (vec text) query;
   get_default_rate_limit_config : () -> (GlobalRateLimitConfig) query;
   get_principal_rate_limit_config : (principal, text) -> (
@@ -67,7 +68,7 @@ service : (RateLimitsInitArgs) -> {
       opt VideoGenRequest,
     ) query;
   increment_request_count : (principal, text, bool) -> (RateLimitResult);
-  poll_video_generation_status : (VideoGenRequestKey) -> (Result_1) query;
+  poll_video_generation_status : (VideoGenRequestKey) -> (Result_2) query;
   remove_from_blacklist : (text) -> (RateLimitResult);
   remove_property_rate_limit_config : (text) -> (RateLimitResult);
   reset_all_principal_rate_limits : (principal) -> (RateLimitResult);
@@ -88,5 +89,5 @@ service : (RateLimitsInitArgs) -> {
   update_video_generation_status : (
       VideoGenRequestKey,
       VideoGenRequestStatus,
-    ) -> (Result_2);
+    ) -> (Result_1);
 }

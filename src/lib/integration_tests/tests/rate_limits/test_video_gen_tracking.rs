@@ -1,4 +1,4 @@
-use candid::{CandidType, Deserialize, Principal};
+use candid::Principal;
 use test_utils::canister_calls::{query, update};
 use test_utils::setup::{
     env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned,
@@ -477,6 +477,178 @@ fn test_poll_nonexistent_request() {
     assert!(poll_result.is_err());
     assert_eq!(
         poll_result.unwrap_err(),
+        "Video generation request not found"
+    );
+}
+
+#[test]
+fn test_decrement_video_generation_counter() {
+    let (pocket_ic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let admin = get_global_super_admin_principal_id();
+    let test_user = Principal::from_text("xkbqi-2qaaa-aaaah-qbpqq-cai").unwrap();
+
+    // Register user
+    register_user_for_testing(&pocket_ic, &service_canisters, test_user).unwrap();
+
+    // Set a low rate limit to test the decrement functionality
+    let _config_result = update::<_, RateLimitResult>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "set_property_rate_limit_config",
+        (
+            "VIDEOGEN".to_string(),
+            3u64,        // max_requests_per_window_registered
+            2u64,        // max_requests_per_window_unregistered
+            300u64,      // window_duration_seconds (5 minutes)
+            None::<u64>, // max_requests_per_property_all_users
+            None::<u64>, // property_rate_limit_window_duration_seconds
+        ),
+    )
+    .expect("Failed to set property rate limit config");
+
+    // Create two requests successfully
+    let mut keys = vec![];
+    for i in 0..2 {
+        let result = update::<_, Result<VideoGenRequestKey, String>>(
+            &pocket_ic,
+            service_canisters.rate_limits_canister_id,
+            admin,
+            "create_video_generation_request",
+            (
+                test_user,
+                "VEO3".to_string(),
+                format!("Test prompt {}", i),
+                "VIDEOGEN".to_string(),
+                true,
+            ),
+        )
+        .expect("Failed to call create_video_generation_request");
+
+        assert!(result.is_ok(), "Request {} should succeed", i + 1);
+        keys.push(result.unwrap());
+    }
+
+    // Update the second request to Failed status
+    let failed_key = keys[1].clone();
+    let update_result = update::<_, Result<(), String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "update_video_generation_status",
+        (
+            failed_key.clone(),
+            VideoGenRequestStatus::Failed("Model error: generation failed".to_string()),
+        ),
+    )
+    .expect("Failed to call update_video_generation_status");
+
+    assert!(update_result.is_ok());
+
+    // Now decrement the counter for the failed request
+    let decrement_result = update::<_, Result<(), String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "decrement_video_generation_counter",
+        (failed_key.clone(), "VIDEOGEN".to_string()),
+    )
+    .expect("Failed to call decrement_video_generation_counter");
+
+    assert!(decrement_result.is_ok());
+
+    // Now we should be able to create another request (since we decremented the counter)
+    let result = update::<_, Result<VideoGenRequestKey, String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "create_video_generation_request",
+        (
+            test_user,
+            "VEO3".to_string(),
+            "This should succeed after decrement".to_string(),
+            "VIDEOGEN".to_string(),
+            true,
+        ),
+    )
+    .expect("Failed to call create_video_generation_request");
+
+    assert!(result.is_ok(), "Request should succeed after decrement");
+    let new_key = result.unwrap();
+    assert_eq!(new_key.counter, 3); // Should be counter 3
+
+    // Create another one to reach the limit again
+    let result = update::<_, Result<VideoGenRequestKey, String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "create_video_generation_request",
+        (
+            test_user,
+            "VEO3".to_string(),
+            "This should also succeed after decrement".to_string(),
+            "VIDEOGEN".to_string(),
+            true,
+        ),
+    )
+    .expect("Failed to call create_video_generation_request");
+
+    assert!(result.is_ok(), "Fourth request should succeed after decrement");
+    assert_eq!(result.unwrap().counter, 4);
+
+    // Now try to create one more - this should fail (we're at the limit)
+    let result = update::<_, Result<VideoGenRequestKey, String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "create_video_generation_request",
+        (
+            test_user,
+            "VEO3".to_string(),
+            "This should fail".to_string(),
+            "VIDEOGEN".to_string(),
+            true,
+        ),
+    )
+    .expect("Failed to call create_video_generation_request");
+
+    assert!(result.is_err());
+    assert_eq!(result.unwrap_err(), "Rate limit exceeded");
+
+    // Test that decrement only works for failed requests
+    let non_failed_key = keys[0].clone();
+    let decrement_result = update::<_, Result<(), String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "decrement_video_generation_counter",
+        (non_failed_key, "VIDEOGEN".to_string()),
+    )
+    .expect("Failed to call decrement_video_generation_counter");
+
+    assert!(decrement_result.is_err());
+    assert_eq!(
+        decrement_result.unwrap_err(),
+        "Can only decrement counter for failed requests"
+    );
+
+    // Test that decrement fails for non-existent request
+    let fake_key = VideoGenRequestKey {
+        principal: test_user,
+        counter: 999,
+    };
+    let decrement_result = update::<_, Result<(), String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "decrement_video_generation_counter",
+        (fake_key, "VIDEOGEN".to_string()),
+    )
+    .expect("Failed to call decrement_video_generation_counter");
+
+    assert!(decrement_result.is_err());
+    assert_eq!(
+        decrement_result.unwrap_err(),
         "Video generation request not found"
     );
 }

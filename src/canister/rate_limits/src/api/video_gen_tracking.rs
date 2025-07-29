@@ -92,3 +92,33 @@ pub fn poll_video_generation_status(
             .ok_or_else(|| "Video generation request not found".to_string())
     })
 }
+
+/// Decrement the rate limit counter for a failed video generation request
+#[update(guard = "is_caller_controller_or_global_admin")]
+pub async fn decrement_video_generation_counter(
+    key: VideoGenRequestKey,
+    property: String,
+) -> Result<(), String> {
+    // Validate property
+    if property.is_empty() || property.len() > 50 {
+        return Err("Invalid property".to_string());
+    }
+
+    CANISTER_DATA.with(|data| {
+        let mut data = data.borrow_mut();
+        
+        // Verify the request exists and is in failed state
+        if let Some(request) = data.get_video_gen_request(&key) {
+            match request.status {
+                VideoGenRequestStatus::Failed(_) => {
+                    // Decrement the counter for the principal and property
+                    data.decrement_request_with_property(&key.principal, &property);
+                    Ok(())
+                }
+                _ => Err("Can only decrement counter for failed requests".to_string())
+            }
+        } else {
+            Err("Video generation request not found".to_string())
+        }
+    })
+}
