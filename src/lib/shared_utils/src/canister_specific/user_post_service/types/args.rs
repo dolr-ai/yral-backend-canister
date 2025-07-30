@@ -1,5 +1,7 @@
+use std::time::SystemTime;
+
 use candid::{CandidType, Principal};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     canister_specific::user_post_service::types::storage::Post,
@@ -11,13 +13,27 @@ pub struct UserPostServiceInitArgs {
     pub version: String,
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
 pub struct PostDetailsFromFrontend {
     pub id: String,
     pub description: String,
     pub hashtags: Vec<String>,
     pub video_uid: String,
     pub creator_principal: Principal,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub struct PostDetailsForFrontend {
+    pub id: String,
+    pub description: String,
+    pub hashtags: Vec<String>,
+    pub video_uid: String,
+    pub creator_principal: Principal,
+    pub created_at: SystemTime,
+    pub total_view_count: u64,
+    pub like_count: u64,
+    pub created_by_user_principal_id: Principal,
+    pub liked_by_me: bool,
 }
 
 impl From<PostDetailsFromFrontend> for Post {
