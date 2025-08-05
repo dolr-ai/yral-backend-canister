@@ -179,6 +179,7 @@ pub struct VideoGenRequest {
     pub status: VideoGenRequestStatus,
     pub created_at: u64,
     pub updated_at: u64,
+    pub payment_amount: Option<String>,
 }
 
 impl Storable for VideoGenRequest {

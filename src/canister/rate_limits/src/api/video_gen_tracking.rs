@@ -15,6 +15,7 @@ pub async fn create_video_generation_request(
     prompt: String,
     property: String,
     is_registered: bool,
+    payment_amount: Option<String>,
 ) -> Result<VideoGenRequestKey, String> {
     // Validate inputs
     if model_name.is_empty() || model_name.len() > 100 {
@@ -39,7 +40,7 @@ pub async fn create_video_generation_request(
         data.increment_request_with_property(&principal, &property);
 
         // Create the video generation request
-        let key = data.create_video_gen_request(principal, model_name, prompt);
+        let key = data.create_video_gen_request(principal, model_name, prompt, payment_amount);
         Ok(key)
     })
 }

@@ -431,6 +431,7 @@ impl CanisterData {
         principal: Principal,
         model_name: String,
         prompt: String,
+        payment_amount: Option<String>,
     ) -> VideoGenRequestKey {
         let current_time = ic_cdk::api::time() / 1_000_000_000; // Convert nanoseconds to seconds
         
@@ -446,6 +447,7 @@ impl CanisterData {
             status: VideoGenRequestStatus::Pending,
             created_at: current_time,
             updated_at: current_time,
+            payment_amount,
         };
         
         self.video_gen_requests.insert(key.clone(), request);
