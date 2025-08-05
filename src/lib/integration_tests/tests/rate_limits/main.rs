@@ -6,6 +6,7 @@ pub mod test_get_default_rate_limit_config;
 pub mod test_get_principal_rate_limit_config;
 pub mod test_get_rate_limit_status;
 pub mod test_increment_request_count;
+pub mod test_increment_request_count_v1;
 pub mod test_property_rate_limits;
 pub mod test_property_wide_rate_limits;
 pub mod test_reset_rate_limit;

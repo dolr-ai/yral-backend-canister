@@ -425,6 +425,67 @@ impl CanisterData {
         self.property_rate_limits.remove(&property.to_string());
     }
 
+    // Check only property-wide limit for paid requests
+    pub fn is_property_daily_rate_limited_for_paid(&self, property: &str) -> bool {
+        self.is_property_daily_rate_limited(property)
+    }
+
+    // Increment only property counter for paid requests
+    pub fn increment_paid_request_property_only(&mut self, property: &str) {
+        let current_time = ic_cdk::api::time() / 1_000_000_000;
+        
+        // Only increment the property-wide counter if configured
+        if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
+            if prop_config.max_requests_per_property_all_users.is_some() {
+                let window_duration = prop_config.property_rate_limit_window_duration_seconds
+                    .unwrap_or(86400); // Default to 24 hours
+                
+                let property_entry = if let Some(mut existing) = self.property_rate_limits.get(&property.to_string()) {
+                    // Check if we need to reset the window
+                    if current_time >= existing.window_start + window_duration {
+                        RateLimitEntry {
+                            request_count: 1,
+                            window_start: current_time,
+                            config: None,
+                        }
+                    } else {
+                        existing.request_count += 1;
+                        existing
+                    }
+                } else {
+                    RateLimitEntry {
+                        request_count: 1,
+                        window_start: current_time,
+                        config: None,
+                    }
+                };
+
+                self.property_rate_limits.insert(property.to_string(), property_entry);
+            }
+        }
+    }
+
+    // Decrement only property counter (for paid requests)
+    pub fn decrement_property_counter_only(&mut self, property: &str) {
+        let current_time = ic_cdk::api::time() / 1_000_000_000;
+        
+        // Only decrement the property-wide counter if configured
+        if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
+            if prop_config.max_requests_per_property_all_users.is_some() {
+                let window_duration = prop_config.property_rate_limit_window_duration_seconds
+                    .unwrap_or(86400); // Default to 24 hours
+                
+                if let Some(mut entry) = self.property_rate_limits.get(&property.to_string()) {
+                    // Only decrement if we're still within the same window and count is greater than 0
+                    if current_time < entry.window_start + window_duration && entry.request_count > 0 {
+                        entry.request_count -= 1;
+                        self.property_rate_limits.insert(property.to_string(), entry);
+                    }
+                }
+            }
+        }
+    }
+
     // Video generation request methods
     pub fn create_video_gen_request(
         &mut self,

@@ -54,7 +54,19 @@ service : (RateLimitsInitArgs) -> {
       bool,
       opt text,
     ) -> (Result);
+  create_video_generation_request_v1 : (
+      principal,
+      text,
+      text,
+      text,
+      bool,
+      bool,
+      opt text,
+    ) -> (Result);
   decrement_video_generation_counter : (VideoGenRequestKey, text) -> (Result_1);
+  decrement_video_generation_counter_v1 : (VideoGenRequestKey, text) -> (
+      Result_1,
+    );
   get_blacklist : () -> (vec text) query;
   get_default_rate_limit_config : () -> (GlobalRateLimitConfig) query;
   get_principal_rate_limit_config : (principal, text) -> (
