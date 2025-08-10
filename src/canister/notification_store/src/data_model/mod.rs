@@ -16,7 +16,10 @@ pub struct CanisterData {
 
 impl Default for CanisterData{
     fn default() -> Self {
-        Self { notifications: _init_notifications(), version: String::from("v1.0.0") }
+        Self { 
+            notifications: _init_notifications(),
+            version: String::from("v1.0.0") 
+        }
     }
 }
 

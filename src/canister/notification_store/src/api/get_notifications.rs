@@ -11,9 +11,9 @@ fn get_notifications(limit: usize, offset: usize) -> Vec<NotificationData> {
         canister_data
             .notifications
             .get(&caller)
-            .map(|notifications| {
-                notifications
-                    .0
+            .map(|notification_data| {
+                notification_data
+                    .notifications
                     .iter()
                     .skip(offset)
                     .take(limit)
