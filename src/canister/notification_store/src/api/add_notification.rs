@@ -25,8 +25,8 @@ fn add_notification(user_principal: Principal, notification_type: NotificationTy
         
         if notification_data.notifications.len() >= MAX_NOTIFICATIONS_BEFORE_PRUNING {
             // Keep only the most recent notifications (which are at the end)
-            let to_remove = notification_data.notifications.len() - NOTIFICATIONS_TO_KEEP_AFTER_PRUNING;
-            notification_data.notifications.drain(0..to_remove);
+            let start_index = notification_data.notifications.len() - NOTIFICATIONS_TO_KEEP_AFTER_PRUNING;
+            notification_data.notifications = notification_data.notifications[start_index..].to_vec();
             
             // Re-assign notification IDs after pruning
             for (index, notification) in notification_data.notifications.iter_mut().enumerate() {
