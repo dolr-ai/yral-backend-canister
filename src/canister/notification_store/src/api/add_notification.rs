@@ -5,6 +5,9 @@ use shared_utils::{canister_specific::notification_store::types::{error::Notific
 
 use crate::{CANISTER_DATA};
 
+const MAX_NOTIFICATIONS_BEFORE_PRUNING: usize = 1000;
+const NOTIFICATIONS_TO_KEEP_AFTER_PRUNING: usize = 500;
+
 #[update]
 fn add_notification(user_principal: Principal, notification_type: NotificationType) -> Result<(), NotificationStoreError> {
     if user_principal != caller() && is_caller_controller_or_global_admin().is_err() {
@@ -20,9 +23,12 @@ fn add_notification(user_principal: Principal, notification_type: NotificationTy
             created_at: get_current_system_time_from_ic()
         });
         
-        if notification_data.notifications.len() >= 1000 {
-            notification_data.notifications.drain(0..500);
+        if notification_data.notifications.len() >= MAX_NOTIFICATIONS_BEFORE_PRUNING {
+            // Keep only the most recent notifications (which are at the end)
+            let to_remove = notification_data.notifications.len() - NOTIFICATIONS_TO_KEEP_AFTER_PRUNING;
+            notification_data.notifications.drain(0..to_remove);
             
+            // Re-assign notification IDs after pruning
             for (index, notification) in notification_data.notifications.iter_mut().enumerate() {
                 notification.notification_id = index as u64;
             }
