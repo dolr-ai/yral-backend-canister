@@ -1,7 +1,7 @@
 use candid::CandidType;
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::BTreeMap};
 
 use candid::Principal;
 use std::{collections::HashSet, time::SystemTime};
@@ -12,14 +12,27 @@ use crate::common::types::top_posts::post_score_index_item::PostStatus;
 pub struct Post {
     pub id: String,
     pub creator_principal: Principal,
-    pub video_uid: String,
+    pub playback_sources: BTreeMap<VideoSourceType, String>,
     pub description: String,
     pub hashtags: Vec<String>,
+    // will there be additional effort to keep the status in sync with bigquery, specifically, for PostStatus::Deleted
     pub status: PostStatus,
     pub created_at: SystemTime,
     pub likes: HashSet<Principal>,
     pub share_count: u64,
     pub view_stats: PostViewStatistics,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize, Serialize,
+)]
+pub enum VideoSourceType {
+    /// Raw video as uploaded by the publisher
+    ///
+    /// This is guaranteed to exist for every video
+    Raw,
+    /// Hls source as generate by our pipeline
+    Hls,
 }
 
 #[derive(Deserialize, CandidType)]

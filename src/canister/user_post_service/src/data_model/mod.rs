@@ -1,14 +1,13 @@
 pub mod memory;
 
 use candid::Principal;
-use ic_cdk::caller;
 use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
 use serde::{Deserialize, Serialize};
 use shared_utils::{
     canister_specific::user_post_service::types::{
         args::PostDetailsFromFrontend,
         error::UserPostServiceError,
-        storage::{Post, PostIdList},
+        storage::{Post, PostIdList, VideoSourceType},
     },
     common::types::top_posts::post_score_index_item::PostStatus,
 };
@@ -27,6 +26,25 @@ pub struct CanisterData {
 }
 
 impl CanisterData {
+    pub fn update_playback_source(
+        &mut self,
+        post_id: &PostId,
+        source_type: VideoSourceType,
+        source_url: String,
+    ) -> Result<(), String> {
+        // TODO: validate url is valid
+        let Some(mut post) = self.posts.get(post_id) else {
+            return Err("Post not found".into());
+        };
+
+        post.playback_sources.insert(source_type, source_url);
+
+        // update
+        self.add_post(post);
+
+        Ok(())
+    }
+
     pub fn add_post_to_memory(
         &mut self,
         post_from_frontend: PostDetailsFromFrontend,
