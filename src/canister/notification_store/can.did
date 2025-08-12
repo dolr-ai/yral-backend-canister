@@ -30,6 +30,7 @@ type SystemTime = record {
 type VideoUploadPayload = record { video_uid : nat64 };
 service : (NotificationStoreInitArgs) -> {
   add_notification : (principal, NotificationType) -> (Result);
+  get_notification_panel_viewed : () -> (opt SystemTime) query;
   get_notifications : (nat64, nat64) -> (vec NotificationData) query;
   get_version : () -> (text) query;
   set_notification_panel_viewed : () -> (Result);
