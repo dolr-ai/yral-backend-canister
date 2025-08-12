@@ -6,13 +6,15 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, CandidType)]
-pub struct Notification(pub Vec<NotificationData>);
+pub struct Notification {
+    pub notifications: Vec<NotificationData>,
+    pub last_viewed: Option<SystemTime>,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, CandidType)]
 pub struct NotificationData {
     pub notification_id: u64,
     pub payload: NotificationType,
-    pub read: bool,
     pub created_at: std::time::SystemTime,
 }
 

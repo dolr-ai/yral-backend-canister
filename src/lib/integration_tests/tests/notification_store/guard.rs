@@ -1,7 +1,7 @@
 use candid::Encode;
 use pocket_ic::WasmResult;
 use shared_utils::{canister_specific::notification_store::types::{error::NotificationStoreError, notification::{NotificationData, NotificationType, VideoUploadPayload}}, common::types::known_principal::KnownPrincipalType};
-use test_utils::setup::{env::pocket_ic_env::{get_new_pocket_ic_env, get_new_pocket_ic_env_with_service_canisters_provisioned}, test_constants::{get_mock_user_alice_principal_id, get_mock_user_charlie_principal_id}};
+use test_utils::setup::{env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned, test_constants::{get_mock_user_alice_principal_id, get_mock_user_charlie_principal_id}};
 
 #[test]
 fn test_notification_authorization() {
