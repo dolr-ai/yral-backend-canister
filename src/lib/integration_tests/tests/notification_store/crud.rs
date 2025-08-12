@@ -110,8 +110,8 @@ fn test_auto_prune_notifications() {
     
     assert_eq!(notifications.len(), 500);
     
-    assert_eq!(notifications[0].notification_id, 0);
-    assert_eq!(notifications[499].notification_id, 499);
+    assert_eq!(notifications[0].notification_id, 500);
+    assert_eq!(notifications[499].notification_id, 999);
     
     // Verify we have the most recent notifications (video_uid 500-999)
     // The oldest remaining notification should have video_uid 500
