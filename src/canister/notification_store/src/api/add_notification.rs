@@ -27,11 +27,6 @@ fn add_notification(user_principal: Principal, notification_type: NotificationTy
             // Keep only the most recent notifications (which are at the end)
             let start_index = notification_data.notifications.len() - NOTIFICATIONS_TO_KEEP_AFTER_PRUNING;
             notification_data.notifications = notification_data.notifications[start_index..].to_vec();
-            
-            // Re-assign notification IDs after pruning
-            for (index, notification) in notification_data.notifications.iter_mut().enumerate() {
-                notification.notification_id = index as u64;
-            }
         }
         
         map.borrow_mut().notifications.insert(user_principal, notification_data);
