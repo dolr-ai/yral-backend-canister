@@ -13,15 +13,14 @@ fn test_check_session_type_for_user_info_service() {
 
     let user_info_service_canister = service_canisters.user_info_service_canister_id;
     let charlie_principal_id = get_mock_user_charlie_principal_id();
-    let global_admin = get_global_super_admin_principal_id();
 
     // First, register the user
     let registration_result = update::<_, Result<(), String>>(
         &pocket_ic,
         user_info_service_canister,
-        global_admin,
+        charlie_principal_id,
         "register_new_user",
-        (charlie_principal_id,),
+        (),
     )
     .expect("Failed to register new user");
 

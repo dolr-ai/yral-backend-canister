@@ -20,9 +20,9 @@ fn test_delete_user_for_user_info_service() {
     let registration_result = update::<_, Result<(), String>>(
         &pocket_ic,
         user_service_canister,
-        global_admin,
+        charlie_principal_id,
         "register_new_user",
-        (charlie_principal_id,),
+        (),
     )
     .expect("Failed to register new user");
 
@@ -150,16 +150,15 @@ fn test_user_can_delete_their_own_info() {
     let (pocket_ic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
 
     let user_service_canister = service_canisters.user_info_service_canister_id;
-    let global_admin = get_global_super_admin_principal_id();
     let charlie_principal_id = get_mock_user_charlie_principal_id();
 
     // Register the user
     let registration_result = update::<_, Result<(), String>>(
         &pocket_ic,
         user_service_canister,
-        global_admin,
+        charlie_principal_id,
         "register_new_user",
-        (charlie_principal_id,),
+        (),
     )
     .expect("Failed to register new user");
 

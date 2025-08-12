@@ -17,7 +17,7 @@ service : (UserInfoServiceInitArgs) -> {
   get_user_profile_details : (principal) -> (Result_1) query;
   get_user_session_type : (principal) -> (Result_2) query;
   get_version : () -> (text) query;
-  register_new_user : (principal) -> (Result);
+  register_new_user : () -> (Result);
   update_session_type : (principal, SessionType) -> (Result);
   update_user_last_access_time : (principal) -> (Result);
 }
