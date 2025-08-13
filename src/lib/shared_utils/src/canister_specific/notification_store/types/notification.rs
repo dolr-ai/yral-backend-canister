@@ -3,7 +3,8 @@ use std::{borrow::Cow, time::SystemTime};
 use candid::{CandidType, Principal};
 use ciborium::de;
 use ic_stable_structures::{storable::Bound, Storable};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, CandidType)]
 pub struct Notification {
@@ -21,13 +22,13 @@ pub struct NotificationData {
 #[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]
 pub struct LikedPayload {
     pub by_user_principal: Principal,
-    pub post_id: u64,
+    pub post_id: String,
 }
 
 #[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]
 pub struct VideoUploadPayload {
     #[serde(alias = "video_id")]
-    pub video_uid: u64,
+    pub video_uid: String,
 }
 
 #[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]
