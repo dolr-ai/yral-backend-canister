@@ -11,7 +11,7 @@ fn test_crud() {
 
     let alice_principal = get_mock_user_alice_principal_id();
     let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", Encode!(&alice_principal, &NotificationType::VideoUpload(VideoUploadPayload {
-        video_uid: 1,
+        video_uid: 1.to_string(),
     })).unwrap()).unwrap();
     let res: Result<(), NotificationStoreError> = match res {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
@@ -27,7 +27,7 @@ fn test_crud() {
 
     assert_eq!(notifications.len(), 1);
     assert_eq!(notifications[0].payload, NotificationType::VideoUpload(VideoUploadPayload {
-        video_uid: 1,
+        video_uid: 1.to_string(),
     }));
 
     let res = pic.update_call(notification_store_canister_id, alice_principal, "set_notification_panel_viewed", candid::encode_args(()).unwrap()).unwrap();
@@ -46,7 +46,7 @@ fn test_increment_notification_id() {
 
     let alice_principal = get_mock_user_alice_principal_id();
     let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", Encode!(&alice_principal, &NotificationType::VideoUpload(VideoUploadPayload {
-        video_uid: 1,
+        video_uid: 1.to_string(),
     })).unwrap()).unwrap();
     let res: Result<(), NotificationStoreError> = match res {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
@@ -55,7 +55,7 @@ fn test_increment_notification_id() {
     res.unwrap();
 
     let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", Encode!(&alice_principal, &NotificationType::VideoUpload(VideoUploadPayload {
-        video_uid: 2,
+        video_uid: 2.to_string(),
     })).unwrap()).unwrap();
     let res: Result<(), NotificationStoreError> = match res {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
@@ -87,7 +87,7 @@ fn test_auto_prune_notifications() {
             alice_principal, 
             "add_notification", 
             Encode!(&alice_principal, &NotificationType::VideoUpload(VideoUploadPayload {
-                video_uid: i,
+                video_uid: i.to_string(),
             })).unwrap()
         ).unwrap();
         let res: Result<(), NotificationStoreError> = match res {
@@ -116,14 +116,14 @@ fn test_auto_prune_notifications() {
     // Verify we have the most recent notifications (video_uid 500-999)
     // The oldest remaining notification should have video_uid 500
     if let NotificationType::VideoUpload(payload) = &notifications[0].payload {
-        assert_eq!(payload.video_uid, 500);
+        assert_eq!(payload.video_uid, 500.to_string());
     } else {
         panic!("Expected VideoUpload notification type");
     }
     
     // The newest notification should have video_uid 999
     if let NotificationType::VideoUpload(payload) = &notifications[499].payload {
-        assert_eq!(payload.video_uid, 999);
+        assert_eq!(payload.video_uid, 999.to_string());
     } else {
         panic!("Expected VideoUpload notification type");
     }
@@ -153,7 +153,7 @@ fn test_notification_panel_viewed() {
         alice_principal,
         "add_notification",
         Encode!(&alice_principal, &NotificationType::VideoUpload(VideoUploadPayload {
-            video_uid: 1,
+            video_uid: 1.to_string(),
         })).unwrap()
     ).unwrap();
     let res: Result<(), NotificationStoreError> = match res {
@@ -187,7 +187,7 @@ fn test_notification_panel_viewed() {
     
     assert_eq!(notifications.len(), 1);
     assert_eq!(notifications[0].payload, NotificationType::VideoUpload(VideoUploadPayload {
-        video_uid: 1,
+        video_uid: 1.to_string(),
     }));
 }
 
@@ -204,7 +204,7 @@ fn test_pagination() {
             alice_principal,
             "add_notification",
             Encode!(&alice_principal, &NotificationType::VideoUpload(VideoUploadPayload {
-                video_uid: i,
+                video_uid: 1.to_string(),
             })).unwrap()
         ).unwrap();
         let res: Result<(), NotificationStoreError> = match res {
