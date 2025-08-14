@@ -64,7 +64,61 @@ impl Storable for Notification {
     }
 
     fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        let notification: Notification = de::from_reader(bytes.as_ref()).unwrap();
-        notification
+        if let Ok(notification) = de::from_reader::<Notification, _>(bytes.as_ref()) {
+            return notification;
+        }
+        
+        #[derive(Deserialize)]
+        struct OldNotification {
+            notifications: Vec<OldNotificationData>,
+            last_viewed: Option<SystemTime>,
+        }
+        
+        #[derive(Deserialize)]
+        struct OldNotificationData {
+            notification_id: u64,
+            payload: OldNotificationType,
+            created_at: SystemTime,
+        }
+        
+        #[derive(Deserialize)]
+        enum OldNotificationType {
+            Liked(OldLikedPayload),
+            VideoUpload(OldVideoUploadPayload),
+        }
+        
+        #[derive(Deserialize)]
+        struct OldLikedPayload {
+            by_user_principal: Principal,
+            post_id: u64,
+        }
+        
+        #[derive(Deserialize)]
+        struct OldVideoUploadPayload {
+            #[serde(alias = "video_id")]
+            video_uid: u64,
+        }
+        
+        let old: OldNotification = de::from_reader(bytes.as_ref())
+            .expect("Failed to deserialize notification from stable storage");
+        
+        Notification {
+            notifications: old.notifications.into_iter().map(|old_data| {
+                NotificationData {
+                    notification_id: old_data.notification_id,
+                    payload: match old_data.payload {
+                        OldNotificationType::Liked(p) => NotificationType::Liked(LikedPayload {
+                            by_user_principal: p.by_user_principal,
+                            post_id: p.post_id.to_string(),
+                        }),
+                        OldNotificationType::VideoUpload(p) => NotificationType::VideoUpload(VideoUploadPayload {
+                            video_uid: p.video_uid.to_string(),
+                        }),
+                    },
+                    created_at: old_data.created_at,
+                }
+            }).collect(),
+            last_viewed: old.last_viewed,
+        }
     }
 }
