@@ -11,7 +11,7 @@ fn test_notification_authorization() {
 
     let alice_principal = get_mock_user_alice_principal_id();
     let res = pic.update_call(notification_store_canister_id, alice_principal, "add_notification", Encode!(&alice_principal, &NotificationType::VideoUpload(VideoUploadPayload {
-        video_uid: 1,
+        video_uid: 1.to_string(),
     })).unwrap()).unwrap();
     let res: Result<(), NotificationStoreError> = match res {
         WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
@@ -27,7 +27,7 @@ fn test_notification_authorization() {
 
     assert_eq!(notifications.len(), 1);
     assert_eq!(notifications[0].payload, NotificationType::VideoUpload(VideoUploadPayload {
-        video_uid: 1,
+        video_uid: 1.to_string(),
     }));
 
     let charlie_principal = get_mock_user_charlie_principal_id();
