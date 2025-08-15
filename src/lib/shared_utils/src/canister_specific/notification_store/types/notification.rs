@@ -69,56 +69,107 @@ impl Storable for Notification {
         }
         
         #[derive(Deserialize)]
-        struct OldNotification {
-            notifications: Vec<OldNotificationData>,
+        struct NotificationV2 {
+            notifications: Vec<NotificationDataV2>,
             last_viewed: Option<SystemTime>,
         }
         
         #[derive(Deserialize)]
-        struct OldNotificationData {
+        struct NotificationDataV2 {
             notification_id: u64,
-            payload: OldNotificationType,
+            payload: NotificationTypeV2,
             created_at: SystemTime,
         }
         
         #[derive(Deserialize)]
-        enum OldNotificationType {
-            Liked(OldLikedPayload),
-            VideoUpload(OldVideoUploadPayload),
+        enum NotificationTypeV2 {
+            Liked(LikedPayloadV2),
+            VideoUpload(VideoUploadPayloadV2),
         }
         
         #[derive(Deserialize)]
-        struct OldLikedPayload {
+        struct LikedPayloadV2 {
             by_user_principal: Principal,
             post_id: u64,
         }
         
         #[derive(Deserialize)]
-        struct OldVideoUploadPayload {
+        struct VideoUploadPayloadV2 {
             #[serde(alias = "video_id")]
             video_uid: u64,
         }
         
-        let old: OldNotification = de::from_reader(bytes.as_ref())
+        if let Ok(v2) = de::from_reader::<NotificationV2, _>(bytes.as_ref()) {
+            return Notification {
+                notifications: v2.notifications.into_iter().map(|data| {
+                    NotificationData {
+                        notification_id: data.notification_id,
+                        payload: match data.payload {
+                            NotificationTypeV2::Liked(p) => NotificationType::Liked(LikedPayload {
+                                by_user_principal: p.by_user_principal,
+                                post_id: p.post_id.to_string(),
+                            }),
+                            NotificationTypeV2::VideoUpload(p) => NotificationType::VideoUpload(VideoUploadPayload {
+                                video_uid: p.video_uid.to_string(),
+                            }),
+                        },
+                        created_at: data.created_at,
+                    }
+                }).collect(),
+                last_viewed: v2.last_viewed,
+            };
+        }
+        
+        // Try v1 format: tuple struct with Vec and read field
+        #[derive(Deserialize)]
+        struct NotificationV1(Vec<NotificationDataV1>);
+        
+        #[derive(Deserialize)]
+        struct NotificationDataV1 {
+            notification_id: u64,
+            payload: NotificationTypeV1,
+            read: bool,
+            created_at: SystemTime,
+        }
+        
+        #[derive(Deserialize)]
+        enum NotificationTypeV1 {
+            Liked(LikedPayloadV1),
+            VideoUpload(VideoUploadPayloadV1),
+        }
+        
+        #[derive(Deserialize)]
+        struct LikedPayloadV1 {
+            by_user_principal: Principal,
+            post_id: u64,
+        }
+        
+        #[derive(Deserialize)]
+        struct VideoUploadPayloadV1 {
+            #[serde(alias = "video_id")]
+            video_uid: u64,
+        }
+        
+        let v1: NotificationV1 = de::from_reader(bytes.as_ref())
             .expect("Failed to deserialize notification from stable storage");
         
         Notification {
-            notifications: old.notifications.into_iter().map(|old_data| {
+            notifications: v1.0.into_iter().map(|data| {
                 NotificationData {
-                    notification_id: old_data.notification_id,
-                    payload: match old_data.payload {
-                        OldNotificationType::Liked(p) => NotificationType::Liked(LikedPayload {
+                    notification_id: data.notification_id,
+                    payload: match data.payload {
+                        NotificationTypeV1::Liked(p) => NotificationType::Liked(LikedPayload {
                             by_user_principal: p.by_user_principal,
                             post_id: p.post_id.to_string(),
                         }),
-                        OldNotificationType::VideoUpload(p) => NotificationType::VideoUpload(VideoUploadPayload {
+                        NotificationTypeV1::VideoUpload(p) => NotificationType::VideoUpload(VideoUploadPayload {
                             video_uid: p.video_uid.to_string(),
                         }),
                     },
-                    created_at: old_data.created_at,
+                    created_at: data.created_at,
                 }
             }).collect(),
-            last_viewed: old.last_viewed,
+            last_viewed: None, // v1 didn't have last_viewed
         }
     }
 }
