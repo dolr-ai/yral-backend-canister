@@ -70,8 +70,8 @@ fn test_increment_notification_id() {
     };
 
     assert_eq!(notifications.len(), 2);
-    assert_eq!(notifications[0].notification_id, 0);
-    assert_eq!(notifications[1].notification_id, 1);
+    assert_eq!(notifications[0].notification_id, 1);
+    assert_eq!(notifications[1].notification_id, 0);
 }
 
 #[test]
@@ -110,20 +110,20 @@ fn test_auto_prune_notifications() {
     
     assert_eq!(notifications.len(), 500);
     
-    assert_eq!(notifications[0].notification_id, 500);
-    assert_eq!(notifications[499].notification_id, 999);
+    assert_eq!(notifications[0].notification_id, 999);
+    assert_eq!(notifications[499].notification_id, 500);
     
     // Verify we have the most recent notifications (video_uid 500-999)
-    // The oldest remaining notification should have video_uid 500
+    // With reverse order, the newest notification (999) is first
     if let NotificationType::VideoUpload(payload) = &notifications[0].payload {
-        assert_eq!(payload.video_uid, 500.to_string());
+        assert_eq!(payload.video_uid, 999.to_string());
     } else {
         panic!("Expected VideoUpload notification type");
     }
     
-    // The newest notification should have video_uid 999
+    // The oldest remaining notification (500) is last
     if let NotificationType::VideoUpload(payload) = &notifications[499].payload {
-        assert_eq!(payload.video_uid, 999.to_string());
+        assert_eq!(payload.video_uid, 500.to_string());
     } else {
         panic!("Expected VideoUpload notification type");
     }
@@ -226,8 +226,8 @@ fn test_pagination() {
     };
     
     assert_eq!(notifications.len(), 5);
-    assert_eq!(notifications[0].notification_id, 0);
-    assert_eq!(notifications[4].notification_id, 4);
+    assert_eq!(notifications[0].notification_id, 9);
+    assert_eq!(notifications[4].notification_id, 5);
     
     let notifications = pic.query_call(
         notification_store_canister,
@@ -241,8 +241,8 @@ fn test_pagination() {
     };
     
     assert_eq!(notifications.len(), 5);
-    assert_eq!(notifications[0].notification_id, 5);
-    assert_eq!(notifications[4].notification_id, 9);
+    assert_eq!(notifications[0].notification_id, 4);
+    assert_eq!(notifications[4].notification_id, 0);
     
     let notifications = pic.query_call(
         notification_store_canister,
