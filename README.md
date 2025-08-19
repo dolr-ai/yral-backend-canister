@@ -16,7 +16,7 @@ Run the install script to build and deploy canisters. you can skip the test run 
 scripts/canisters/local_deploy/install_all_canisters.sh [-s]
 ```
 
-**NOTE: This will only deploy one subnet-orchestrator (also called user-index in codebase) and will not deploy platform-orchsetrator. Platform-orchestrator needs to be deployed and tested separetly** 
+**NOTE: This will only deploy one subnet-orchestrator (also called user-index in codebase) and will not deploy platform-orchestrator. Platform-orchestrator needs to be deployed and tested separately** 
 
 ## Upgrading locally deployed canisters
 To upgrade locally deployed canisters. Run the following commands
@@ -63,7 +63,7 @@ git checkout main
 ```
 
 ### Step 4
-Run upgrade script to upgrade canistesr locally
+Run upgrade script to upgrade canisters locally
 ```sh
 scripts/canisters/local_deploy/upgrade_all_canisters.sh [-s]
 ```
@@ -115,7 +115,7 @@ To get the hash for canisters:
 To get the hash for canister deployment:
 
 - Go to [Github actions deployment runs](https://github.com/go-bazzinga/hot-or-not-backend-canister/actions/workflows/webclient-deploy.yml)
-- Open the latest succesful run. ([Click to see an example run](https://github.com/go-bazzinga/hot-or-not-backend-canister/actions/runs/4810296657))
+- Open the latest successful run. ([Click to see an example run](https://github.com/go-bazzinga/hot-or-not-backend-canister/actions/runs/4810296657))
 - Go to any of the `Deploy all canisters` jobs. ([Click to see an example job](https://github.com/go-bazzinga/hot-or-not-backend-canister/actions/runs/4900015913/jobs/8750374252))
 - Open one of the `Deploy <canister_name> canister` steps. You should find the `Module hash` in this step. This value should match the value you got locally. ([Click to see an example step](https://github.com/go-bazzinga/hot-or-not-backend-canister/actions/runs/4900015913/jobs/8750374252#step:8:16))
 
@@ -125,4 +125,3 @@ To check the status of the deployment
 - check the status of upgrade for individual canisters in subnet orchestrators and verify the version. Example for one of the subnet orchesrator: [Subnet Orchestrator function](https://dashboard.internetcomputer.org/canister/rimrc-piaaa-aaaao-aaljq-cai#get_index_details_last_upgrade_status)
 
 ---
-
