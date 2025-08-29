@@ -87,7 +87,7 @@ impl Post {
             created_at: self.created_at.clone(),
             total_view_count: self.view_stats.total_view_count,
             like_count: self.likes.len() as u64,
-            created_by_user_principal_id: user,
+            created_by_user_principal_id: self.creator_principal,
             liked_by_me: self.likes.contains(&user),
         }
     }
