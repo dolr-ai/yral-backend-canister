@@ -900,3 +900,98 @@ fn test_get_individual_post_details_by_id_for_user_with_likes() {
     assert_eq!(post_details.like_count, 1);
     assert_eq!(post_details.liked_by_me, false);
 }
+
+// Tests for update_post_status
+use shared_utils::common::types::top_posts::post_score_index_item::PostStatus;
+
+#[test]
+fn test_update_post_status_success() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let admin_principal = get_global_super_admin_principal_id();
+    let alice_principal = get_mock_user_alice_principal_id();
+
+    // Add a post first
+    let post_details = create_test_post_details(
+        "status_test_post",
+        alice_principal,
+        "video_status",
+        "Post for status testing",
+    );
+    let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+
+    // Update post status as admin
+    let result = update::<_, ()>(
+        &pic,
+        user_post_service_canister_id,
+        admin_principal,
+        "update_post_status",
+        (
+            "status_test_post".to_string(),
+            PostStatus::BannedDueToUserReporting,
+        ),
+    );
+    assert!(result.is_ok());
+
+    // Verify status was updated
+    let post = query::<_, Result<Post, UserPostServiceError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_individual_post_details_by_id",
+        ("status_test_post",),
+    )
+    .unwrap();
+    let post = post.unwrap();
+    assert_eq!(post.status, PostStatus::BannedDueToUserReporting);
+}
+
+#[test]
+fn test_update_post_status_unauthorized() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+
+    // Add a post first
+    let post_details = create_test_post_details(
+        "unauth_status_post",
+        alice_principal,
+        "video_unauth_status",
+        "Post for unauthorized status update",
+    );
+    let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+
+    // Try to update post status as non-admin (should fail)
+    let result: Result<Result<(), UserPostServiceError>, Box<dyn std::error::Error>> = update(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "update_post_status",
+        (
+            "unauth_status_post".to_string(),
+            PostStatus::BannedDueToUserReporting,
+        ),
+    );
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_update_post_status_nonexistent_post() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let admin_principal = get_global_super_admin_principal_id();
+
+    // Try to update status of a non-existent post
+    let result = update::<_, ()>(
+        &pic,
+        user_post_service_canister_id,
+        admin_principal,
+        "update_post_status",
+        (
+            "nonexistent_status_post".to_string(),
+            PostStatus::BannedDueToUserReporting,
+        ),
+    );
+    // Should error (likely panic or unwrap error in canister)
+    assert!(result.is_err());
+}
