@@ -1,3 +1,4 @@
+use shared_utils::canister_specific::individual_user_template::types::error::GetPostsOfUserProfileError;
 use shared_utils::canister_specific::user_post_service::types::{
     args::{PostDetailsForFrontend, PostDetailsFromFrontend},
     error::UserPostServiceError,
@@ -52,6 +53,67 @@ fn add_post_as_admin(
             Err(UserPostServiceError::Unauthorized)
         }
     }
+}
+
+#[test]
+fn test_get_posts_of_this_user_profile_with_pagination() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+    let bob_principal = get_mock_user_bob_principal_id();
+
+    // Add multiple posts for Alice
+    for i in 0..5 {
+        let post_details = create_test_post_details(
+            &format!("alice_pagination_post_{}", i),
+            alice_principal,
+            &format!("video_alice_pagination_{}", i),
+            &format!("Alice's pagination post #{}", i),
+        );
+        let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+    }
+
+    // Add multiple posts for Bob
+    for i in 0..3 {
+        let post_details = create_test_post_details(
+            &format!("bob_pagination_post_{}", i),
+            bob_principal,
+            &format!("video_bob_pagination_{}", i),
+            &format!("Bob's pagination post #{}", i),
+        );
+        let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+    }
+
+    // Get Alice's posts with pagination (limit: 3, offset: 0)
+    let posts = query::<_, Result<Vec<Post>, GetPostsOfUserProfileError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_posts_of_this_user_profile_with_pagination",
+        (alice_principal, 0usize, 3usize),
+    );
+    let posts = posts.unwrap().unwrap();
+    assert_eq!(posts.len(), 3);
+    for post in &posts {
+        assert_eq!(post.creator_principal, alice_principal);
+        assert!(post.id.starts_with("alice_pagination_post_"));
+    }
+
+    let posts_res = query::<_, Result<Vec<Post>, GetPostsOfUserProfileError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_posts_of_this_user_profile_with_pagination",
+        (alice_principal, 6usize, 3usize),
+    )
+    .unwrap();
+
+    assert!(posts_res.is_err());
+
+    assert!(matches!(
+        posts_res,
+        Err(GetPostsOfUserProfileError::ReachedEndOfItemsList)
+    ));
 }
 
 #[test]

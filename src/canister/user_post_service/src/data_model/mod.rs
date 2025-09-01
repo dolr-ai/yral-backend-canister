@@ -1,16 +1,20 @@
 pub mod memory;
 
 use candid::Principal;
-use ic_cdk::caller;
 use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
 use serde::{Deserialize, Serialize};
 use shared_utils::{
-    canister_specific::user_post_service::types::{
-        args::{PostDetailsForFrontend, PostDetailsFromFrontend},
-        error::UserPostServiceError,
-        storage::{Post, PostIdList},
+    canister_specific::{
+        individual_user_template::types::error::GetPostsOfUserProfileError,
+        user_post_service::types::{
+            args::PostDetailsForFrontend,
+            args::PostDetailsFromFrontend,
+            error::UserPostServiceError,
+            storage::{Post, PostIdList},
+        },
     },
     common::types::top_posts::post_score_index_item::PostStatus,
+    pagination::{self, PaginationError},
 };
 
 type Memory = VirtualMemory<DefaultMemoryImpl>;
@@ -73,6 +77,45 @@ impl CanisterData {
             .skip(offset)
             .take(limit)
             .collect()
+    }
+
+    pub fn get_posts_of_this_user_profile_with_pagination(
+        &self,
+        creator: Principal,
+        limit: usize,
+        offset: usize,
+    ) -> Result<Vec<Post>, GetPostsOfUserProfileError> {
+        let posts_created_by_user: Vec<Post> = self
+            .posts
+            .iter()
+            .filter(|(_, post)| {
+                post.creator_principal == creator
+                    && post.status != PostStatus::Deleted
+                    && post.status != PostStatus::BannedDueToUserReporting
+            })
+            .map(|(_, post)| post)
+            .collect();
+
+        let (from_inclusive_index, limit) = pagination::get_pagination_bounds_cursor(
+            offset as u64,
+            limit as u64,
+            posts_created_by_user.len() as u64,
+        )
+        .map_err(|e| match e {
+            PaginationError::InvalidBoundsPassed => GetPostsOfUserProfileError::InvalidBoundsPassed,
+            PaginationError::ReachedEndOfItemsList => {
+                GetPostsOfUserProfileError::ReachedEndOfItemsList
+            }
+            PaginationError::ExceededMaxNumberOfItemsAllowedInOneRequest => {
+                GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest
+            }
+        })?;
+
+        Ok(posts_created_by_user
+            .into_iter()
+            .skip(from_inclusive_index as usize)
+            .take(limit as usize)
+            .collect())
     }
 
     pub fn get_post(&self, post_id: &PostId) -> Result<Post, UserPostServiceError> {
