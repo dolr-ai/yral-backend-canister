@@ -1,5 +1,5 @@
 use shared_utils::canister_specific::user_post_service::types::{
-    args::PostDetailsFromFrontend,
+    args::{PostDetailsForFrontend, PostDetailsFromFrontend},
     error::UserPostServiceError,
     storage::{Post, PostViewDetailsFromFrontend},
 };
@@ -702,4 +702,139 @@ fn test_delete_post_nonexistent() {
     .unwrap();
 
     assert!(matches!(result, Err(UserPostServiceError::PostNotFound)));
+}
+
+#[test]
+fn test_get_individual_post_details_by_id_for_user_success() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+    let bob_principal = get_mock_user_bob_principal_id();
+
+    // Add a post first
+    let post_details = create_test_post_details(
+        "test_post_for_user",
+        alice_principal,
+        "video_789",
+        "Test post for user details",
+    );
+    let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+
+    // Get post details as Alice (creator)
+    let result: Result<PostDetailsForFrontend, UserPostServiceError> = query(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_individual_post_details_by_id_for_user",
+        ("test_post_for_user".to_string(), alice_principal),
+    )
+    .unwrap();
+
+    let post_details = result.unwrap();
+    assert_eq!(post_details.id, "test_post_for_user");
+    assert_eq!(post_details.creator_principal, alice_principal);
+    assert_eq!(post_details.video_uid, "video_789");
+    assert_eq!(post_details.description, "Test post for user details");
+    assert_eq!(
+        post_details.hashtags,
+        vec!["test".to_string(), "integration".to_string()]
+    );
+    assert_eq!(post_details.like_count, 0);
+    assert_eq!(post_details.liked_by_me, false);
+
+    // Get post details as Bob (different user)
+    let result: Result<PostDetailsForFrontend, UserPostServiceError> = query(
+        &pic,
+        user_post_service_canister_id,
+        bob_principal,
+        "get_individual_post_details_by_id_for_user",
+        ("test_post_for_user".to_string(), bob_principal),
+    )
+    .unwrap();
+
+    let post_details = result.unwrap();
+    assert_eq!(post_details.id, "test_post_for_user");
+    assert_eq!(post_details.creator_principal, alice_principal);
+    assert_eq!(post_details.video_uid, "video_789");
+    assert_eq!(post_details.description, "Test post for user details");
+    assert_eq!(
+        post_details.hashtags,
+        vec!["test".to_string(), "integration".to_string()]
+    );
+    assert_eq!(post_details.like_count, 0);
+    assert_eq!(post_details.liked_by_me, false);
+}
+
+#[test]
+fn test_get_individual_post_details_by_id_for_user_not_found() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+
+    // Try to get a non-existent post
+    let result: Result<PostDetailsForFrontend, UserPostServiceError> = query(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_individual_post_details_by_id_for_user",
+        ("non_existent_post".to_string(), alice_principal),
+    )
+    .unwrap();
+
+    assert!(matches!(result, Err(UserPostServiceError::PostNotFound)));
+}
+
+#[test]
+fn test_get_individual_post_details_by_id_for_user_with_likes() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+    let bob_principal = get_mock_user_bob_principal_id();
+
+    // Add a post first
+    let post_details = create_test_post_details(
+        "liked_post",
+        alice_principal,
+        "video_likes",
+        "Test post with likes",
+    );
+    let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+
+    // Bob likes the post
+    let _: Result<bool, UserPostServiceError> = update(
+        &pic,
+        user_post_service_canister_id,
+        bob_principal,
+        "update_post_toggle_like_status_by_caller",
+        ("liked_post",),
+    )
+    .unwrap();
+
+    // Get post details as Bob
+    let result: Result<PostDetailsForFrontend, UserPostServiceError> = query(
+        &pic,
+        user_post_service_canister_id,
+        bob_principal,
+        "get_individual_post_details_by_id_for_user",
+        ("liked_post".to_string(), bob_principal),
+    )
+    .unwrap();
+
+    let post_details = result.unwrap();
+    assert_eq!(post_details.like_count, 1);
+    assert_eq!(post_details.liked_by_me, true);
+
+    // Get post details as Alice
+    let result: Result<PostDetailsForFrontend, UserPostServiceError> = query(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_individual_post_details_by_id_for_user",
+        ("liked_post".to_string(), alice_principal),
+    )
+    .unwrap();
+
+    let post_details = result.unwrap();
+    assert_eq!(post_details.like_count, 1);
+    assert_eq!(post_details.liked_by_me, false);
 }
