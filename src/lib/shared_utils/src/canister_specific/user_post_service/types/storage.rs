@@ -6,7 +6,12 @@ use std::borrow::Cow;
 use candid::Principal;
 use std::{collections::HashSet, time::SystemTime};
 
-use crate::common::types::top_posts::post_score_index_item::PostStatus;
+use crate::{
+    canister_specific::user_post_service::types::args::PostDetailsForFrontend,
+    common::types::top_posts::post_score_index_item::PostStatus,
+};
+
+//TODO: Create new struct for PostForFrontend
 
 #[derive(CandidType, Clone, Deserialize, Debug, Serialize)]
 pub struct Post {
@@ -66,6 +71,24 @@ impl Post {
                     self.view_stats.threshold_view_count += 1;
                 }
             }
+        }
+    }
+
+    pub fn get_post_details_for_frontend_for_user(
+        &self,
+        user: Principal,
+    ) -> PostDetailsForFrontend {
+        PostDetailsForFrontend {
+            id: self.id.clone(),
+            description: (self.description.clone()),
+            hashtags: self.hashtags.clone(),
+            video_uid: self.video_uid.clone(),
+            creator_principal: self.creator_principal.clone(),
+            created_at: self.created_at.clone(),
+            total_view_count: self.view_stats.total_view_count,
+            like_count: self.likes.len() as u64,
+            created_by_user_principal_id: self.creator_principal,
+            liked_by_me: self.likes.contains(&user),
         }
     }
 

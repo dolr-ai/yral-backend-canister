@@ -1,13 +1,13 @@
 pub mod memory;
 
 use candid::Principal;
-use ic_cdk::caller;
 use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
 use serde::{Deserialize, Serialize};
 use shared_utils::{
     canister_specific::{
         individual_user_template::types::error::GetPostsOfUserProfileError,
         user_post_service::types::{
+            args::PostDetailsForFrontend,
             args::PostDetailsFromFrontend,
             error::UserPostServiceError,
             storage::{Post, PostIdList},
@@ -48,6 +48,15 @@ impl CanisterData {
 
     pub fn add_post(&mut self, post: Post) -> Option<Post> {
         self.posts.insert(post.id.clone(), post)
+    }
+
+    pub fn get_post_details_for_user(
+        &self,
+        post_id: &PostId,
+        user: Principal,
+    ) -> Result<PostDetailsForFrontend, UserPostServiceError> {
+        let post = self.get_post(post_id)?;
+        Ok(post.get_post_details_for_frontend_for_user(user))
     }
 
     pub fn get_posts_of_this_user_profile_with_pagination_cursor(

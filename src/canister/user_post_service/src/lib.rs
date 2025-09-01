@@ -13,7 +13,7 @@ use shared_utils::canister_specific::user_post_service::types::args::PostDetails
 use shared_utils::canister_specific::user_post_service::types::storage::Post;
 use shared_utils::canister_specific::user_post_service::types::storage::PostViewDetailsFromFrontend;
 use shared_utils::canister_specific::user_post_service::types::{
-    args::UserPostServiceInitArgs, error::UserPostServiceError,
+    args::PostDetailsForFrontend, args::UserPostServiceInitArgs, error::UserPostServiceError,
 };
 
 use crate::data_model::CanisterData;
