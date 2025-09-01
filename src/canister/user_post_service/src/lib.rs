@@ -14,6 +14,7 @@ use shared_utils::canister_specific::user_post_service::types::storage::PostView
 use shared_utils::canister_specific::user_post_service::types::{
     args::PostDetailsForFrontend, args::UserPostServiceInitArgs, error::UserPostServiceError,
 };
+use shared_utils::common::types::top_posts::post_score_index_item::PostStatus;
 
 use crate::data_model::CanisterData;
 

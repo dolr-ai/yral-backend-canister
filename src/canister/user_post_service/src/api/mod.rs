@@ -5,4 +5,5 @@ pub mod get_individual_post_details_by_id_for_user;
 pub mod get_posts_of_this_user_profile_with_pagination_cursor;
 pub mod update_post_add_view_details;
 pub mod update_post_increment_share_count;
+pub mod update_post_status;
 pub mod update_post_toggle_like_status_by_caller;
