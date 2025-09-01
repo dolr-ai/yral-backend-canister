@@ -106,5 +106,6 @@ service : (UserPostServiceInitArgs) -> {
       Result,
     );
   update_post_increment_share_count : (text) -> (Result_4);
+  update_post_status : (text, PostStatus) -> ();
   update_post_toggle_like_status_by_caller : (text) -> (Result_5);
 }
