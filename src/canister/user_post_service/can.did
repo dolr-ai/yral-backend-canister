@@ -1,3 +1,8 @@
+type GetPostsOfUserProfileError = variant {
+  ReachedEndOfItemsList;
+  InvalidBoundsPassed;
+  ExceededMaxNumberOfItemsAllowedInOneRequest;
+};
 type Post = record {
   id : text;
   status : PostStatus;
@@ -49,8 +54,9 @@ type RejectionCode = variant {
 };
 type Result = variant { Ok; Err : UserPostServiceError };
 type Result_1 = variant { Ok : Post; Err : UserPostServiceError };
-type Result_2 = variant { Ok : nat64; Err : UserPostServiceError };
-type Result_3 = variant { Ok : bool; Err : UserPostServiceError };
+type Result_2 = variant { Ok : vec Post; Err : GetPostsOfUserProfileError };
+type Result_3 = variant { Ok : nat64; Err : UserPostServiceError };
+type Result_4 = variant { Ok : bool; Err : UserPostServiceError };
 type SystemTime = record {
   nanos_since_epoch : nat32;
   secs_since_epoch : nat64;
@@ -66,6 +72,11 @@ service : (UserPostServiceInitArgs) -> {
   add_post : (PostDetailsFromFrontend) -> (Result);
   delete_post : (text) -> (Result);
   get_individual_post_details_by_id : (text) -> (Result_1) query;
+  get_posts_of_this_user_profile_with_pagination : (
+      principal,
+      nat64,
+      nat64,
+    ) -> (Result_2) query;
   get_posts_of_this_user_profile_with_pagination_cursor : (
       principal,
       nat64,
@@ -75,6 +86,6 @@ service : (UserPostServiceInitArgs) -> {
   update_post_add_view_details : (text, PostViewDetailsFromFrontend) -> (
       Result,
     );
-  update_post_increment_share_count : (text) -> (Result_2);
-  update_post_toggle_like_status_by_caller : (text) -> (Result_3);
+  update_post_increment_share_count : (text) -> (Result_3);
+  update_post_toggle_like_status_by_caller : (text) -> (Result_4);
 }
