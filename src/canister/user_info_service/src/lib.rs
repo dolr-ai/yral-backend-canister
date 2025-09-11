@@ -7,6 +7,8 @@ use shared_utils::canister_specific::individual_user_template::types::session::S
 use shared_utils::canister_specific::user_info_service::args::UserInfoServiceInitArgs;
 
 use crate::data_model::CanisterData;
+use crate::api::get_followers::FollowersResponse;
+use crate::api::get_following::FollowingResponse;
 
 mod api;
 pub mod data_model;

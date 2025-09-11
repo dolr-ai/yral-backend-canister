@@ -1,4 +1,4 @@
-use std::{borrow::Cow, time::SystemTime};
+use std::{borrow::Cow, collections::BTreeSet, time::SystemTime};
 
 use candid::{CandidType, Principal};
 use ciborium::{de, ser};
@@ -20,6 +20,8 @@ pub(crate) struct UserInfo {
     profile: UserProfile,
     session_type: SessionType,
     last_access_time: SystemTime,
+    followers: BTreeSet<Principal>,
+    following: BTreeSet<Principal>,
 }
 
 impl UserInfo {
@@ -33,6 +35,8 @@ impl UserInfo {
             },
             session_type: SessionType::AnonymousSession,
             last_access_time: get_current_system_time(),
+            followers: BTreeSet::new(),
+            following: BTreeSet::new(),
         }
     }
 }
@@ -135,6 +139,118 @@ impl CanisterData {
         } else {
             Err("User not found".to_string())
         }
+    }
+
+    pub fn follow_user(&mut self, follower: Principal, target: Principal) -> Result<(), String> {
+        if follower == target {
+            return Err("Cannot follow yourself".to_string());
+        }
+
+        let mut follower_info = self.user_infos.get(&follower)
+            .ok_or("Follower not found".to_string())?;
+        
+        let mut target_info = self.user_infos.get(&target)
+            .ok_or("Target user not found".to_string())?;
+
+        if follower_info.following.contains(&target) {
+            return Err("Already following this user".to_string());
+        }
+
+        follower_info.following.insert(target);
+        target_info.followers.insert(follower);
+
+        self.user_infos.insert(follower, follower_info);
+        self.user_infos.insert(target, target_info);
+
+        Ok(())
+    }
+
+    pub fn unfollow_user(&mut self, follower: Principal, target: Principal) -> Result<(), String> {
+        if follower == target {
+            return Err("Cannot unfollow yourself".to_string());
+        }
+
+        let mut follower_info = self.user_infos.get(&follower)
+            .ok_or("Follower not found".to_string())?;
+        
+        let mut target_info = self.user_infos.get(&target)
+            .ok_or("Target user not found".to_string())?;
+
+        if !follower_info.following.contains(&target) {
+            return Err("Not following this user".to_string());
+        }
+
+        follower_info.following.remove(&target);
+        target_info.followers.remove(&follower);
+
+        self.user_infos.insert(follower, follower_info);
+        self.user_infos.insert(target, target_info);
+
+        Ok(())
+    }
+
+    pub fn get_followers_paginated(
+        &self,
+        user_principal: Principal,
+        offset: u64,
+        limit: u64,
+    ) -> Result<Vec<Principal>, String> {
+        const MAX_FOLLOWERS_PER_PAGE: u64 = 100;
+        
+        if limit > MAX_FOLLOWERS_PER_PAGE {
+            return Err(format!("Limit exceeds maximum of {}", MAX_FOLLOWERS_PER_PAGE));
+        }
+
+        let user_info = self.user_infos.get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        let followers: Vec<Principal> = user_info.followers
+            .iter()
+            .skip(offset as usize)
+            .take(limit as usize)
+            .cloned()
+            .collect();
+
+        Ok(followers)
+    }
+
+    pub fn get_following_paginated(
+        &self,
+        user_principal: Principal,
+        offset: u64,
+        limit: u64,
+    ) -> Result<Vec<Principal>, String> {
+        const MAX_FOLLOWING_PER_PAGE: u64 = 100;
+        
+        if limit > MAX_FOLLOWING_PER_PAGE {
+            return Err(format!("Limit exceeds maximum of {}", MAX_FOLLOWING_PER_PAGE));
+        }
+
+        let user_info = self.user_infos.get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        let following: Vec<Principal> = user_info.following
+            .iter()
+            .skip(offset as usize)
+            .take(limit as usize)
+            .cloned()
+            .collect();
+
+        Ok(following)
+    }
+
+    pub fn get_followers_count(&self, user_principal: Principal) -> Result<u64, String> {
+        let user_info = self.user_infos.get(&user_principal)
+            .ok_or("User not found".to_string())?;
+        
+        Ok(user_info.followers.len() as u64)
+    }
+
+    pub fn get_following_count(&self, user_principal: Principal) -> Result<u64, String> {
+        let user_info = self.user_infos.get(&user_principal)
+            .ok_or("User not found".to_string())?;
+        
+        Ok(user_info.following.len() as u64)
     }
 }
 
