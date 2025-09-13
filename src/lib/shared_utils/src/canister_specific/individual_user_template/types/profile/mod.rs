@@ -10,6 +10,10 @@ pub struct UserProfile {
     pub profile_stats: UserProfileGlobalStats,
     #[serde(default)]
     pub referrer_details: Option<UserCanisterDetails>,
+    #[serde(default)]
+    pub bio: Option<String>,
+    #[serde(default)]
+    pub website_url: Option<String>,
 }
 
 #[derive(Clone, CandidType, Deserialize, Debug, Serialize, PartialEq, Eq)]
@@ -56,6 +60,15 @@ pub struct UserProfileDetailsForFrontendV3 {
 pub struct UserProfileGlobalStats {
     pub hot_bets_received: u64,
     pub not_bets_received: u64,
+}
+
+#[derive(CandidType, Deserialize, Debug, PartialEq, Eq)]
+pub struct UserProfileDetailsForFrontendV4 {
+    pub principal_id: Principal,
+    pub profile_stats: UserProfileGlobalStats,
+    pub profile_picture_url: Option<String>,
+    pub bio: Option<String>,
+    pub website_url: Option<String>,
 }
 
 #[derive(Deserialize, CandidType)]

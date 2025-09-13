@@ -6,7 +6,7 @@ use ic_stable_structures::{BTreeMap as StableBTreeMap, Storable, storable::Bound
 use serde::{Deserialize, Serialize};
 use shared_utils::{
     canister_specific::individual_user_template::types::{
-        profile::{UserProfile, UserProfileDetailsForFrontendV3},
+        profile::{UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4},
         session::SessionType,
     },
     common::utils::system_time::get_current_system_time,
@@ -14,6 +14,13 @@ use shared_utils::{
 pub(crate) mod memory;
 
 use crate::data_model::memory::Memory;
+
+#[derive(CandidType, Deserialize)]
+pub struct ProfileUpdateDetails {
+    pub bio: Option<String>,
+    pub website_url: Option<String>,
+    pub profile_picture_url: Option<String>,
+}
 
 #[derive(CandidType, Deserialize, Serialize)]
 pub(crate) struct UserInfo {
@@ -32,6 +39,8 @@ impl UserInfo {
                 profile_picture_url: None,
                 profile_stats: Default::default(),
                 referrer_details: None,
+                bio: None,
+                website_url: None,
             },
             session_type: SessionType::AnonymousSession,
             last_access_time: get_current_system_time(),
@@ -251,6 +260,48 @@ impl CanisterData {
             .ok_or("User not found".to_string())?;
         
         Ok(user_info.following.len() as u64)
+    }
+
+    pub fn update_profile_details(
+        &mut self,
+        user_principal: Principal,
+        details: ProfileUpdateDetails,
+    ) -> Result<(), String> {
+        let mut user_info = self.user_infos.get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        // Only update fields that have Some value
+        if let Some(bio) = details.bio {
+            user_info.profile.bio = Some(bio);
+        }
+        
+        if let Some(website_url) = details.website_url {
+            user_info.profile.website_url = Some(website_url);
+        }
+        
+        if let Some(profile_picture_url) = details.profile_picture_url {
+            user_info.profile.profile_picture_url = Some(profile_picture_url);
+        }
+
+        self.user_infos.insert(user_principal, user_info);
+        Ok(())
+    }
+
+    pub fn get_profile_details_v4(
+        &self,
+        user_principal: Principal,
+    ) -> Result<UserProfileDetailsForFrontendV4, String> {
+        if let Some(user_info) = self.user_infos.get(&user_principal) {
+            Ok(UserProfileDetailsForFrontendV4 {
+                principal_id: user_principal,
+                profile_stats: user_info.profile.profile_stats,
+                profile_picture_url: user_info.profile.profile_picture_url.clone(),
+                bio: user_info.profile.bio.clone(),
+                website_url: user_info.profile.website_url.clone(),
+            })
+        } else {
+            Err("User not found".to_string())
+        }
     }
 }
 
