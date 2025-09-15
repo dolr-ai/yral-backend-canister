@@ -17,7 +17,7 @@ fn test_accept_new_user_registration_for_user_info_service() {
         user_service_canister,
         charlie_principal_id,
         "accept_new_user_registration",
-        (),
+        (charlie_principal_id,),
     );
 
     assert!(result.is_err(), "User registration should fail");
