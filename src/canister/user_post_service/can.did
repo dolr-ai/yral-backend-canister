@@ -102,6 +102,7 @@ service : (UserPostServiceInitArgs) -> {
       nat64,
     ) -> (vec Post) query;
   get_version : () -> (text) query;
+  sync_post_from_individual_canister : (Post) -> (opt Post);
   update_post_add_view_details : (text, PostViewDetailsFromFrontend) -> (
       Result,
     );
