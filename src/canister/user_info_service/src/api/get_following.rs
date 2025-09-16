@@ -2,12 +2,7 @@ use candid::Principal;
 use ic_cdk_macros::query;
 
 use crate::CANISTER_DATA;
-
-#[derive(candid::CandidType, candid::Deserialize)]
-pub struct FollowingResponse {
-    pub following: Vec<Principal>,
-    pub total_count: u64,
-}
+use shared_utils::canister_specific::user_info_service::types::FollowingResponse;
 
 #[query]
 fn get_following(user: Principal, offset: u64, limit: u64) -> Result<FollowingResponse, String> {

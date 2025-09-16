@@ -1,13 +1,14 @@
 use candid::Principal;
 use pocket_ic::PocketIc;
+use shared_utils::canister_specific::user_info_service::types::{
+    FollowersResponse, FollowingResponse,
+};
 use test_utils::canister_calls::{query, update};
 use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned;
 use test_utils::setup::test_constants::{
     get_mock_user_alice_principal_id, get_mock_user_bob_principal_id,
     get_mock_user_charlie_principal_id, get_mock_user_dan_principal_id,
 };
-use user_info_service::api::get_followers::FollowersResponse;
-use user_info_service::api::get_following::FollowingResponse;
 
 #[test]
 fn test_comprehensive_follower_following_functionality() {
@@ -30,11 +31,16 @@ fn test_comprehensive_follower_following_functionality() {
             (),
         )
         .expect("Failed to register user");
-        assert!(result.is_ok(), "User registration failed for {:?}: {:?}", user, result);
+        assert!(
+            result.is_ok(),
+            "User registration failed for {:?}: {:?}",
+            user,
+            result
+        );
     }
 
     // Test Follow Operations
-    
+
     // Alice follows Bob
     let result = update::<_, Result<(), String>>(
         &pocket_ic,
@@ -44,7 +50,11 @@ fn test_comprehensive_follower_following_functionality() {
         (bob,),
     )
     .expect("Failed to call follow_user");
-    assert!(result.is_ok(), "Alice should be able to follow Bob: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Alice should be able to follow Bob: {:?}",
+        result
+    );
 
     // Alice follows Charlie
     let result = update::<_, Result<(), String>>(
@@ -55,7 +65,11 @@ fn test_comprehensive_follower_following_functionality() {
         (charlie,),
     )
     .expect("Failed to call follow_user");
-    assert!(result.is_ok(), "Alice should be able to follow Charlie: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Alice should be able to follow Charlie: {:?}",
+        result
+    );
 
     // Bob follows Alice
     let result = update::<_, Result<(), String>>(
@@ -66,7 +80,11 @@ fn test_comprehensive_follower_following_functionality() {
         (alice,),
     )
     .expect("Failed to call follow_user");
-    assert!(result.is_ok(), "Bob should be able to follow Alice: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Bob should be able to follow Alice: {:?}",
+        result
+    );
 
     // Charlie follows Alice
     let result = update::<_, Result<(), String>>(
@@ -77,7 +95,11 @@ fn test_comprehensive_follower_following_functionality() {
         (alice,),
     )
     .expect("Failed to call follow_user");
-    assert!(result.is_ok(), "Charlie should be able to follow Alice: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Charlie should be able to follow Alice: {:?}",
+        result
+    );
 
     // Charlie follows Dan
     let result = update::<_, Result<(), String>>(
@@ -88,7 +110,11 @@ fn test_comprehensive_follower_following_functionality() {
         (dan,),
     )
     .expect("Failed to call follow_user");
-    assert!(result.is_ok(), "Charlie should be able to follow Dan: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Charlie should be able to follow Dan: {:?}",
+        result
+    );
 
     // Test validation: Cannot follow yourself
     let result = update::<_, Result<(), String>>(
@@ -111,7 +137,10 @@ fn test_comprehensive_follower_following_functionality() {
         (bob,),
     )
     .expect("Failed to call follow_user");
-    assert!(result.is_err(), "Should not be able to follow same user twice");
+    assert!(
+        result.is_err(),
+        "Should not be able to follow same user twice"
+    );
     assert_eq!(result.unwrap_err(), "Already following this user");
 
     // Test validation: Cannot follow non-existent user
@@ -124,11 +153,14 @@ fn test_comprehensive_follower_following_functionality() {
         (non_existent,),
     )
     .expect("Failed to call follow_user");
-    assert!(result.is_err(), "Should not be able to follow non-existent user");
+    assert!(
+        result.is_err(),
+        "Should not be able to follow non-existent user"
+    );
     assert_eq!(result.unwrap_err(), "Target user not found");
 
     // Verify Followers
-    
+
     // Alice should have 2 followers: Bob and Charlie
     let alice_followers = query::<_, Result<FollowersResponse, String>>(
         &pocket_ic,
@@ -139,10 +171,19 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query followers")
     .expect("Failed to get Alice's followers");
-    
-    assert_eq!(alice_followers.total_count, 2, "Alice should have 2 followers");
-    assert!(alice_followers.followers.contains(&bob), "Bob should be in Alice's followers");
-    assert!(alice_followers.followers.contains(&charlie), "Charlie should be in Alice's followers");
+
+    assert_eq!(
+        alice_followers.total_count, 2,
+        "Alice should have 2 followers"
+    );
+    assert!(
+        alice_followers.followers.contains(&bob),
+        "Bob should be in Alice's followers"
+    );
+    assert!(
+        alice_followers.followers.contains(&charlie),
+        "Charlie should be in Alice's followers"
+    );
 
     // Bob should have 1 follower: Alice
     let bob_followers = query::<_, Result<FollowersResponse, String>>(
@@ -154,9 +195,12 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query followers")
     .expect("Failed to get Bob's followers");
-    
+
     assert_eq!(bob_followers.total_count, 1, "Bob should have 1 follower");
-    assert!(bob_followers.followers.contains(&alice), "Alice should be in Bob's followers");
+    assert!(
+        bob_followers.followers.contains(&alice),
+        "Alice should be in Bob's followers"
+    );
 
     // Charlie should have 1 follower: Alice
     let charlie_followers = query::<_, Result<FollowersResponse, String>>(
@@ -168,9 +212,15 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query followers")
     .expect("Failed to get Charlie's followers");
-    
-    assert_eq!(charlie_followers.total_count, 1, "Charlie should have 1 follower");
-    assert!(charlie_followers.followers.contains(&alice), "Alice should be in Charlie's followers");
+
+    assert_eq!(
+        charlie_followers.total_count, 1,
+        "Charlie should have 1 follower"
+    );
+    assert!(
+        charlie_followers.followers.contains(&alice),
+        "Alice should be in Charlie's followers"
+    );
 
     // Dan should have 1 follower: Charlie
     let dan_followers = query::<_, Result<FollowersResponse, String>>(
@@ -182,12 +232,15 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query followers")
     .expect("Failed to get Dan's followers");
-    
+
     assert_eq!(dan_followers.total_count, 1, "Dan should have 1 follower");
-    assert!(dan_followers.followers.contains(&charlie), "Charlie should be in Dan's followers");
+    assert!(
+        dan_followers.followers.contains(&charlie),
+        "Charlie should be in Dan's followers"
+    );
 
     // Verify Following
-    
+
     // Alice should be following 2: Bob and Charlie
     let alice_following = query::<_, Result<FollowingResponse, String>>(
         &pocket_ic,
@@ -198,10 +251,19 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query following")
     .expect("Failed to get Alice's following");
-    
-    assert_eq!(alice_following.total_count, 2, "Alice should be following 2 users");
-    assert!(alice_following.following.contains(&bob), "Alice should be following Bob");
-    assert!(alice_following.following.contains(&charlie), "Alice should be following Charlie");
+
+    assert_eq!(
+        alice_following.total_count, 2,
+        "Alice should be following 2 users"
+    );
+    assert!(
+        alice_following.following.contains(&bob),
+        "Alice should be following Bob"
+    );
+    assert!(
+        alice_following.following.contains(&charlie),
+        "Alice should be following Charlie"
+    );
 
     // Bob should be following 1: Alice
     let bob_following = query::<_, Result<FollowingResponse, String>>(
@@ -213,9 +275,15 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query following")
     .expect("Failed to get Bob's following");
-    
-    assert_eq!(bob_following.total_count, 1, "Bob should be following 1 user");
-    assert!(bob_following.following.contains(&alice), "Bob should be following Alice");
+
+    assert_eq!(
+        bob_following.total_count, 1,
+        "Bob should be following 1 user"
+    );
+    assert!(
+        bob_following.following.contains(&alice),
+        "Bob should be following Alice"
+    );
 
     // Charlie should be following 2: Alice and Dan
     let charlie_following = query::<_, Result<FollowingResponse, String>>(
@@ -227,10 +295,19 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query following")
     .expect("Failed to get Charlie's following");
-    
-    assert_eq!(charlie_following.total_count, 2, "Charlie should be following 2 users");
-    assert!(charlie_following.following.contains(&alice), "Charlie should be following Alice");
-    assert!(charlie_following.following.contains(&dan), "Charlie should be following Dan");
+
+    assert_eq!(
+        charlie_following.total_count, 2,
+        "Charlie should be following 2 users"
+    );
+    assert!(
+        charlie_following.following.contains(&alice),
+        "Charlie should be following Alice"
+    );
+    assert!(
+        charlie_following.following.contains(&dan),
+        "Charlie should be following Dan"
+    );
 
     // Dan should be following 0
     let dan_following = query::<_, Result<FollowingResponse, String>>(
@@ -242,12 +319,18 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query following")
     .expect("Failed to get Dan's following");
-    
-    assert_eq!(dan_following.total_count, 0, "Dan should not be following anyone");
-    assert!(dan_following.following.is_empty(), "Dan's following list should be empty");
+
+    assert_eq!(
+        dan_following.total_count, 0,
+        "Dan should not be following anyone"
+    );
+    assert!(
+        dan_following.following.is_empty(),
+        "Dan's following list should be empty"
+    );
 
     // Test Pagination
-    
+
     // Test pagination with offset
     let alice_followers_page2 = query::<_, Result<FollowersResponse, String>>(
         &pocket_ic,
@@ -258,12 +341,19 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query followers")
     .expect("Failed to get Alice's followers with pagination");
-    
-    assert_eq!(alice_followers_page2.followers.len(), 1, "Should get 1 follower with limit 1");
-    assert_eq!(alice_followers_page2.total_count, 2, "Total count should still be 2");
+
+    assert_eq!(
+        alice_followers_page2.followers.len(),
+        1,
+        "Should get 1 follower with limit 1"
+    );
+    assert_eq!(
+        alice_followers_page2.total_count, 2,
+        "Total count should still be 2"
+    );
 
     // Test Unfollow Operations
-    
+
     // Alice unfollows Bob
     let result = update::<_, Result<(), String>>(
         &pocket_ic,
@@ -273,7 +363,11 @@ fn test_comprehensive_follower_following_functionality() {
         (bob,),
     )
     .expect("Failed to call unfollow_user");
-    assert!(result.is_ok(), "Alice should be able to unfollow Bob: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Alice should be able to unfollow Bob: {:?}",
+        result
+    );
 
     // Charlie unfollows Alice
     let result = update::<_, Result<(), String>>(
@@ -284,7 +378,11 @@ fn test_comprehensive_follower_following_functionality() {
         (alice,),
     )
     .expect("Failed to call unfollow_user");
-    assert!(result.is_ok(), "Charlie should be able to unfollow Alice: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Charlie should be able to unfollow Alice: {:?}",
+        result
+    );
 
     // Test validation: Cannot unfollow someone you're not following
     let result = update::<_, Result<(), String>>(
@@ -295,7 +393,10 @@ fn test_comprehensive_follower_following_functionality() {
         (dan,),
     )
     .expect("Failed to call unfollow_user");
-    assert!(result.is_err(), "Should not be able to unfollow someone you're not following");
+    assert!(
+        result.is_err(),
+        "Should not be able to unfollow someone you're not following"
+    );
     assert_eq!(result.unwrap_err(), "Not following this user");
 
     // Test validation: Cannot unfollow yourself
@@ -311,7 +412,7 @@ fn test_comprehensive_follower_following_functionality() {
     assert_eq!(result.unwrap_err(), "Cannot unfollow yourself");
 
     // Final Verification after unfollows
-    
+
     // Alice should now have 1 follower: Bob (Charlie unfollowed)
     let alice_followers_final = query::<_, Result<FollowersResponse, String>>(
         &pocket_ic,
@@ -322,10 +423,19 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query followers")
     .expect("Failed to get Alice's final followers");
-    
-    assert_eq!(alice_followers_final.total_count, 1, "Alice should have 1 follower after unfollows");
-    assert!(alice_followers_final.followers.contains(&bob), "Bob should still be in Alice's followers");
-    assert!(!alice_followers_final.followers.contains(&charlie), "Charlie should not be in Alice's followers");
+
+    assert_eq!(
+        alice_followers_final.total_count, 1,
+        "Alice should have 1 follower after unfollows"
+    );
+    assert!(
+        alice_followers_final.followers.contains(&bob),
+        "Bob should still be in Alice's followers"
+    );
+    assert!(
+        !alice_followers_final.followers.contains(&charlie),
+        "Charlie should not be in Alice's followers"
+    );
 
     // Alice should now be following 1: Charlie (unfollowed Bob)
     let alice_following_final = query::<_, Result<FollowingResponse, String>>(
@@ -337,10 +447,19 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query following")
     .expect("Failed to get Alice's final following");
-    
-    assert_eq!(alice_following_final.total_count, 1, "Alice should be following 1 user after unfollows");
-    assert!(!alice_following_final.following.contains(&bob), "Alice should not be following Bob");
-    assert!(alice_following_final.following.contains(&charlie), "Alice should still be following Charlie");
+
+    assert_eq!(
+        alice_following_final.total_count, 1,
+        "Alice should be following 1 user after unfollows"
+    );
+    assert!(
+        !alice_following_final.following.contains(&bob),
+        "Alice should not be following Bob"
+    );
+    assert!(
+        alice_following_final.following.contains(&charlie),
+        "Alice should still be following Charlie"
+    );
 
     // Bob should have 0 followers (Alice unfollowed)
     let bob_followers_final = query::<_, Result<FollowersResponse, String>>(
@@ -352,9 +471,15 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query followers")
     .expect("Failed to get Bob's final followers");
-    
-    assert_eq!(bob_followers_final.total_count, 0, "Bob should have 0 followers after Alice unfollowed");
-    assert!(bob_followers_final.followers.is_empty(), "Bob's followers list should be empty");
+
+    assert_eq!(
+        bob_followers_final.total_count, 0,
+        "Bob should have 0 followers after Alice unfollowed"
+    );
+    assert!(
+        bob_followers_final.followers.is_empty(),
+        "Bob's followers list should be empty"
+    );
 
     // Charlie should be following 1: Dan (unfollowed Alice)
     let charlie_following_final = query::<_, Result<FollowingResponse, String>>(
@@ -366,10 +491,102 @@ fn test_comprehensive_follower_following_functionality() {
     )
     .expect("Failed to query following")
     .expect("Failed to get Charlie's final following");
-    
-    assert_eq!(charlie_following_final.total_count, 1, "Charlie should be following 1 user after unfollows");
-    assert!(!charlie_following_final.following.contains(&alice), "Charlie should not be following Alice");
-    assert!(charlie_following_final.following.contains(&dan), "Charlie should still be following Dan");
+
+    assert_eq!(
+        charlie_following_final.total_count, 1,
+        "Charlie should be following 1 user after unfollows"
+    );
+    assert!(
+        !charlie_following_final.following.contains(&alice),
+        "Charlie should not be following Alice"
+    );
+    assert!(
+        charlie_following_final.following.contains(&dan),
+        "Charlie should still be following Dan"
+    );
 
     println!("✅ All follower/following functionality tests passed!");
+
+    // Test profile details v4 includes correct follower/following counts
+    println!("\n📊 Testing profile details v4 follower/following counts...");
+
+    // Re-establish some follow relationships for testing profile counts
+    // Current state: Alice follows Charlie, Bob follows Alice, Charlie follows Dan
+    // We need: Alice to also follow Bob again
+    update::<_, Result<(), String>>(
+        &pocket_ic,
+        user_service_canister,
+        alice,
+        "follow_user",
+        (bob,),
+    )
+    .expect("Failed to follow Bob")
+    .expect("Alice should follow Bob");
+
+    // Alice is already following Charlie, Bob is already following Alice
+    // No need to re-establish those relationships
+
+    // Get Alice's profile details
+    use shared_utils::canister_specific::individual_user_template::types::profile::UserProfileDetailsForFrontendV4;
+
+    let alice_profile = query::<_, Result<UserProfileDetailsForFrontendV4, String>>(
+        &pocket_ic,
+        user_service_canister,
+        alice,
+        "get_profile_details_v4",
+        (alice,),
+    )
+    .expect("Failed to query profile details")
+    .expect("Failed to get Alice's profile details");
+
+    assert_eq!(
+        alice_profile.following_count, 2,
+        "Alice should be following 2 users (Bob and Charlie)"
+    );
+    assert_eq!(
+        alice_profile.followers_count, 1,
+        "Alice should have 1 follower (Bob)"
+    );
+
+    // Get Bob's profile details
+    let bob_profile = query::<_, Result<UserProfileDetailsForFrontendV4, String>>(
+        &pocket_ic,
+        user_service_canister,
+        bob,
+        "get_profile_details_v4",
+        (bob,),
+    )
+    .expect("Failed to query profile details")
+    .expect("Failed to get Bob's profile details");
+
+    assert_eq!(
+        bob_profile.following_count, 1,
+        "Bob should be following 1 user (Alice)"
+    );
+    assert_eq!(
+        bob_profile.followers_count, 1,
+        "Bob should have 1 follower (Alice)"
+    );
+
+    // Get Charlie's profile details (Charlie has Dan following from earlier test)
+    let charlie_profile = query::<_, Result<UserProfileDetailsForFrontendV4, String>>(
+        &pocket_ic,
+        user_service_canister,
+        charlie,
+        "get_profile_details_v4",
+        (charlie,),
+    )
+    .expect("Failed to query profile details")
+    .expect("Failed to get Charlie's profile details");
+
+    assert_eq!(
+        charlie_profile.following_count, 1,
+        "Charlie should be following 1 user (Dan from earlier test)"
+    );
+    assert_eq!(
+        charlie_profile.followers_count, 1,
+        "Charlie should have 1 follower (Alice)"
+    );
+
+    println!("✅ Profile details v4 follower/following counts verified!");
 }

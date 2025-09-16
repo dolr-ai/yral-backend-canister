@@ -69,6 +69,8 @@ pub struct UserProfileDetailsForFrontendV4 {
     pub profile_picture_url: Option<String>,
     pub bio: Option<String>,
     pub website_url: Option<String>,
+    pub followers_count: u64,
+    pub following_count: u64,
 }
 
 #[derive(Deserialize, CandidType)]

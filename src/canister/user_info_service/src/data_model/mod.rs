@@ -298,6 +298,8 @@ impl CanisterData {
                 profile_picture_url: user_info.profile.profile_picture_url.clone(),
                 bio: user_info.profile.bio.clone(),
                 website_url: user_info.profile.website_url.clone(),
+                followers_count: user_info.followers.len() as u64,
+                following_count: user_info.following.len() as u64,
             })
         } else {
             Err("User not found".to_string())
