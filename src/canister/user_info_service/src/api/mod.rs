@@ -1,3 +1,4 @@
+mod accept_new_user_registration;
 mod canister_lifecycle;
 mod delete_user_info;
 mod follow_user;
