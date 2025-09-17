@@ -71,6 +71,8 @@ pub struct UserProfileDetailsForFrontendV4 {
     pub website_url: Option<String>,
     pub followers_count: u64,
     pub following_count: u64,
+    pub caller_follows_user: Option<bool>,
+    pub user_follows_caller: Option<bool>,
 }
 
 #[derive(Deserialize, CandidType)]
