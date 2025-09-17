@@ -27,7 +27,9 @@ pub(crate) struct UserInfo {
     profile: UserProfile,
     session_type: SessionType,
     last_access_time: SystemTime,
+    #[serde(default)]
     followers: BTreeSet<Principal>,
+    #[serde(default)]
     following: BTreeSet<Principal>,
 }
 
@@ -155,10 +157,14 @@ impl CanisterData {
             return Err("Cannot follow yourself".to_string());
         }
 
-        let mut follower_info = self.user_infos.get(&follower)
+        let mut follower_info = self
+            .user_infos
+            .get(&follower)
             .ok_or("Follower not found".to_string())?;
-        
-        let mut target_info = self.user_infos.get(&target)
+
+        let mut target_info = self
+            .user_infos
+            .get(&target)
             .ok_or("Target user not found".to_string())?;
 
         if follower_info.following.contains(&target) {
@@ -179,10 +185,14 @@ impl CanisterData {
             return Err("Cannot unfollow yourself".to_string());
         }
 
-        let mut follower_info = self.user_infos.get(&follower)
+        let mut follower_info = self
+            .user_infos
+            .get(&follower)
             .ok_or("Follower not found".to_string())?;
-        
-        let mut target_info = self.user_infos.get(&target)
+
+        let mut target_info = self
+            .user_infos
+            .get(&target)
             .ok_or("Target user not found".to_string())?;
 
         if !follower_info.following.contains(&target) {
@@ -207,17 +217,25 @@ impl CanisterData {
         const MAX_FOLLOWERS_PER_PAGE: u64 = 100;
 
         if limit > MAX_FOLLOWERS_PER_PAGE {
-            return Err(format!("Limit exceeds maximum of {}", MAX_FOLLOWERS_PER_PAGE));
+            return Err(format!(
+                "Limit exceeds maximum of {}",
+                MAX_FOLLOWERS_PER_PAGE
+            ));
         }
 
-        let user_info = self.user_infos.get(&user_principal)
+        let user_info = self
+            .user_infos
+            .get(&user_principal)
             .ok_or("User not found".to_string())?;
 
         let mut followers_iter = match start {
             Some(cursor) => {
                 // Use range to get all followers after the cursor (O(log n) operation)
-                user_info.followers.range((std::ops::Bound::Included(cursor), std::ops::Bound::Unbounded))
-            },
+                user_info.followers.range((
+                    std::ops::Bound::Included(cursor),
+                    std::ops::Bound::Unbounded,
+                ))
+            }
             None => {
                 // Start from the beginning
                 user_info.followers.range(..)
@@ -245,17 +263,25 @@ impl CanisterData {
         const MAX_FOLLOWING_PER_PAGE: u64 = 100;
 
         if limit > MAX_FOLLOWING_PER_PAGE {
-            return Err(format!("Limit exceeds maximum of {}", MAX_FOLLOWING_PER_PAGE));
+            return Err(format!(
+                "Limit exceeds maximum of {}",
+                MAX_FOLLOWING_PER_PAGE
+            ));
         }
 
-        let user_info = self.user_infos.get(&user_principal)
+        let user_info = self
+            .user_infos
+            .get(&user_principal)
             .ok_or("User not found".to_string())?;
 
         let mut following_iter = match start {
             Some(cursor) => {
                 // Use range to get all following after the cursor (O(log n) operation)
-                user_info.following.range((std::ops::Bound::Included(cursor), std::ops::Bound::Unbounded))
-            },
+                user_info.following.range((
+                    std::ops::Bound::Included(cursor),
+                    std::ops::Bound::Unbounded,
+                ))
+            }
             None => {
                 // Start from the beginning
                 user_info.following.range(..)
@@ -275,16 +301,20 @@ impl CanisterData {
     }
 
     pub fn get_followers_count(&self, user_principal: Principal) -> Result<u64, String> {
-        let user_info = self.user_infos.get(&user_principal)
+        let user_info = self
+            .user_infos
+            .get(&user_principal)
             .ok_or("User not found".to_string())?;
-        
+
         Ok(user_info.followers.len() as u64)
     }
 
     pub fn get_following_count(&self, user_principal: Principal) -> Result<u64, String> {
-        let user_info = self.user_infos.get(&user_principal)
+        let user_info = self
+            .user_infos
+            .get(&user_principal)
             .ok_or("User not found".to_string())?;
-        
+
         Ok(user_info.following.len() as u64)
     }
 
@@ -293,18 +323,20 @@ impl CanisterData {
         user_principal: Principal,
         details: ProfileUpdateDetails,
     ) -> Result<(), String> {
-        let mut user_info = self.user_infos.get(&user_principal)
+        let mut user_info = self
+            .user_infos
+            .get(&user_principal)
             .ok_or("User not found".to_string())?;
 
         // Only update fields that have Some value
         if let Some(bio) = details.bio {
             user_info.profile.bio = Some(bio);
         }
-        
+
         if let Some(website_url) = details.website_url {
             user_info.profile.website_url = Some(website_url);
         }
-        
+
         if let Some(profile_picture_url) = details.profile_picture_url {
             user_info.profile.profile_picture_url = Some(profile_picture_url);
         }
@@ -351,22 +383,27 @@ impl CanisterData {
         &self,
         caller_principal: Principal,
         follower_principals: Vec<Principal>,
-    ) -> Result<Vec<shared_utils::canister_specific::user_info_service::types::FollowerItem>, String> {
-        let items = follower_principals.into_iter().map(|principal| {
-            // Check if caller follows this follower
-            let caller_follows = if caller_principal != Principal::anonymous() {
-                self.user_infos.get(&caller_principal)
-                    .map(|info| info.following.contains(&principal))
-                    .unwrap_or(false)
-            } else {
-                false
-            };
+    ) -> Result<Vec<shared_utils::canister_specific::user_info_service::types::FollowerItem>, String>
+    {
+        let items = follower_principals
+            .into_iter()
+            .map(|principal| {
+                // Check if caller follows this follower
+                let caller_follows = if caller_principal != Principal::anonymous() {
+                    self.user_infos
+                        .get(&caller_principal)
+                        .map(|info| info.following.contains(&principal))
+                        .unwrap_or(false)
+                } else {
+                    false
+                };
 
-            shared_utils::canister_specific::user_info_service::types::FollowerItem {
-                principal_id: principal,
-                caller_follows,
-            }
-        }).collect();
+                shared_utils::canister_specific::user_info_service::types::FollowerItem {
+                    principal_id: principal,
+                    caller_follows,
+                }
+            })
+            .collect();
 
         Ok(items)
     }
@@ -375,22 +412,27 @@ impl CanisterData {
         &self,
         caller_principal: Principal,
         following_principals: Vec<Principal>,
-    ) -> Result<Vec<shared_utils::canister_specific::user_info_service::types::FollowingItem>, String> {
-        let items = following_principals.into_iter().map(|principal| {
-            // Check if caller follows this user (in following list)
-            let caller_follows = if caller_principal != Principal::anonymous() {
-                self.user_infos.get(&caller_principal)
-                    .map(|info| info.following.contains(&principal))
-                    .unwrap_or(false)
-            } else {
-                false
-            };
+    ) -> Result<Vec<shared_utils::canister_specific::user_info_service::types::FollowingItem>, String>
+    {
+        let items = following_principals
+            .into_iter()
+            .map(|principal| {
+                // Check if caller follows this user (in following list)
+                let caller_follows = if caller_principal != Principal::anonymous() {
+                    self.user_infos
+                        .get(&caller_principal)
+                        .map(|info| info.following.contains(&principal))
+                        .unwrap_or(false)
+                } else {
+                    false
+                };
 
-            shared_utils::canister_specific::user_info_service::types::FollowingItem {
-                principal_id: principal,
-                caller_follows,
-            }
-        }).collect();
+                shared_utils::canister_specific::user_info_service::types::FollowingItem {
+                    principal_id: principal,
+                    caller_follows,
+                }
+            })
+            .collect();
 
         Ok(items)
     }
