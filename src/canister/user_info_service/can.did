@@ -1,12 +1,42 @@
+type FollowerItem = record { caller_follows : bool; principal_id : principal };
+type FollowersResponse = record {
+  next_cursor : opt principal;
+  followers : vec FollowerItem;
+  total_count : nat64;
+};
+type FollowingResponse = record {
+  next_cursor : opt principal;
+  following : vec FollowerItem;
+  total_count : nat64;
+};
+type ProfileUpdateDetails = record {
+  bio : opt text;
+  website_url : opt text;
+  profile_picture_url : opt text;
+};
 type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : UserProfileDetailsForFrontendV3; Err : text };
-type Result_2 = variant { Ok : SessionType; Err : text };
+type Result_1 = variant { Ok : FollowersResponse; Err : text };
+type Result_2 = variant { Ok : FollowingResponse; Err : text };
+type Result_3 = variant { Ok : UserProfileDetailsForFrontendV4; Err : text };
+type Result_4 = variant { Ok : UserProfileDetailsForFrontendV3; Err : text };
+type Result_5 = variant { Ok : SessionType; Err : text };
 type SessionType = variant { AnonymousSession; RegisteredSession };
 type UserInfoServiceInitArgs = record { version : text };
 type UserProfileDetailsForFrontendV3 = record {
   profile_picture_url : opt text;
   principal_id : principal;
   profile_stats : UserProfileGlobalStats;
+};
+type UserProfileDetailsForFrontendV4 = record {
+  bio : opt text;
+  website_url : opt text;
+  following_count : nat64;
+  user_follows_caller : opt bool;
+  profile_picture_url : opt text;
+  principal_id : principal;
+  profile_stats : UserProfileGlobalStats;
+  followers_count : nat64;
+  caller_follows_user : opt bool;
 };
 type UserProfileGlobalStats = record {
   hot_bets_received : nat64;
@@ -15,10 +45,16 @@ type UserProfileGlobalStats = record {
 service : (UserInfoServiceInitArgs) -> {
   accept_new_user_registration : (principal) -> (Result);
   delete_user_info : (principal) -> (Result);
-  get_user_profile_details : (principal) -> (Result_1) query;
-  get_user_session_type : (principal) -> (Result_2) query;
+  follow_user : (principal) -> (Result);
+  get_followers : (principal, opt principal, nat64) -> (Result_1) query;
+  get_following : (principal, opt principal, nat64) -> (Result_2) query;
+  get_profile_details_v4 : (principal) -> (Result_3) query;
+  get_user_profile_details : (principal) -> (Result_4) query;
+  get_user_session_type : (principal) -> (Result_5) query;
   get_version : () -> (text) query;
   register_new_user : () -> (Result);
+  unfollow_user : (principal) -> (Result);
+  update_profile_details : (ProfileUpdateDetails) -> (Result);
   update_session_type : (principal, SessionType) -> (Result);
   update_user_last_access_time : (principal) -> (Result);
 }

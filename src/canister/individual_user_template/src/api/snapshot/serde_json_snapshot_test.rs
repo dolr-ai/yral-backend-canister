@@ -188,6 +188,8 @@ mod test {
                     not_bets_received: 100,
                 },
                 referrer_details: None,
+                bio: None,
+                website_url: None,
             },
             version_details: VersionDetails {
                 version_number: 1,

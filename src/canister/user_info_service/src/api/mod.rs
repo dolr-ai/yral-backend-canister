@@ -1,8 +1,14 @@
 mod accept_new_user_registration;
 mod canister_lifecycle;
 mod delete_user_info;
+mod follow_user;
+pub mod get_followers;
+pub mod get_following;
 mod get_profile_details;
+mod get_profile_details_v4;
 mod get_session_type;
 mod register_new_user;
+mod unfollow_user;
 mod update_last_access_time;
+mod update_profile_details;
 mod update_session_type;
