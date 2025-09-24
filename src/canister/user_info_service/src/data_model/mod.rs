@@ -50,6 +50,23 @@ impl UserInfo {
             following: BTreeSet::new(),
         }
     }
+
+    pub fn authenticated(user_principal: Principal) -> Self {
+        Self {
+            profile: UserProfile {
+                principal_id: Some(user_principal),
+                profile_picture_url: None,
+                profile_stats: Default::default(),
+                referrer_details: None,
+                bio: None,
+                website_url: None,
+            },
+            session_type: SessionType::RegisteredSession,
+            last_access_time: get_current_system_time(),
+            followers: BTreeSet::new(),
+            following: BTreeSet::new(),
+        }
+    }
 }
 
 impl Storable for UserInfo {
@@ -81,6 +98,17 @@ impl CanisterData {
 
         self.user_infos
             .insert(user_principal, UserInfo::new(user_principal));
+
+        Ok(())
+    }
+
+    pub fn register_authenticated_user(&mut self, user_principal: Principal, authenticated: bool) -> Result<(), String> {
+        if self.user_infos.contains_key(&user_principal) {
+            return Err("User already exists".to_string());
+        }
+
+        self.user_infos
+            .insert(user_principal, if authenticated {UserInfo::authenticated(user_principal) } else {UserInfo::new(user_principal)});
 
         Ok(())
     }
