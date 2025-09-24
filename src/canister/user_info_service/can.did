@@ -43,7 +43,7 @@ type UserProfileGlobalStats = record {
   not_bets_received : nat64;
 };
 service : (UserInfoServiceInitArgs) -> {
-  accept_new_user_registration : (principal) -> (Result);
+  accept_new_user_registration : (principal, bool) -> (Result);
   delete_user_info : (principal) -> (Result);
   follow_user : (principal) -> (Result);
   get_followers : (principal, opt principal, nat64) -> (Result_1) query;
