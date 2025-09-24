@@ -940,6 +940,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "daily_missions"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ciborium",
+ "ic-cdk 0.15.1",
+ "ic-cdk-macros 0.16.0",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "serde",
+ "serde_json",
+ "shared_utils",
+ "test_utils",
+]
+
+[[package]]
 name = "darling"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

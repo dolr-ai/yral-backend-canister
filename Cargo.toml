@@ -13,6 +13,7 @@ members = [
     "src/lib/test_utils",
     "src/canister/dedup_index",
     "src/canister/rate_limits",
+    "src/canister/daily_missions",
 ]
 
 [workspace.dependencies]

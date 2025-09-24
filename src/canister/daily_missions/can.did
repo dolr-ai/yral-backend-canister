@@ -1,0 +1,162 @@
+type Principal = principal;
+type SystemTime = int;
+
+// Core data structures
+type RewardType = variant {
+    LoginStreak;
+    GameCompletion;
+    AiVideoGeneration;
+    Referral;
+};
+
+type ClaimedReward = record {
+    reward_type: RewardType;
+    amount: nat64;
+    claimed_at: SystemTime;
+    day: nat32;
+};
+
+type ReferredUser = record {
+    principal_id: Principal;
+    referred_at: SystemTime;
+    is_active: bool;
+};
+
+type LoginStreak = record {
+    current_streak: nat32;
+    max_streak: nat32;
+    last_login_date: opt SystemTime;
+    streak_start_date: opt SystemTime;
+    claimed_rewards: vec ClaimedReward;
+    can_claim_today: bool;
+};
+
+type GameStreak = record {
+    games_played_today: nat32;
+    target_games: nat32;
+    last_reset_date: opt SystemTime;
+    claimed_today: bool;
+    total_games_completed: nat32;
+};
+
+type GenerateAiVideoCount = record {
+    videos_generated_today: nat32;
+    target_videos: nat32;
+    last_reset_date: opt SystemTime;
+    claimed_today: bool;
+    total_videos_generated: nat32;
+};
+
+type ReferralCount = record {
+    referrals_made_today: nat32;
+    target_referrals: nat32;
+    last_reset_date: opt SystemTime;
+    claimed_today: bool;
+    total_referrals_made: nat32;
+    referred_users: vec ReferredUser;
+};
+
+type UserDailyMissions = record {
+    login_streak: LoginStreak;
+    game_streak: GameStreak;
+    ai_video_count: GenerateAiVideoCount;
+    referral_count: ReferralCount;
+    last_updated: SystemTime;
+};
+
+// Progress structures
+type LoginStreakProgress = record {
+    current_day: nat32;
+    target_day: nat32;
+    can_claim: bool;
+    reward_amount: nat64;
+    next_reset_in_hours: nat32;
+};
+
+type GameProgress = record {
+    current_count: nat32;
+    target_count: nat32;
+    can_claim: bool;
+    reward_amount: nat64;
+    hours_remaining: nat32;
+};
+
+type AiVideoProgress = record {
+    current_count: nat32;
+    target_count: nat32;
+    can_claim: bool;
+    reward_amount: nat64;
+    hours_remaining: nat32;
+};
+
+type ReferralProgress = record {
+    current_count: nat32;
+    target_count: nat32;
+    can_claim: bool;
+    reward_amount: nat64;
+    hours_remaining: nat32;
+};
+
+type MissionProgress = record {
+    login_streak: LoginStreakProgress;
+    game_progress: GameProgress;
+    ai_video_progress: AiVideoProgress;
+    referral_progress: ReferralProgress;
+};
+
+// API types
+type MissionType = variant {
+    LoginStreak;
+    PlayGames;
+    GenerateAiVideos;
+    Referrals;
+};
+
+type MissionUpdateData = variant {
+    LoginEvent;
+    GamePlayed: record { game_id: text };
+    AiVideoGenerated: record { video_id: text };
+    ReferralMade: record { referred_user: Principal };
+};
+
+type UpdateMissionRequest = record {
+    mission_type: MissionType;
+    data: MissionUpdateData;
+};
+
+type ClaimRewardRequest = record {
+    mission_type: MissionType;
+};
+
+
+
+type MissionUpdateResult = record {
+    success: bool;
+    message: text;
+    new_progress: opt MissionProgress;
+    reward_earned: opt ClaimedReward;
+};
+
+type ClaimRewardResponse = record {
+    success: bool;
+    message: text;
+    reward_amount: opt nat64;
+    claimed_reward: opt ClaimedReward;
+};
+
+// Init args
+type DailyMissionsInitArgs = record {
+    version: text;
+    known_principal_ids: opt vec record { text; Principal };
+};
+
+service : (DailyMissionsInitArgs) -> {
+    // Query methods
+    "get_version": () -> (text) query;
+    "get_current_missions": () -> (variant { Ok: MissionProgress; Err: text }) query;
+    "get_user_missions_for_principal": (Principal) -> (variant { Ok: MissionProgress; Err: text }) query;
+
+    // Update methods
+    "update_mission": (UpdateMissionRequest) -> (MissionUpdateResult);
+    "claim_reward": (ClaimRewardRequest) -> (ClaimRewardResponse);
+}
