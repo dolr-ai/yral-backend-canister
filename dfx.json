@@ -170,6 +170,17 @@
       "optimize": "size",
       "package": "user_index",
       "type": "rust"
+    },
+    "daily_missions": {
+      "candid": "./src/canister/daily_missions/can.did",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "./export/declarations/daily_missions"
+      },
+      "gzip": true,
+      "optimize": "size",
+      "package": "daily_missions",
+      "type": "rust"
     }
   },
   "version": 1

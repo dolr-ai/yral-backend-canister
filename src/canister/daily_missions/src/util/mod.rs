@@ -1,5 +1,10 @@
 use std::time::{Duration, SystemTime};
 
+/// Mission-specific helper functions
+pub mod mission_utils;
+/// Progress calculation and building utilities
+pub mod progress_utils;
+
 /// Utility functions for daily missions canister
 
 /// Check if a given timestamp is from today

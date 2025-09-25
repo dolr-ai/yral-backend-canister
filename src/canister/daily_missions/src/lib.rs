@@ -7,7 +7,10 @@ mod api;
 mod data_model;
 mod util;
 
-use data_model::{CanisterData, MissionProgress, MissionUpdateResult};
+#[cfg(test)]
+mod tests;
+
+use data_model::{CanisterData, MissionProgress, MissionUpdateResult, UserDailyMissions};
 use shared_utils::service::{update_version_from_args, GetVersion, SetVersion};
 use std::borrow::Cow;
 

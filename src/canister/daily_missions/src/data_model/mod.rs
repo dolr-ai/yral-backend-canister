@@ -9,6 +9,8 @@ use crate::data_model::memory::Memory;
 
 pub mod memory;
 
+
+//This is the source of truth for a user's daily missions.
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UserDailyMissions {
     pub login_streak: LoginStreak,
@@ -16,6 +18,7 @@ pub struct UserDailyMissions {
     pub ai_video_count: GenerateAiVideoCount,
     pub referral_count: ReferralCount,
     pub last_updated: SystemTime,
+    pub pending_rewards: Vec<PendingReward>,
 }
 
 impl Default for UserDailyMissions {
@@ -26,6 +29,7 @@ impl Default for UserDailyMissions {
             ai_video_count: GenerateAiVideoCount::default(),
             referral_count: ReferralCount::default(),
             last_updated: SystemTime::UNIX_EPOCH,
+            pending_rewards: Vec::new(),
         }
     }
 }
@@ -76,20 +80,20 @@ impl Default for GameStreak {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GenerateAiVideoCount {
-    pub videos_generated_today: u32,
+    pub videos_generated_total: u32,
     pub target_videos: u32,
-    pub last_reset_date: Option<SystemTime>,
-    pub claimed_today: bool,
+    pub completed: bool,
+    pub reward_claimed: bool,
     pub total_videos_generated: u32,
 }
 
 impl Default for GenerateAiVideoCount {
     fn default() -> Self {
         Self {
-            videos_generated_today: 0,
+            videos_generated_total: 0,
             target_videos: 3,
-            last_reset_date: None,
-            claimed_today: false,
+            completed: false,
+            reward_claimed: false,
             total_videos_generated: 0,
         }
     }
@@ -97,10 +101,10 @@ impl Default for GenerateAiVideoCount {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReferralCount {
-    pub referrals_made_today: u32,
+    pub referrals_made_total: u32,
     pub target_referrals: u32,
-    pub last_reset_date: Option<SystemTime>,
-    pub claimed_today: bool,
+    pub completed: bool,
+    pub reward_claimed: bool,
     pub total_referrals_made: u32,
     pub referred_users: Vec<ReferredUser>,
 }
@@ -108,10 +112,10 @@ pub struct ReferralCount {
 impl Default for ReferralCount {
     fn default() -> Self {
         Self {
-            referrals_made_today: 0,
+            referrals_made_total: 0,
             target_referrals: 3,
-            last_reset_date: None,
-            claimed_today: false,
+            completed: false,
+            reward_claimed: false,
             total_referrals_made: 0,
             referred_users: Vec::new(),
         }
@@ -134,6 +138,15 @@ pub struct ClaimedReward {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PendingReward {
+    pub id: String,
+    pub reward_type: RewardType,
+    pub amount: u64,
+    pub earned_at: SystemTime,
+    pub mission_day: u32,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum RewardType {
     LoginStreak,
     GameCompletion,
@@ -141,12 +154,14 @@ pub enum RewardType {
     Referral,
 }
 
+//This struct is a simplified representation of a user's daily missions progress for clients
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MissionProgress {
     pub login_streak: LoginStreakProgress,
     pub game_progress: GameProgress,
     pub ai_video_progress: AiVideoProgress,
     pub referral_progress: ReferralProgress,
+    pub pending_rewards: Vec<PendingReward>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -173,7 +188,7 @@ pub struct AiVideoProgress {
     pub target_count: u32,
     pub can_claim: bool,
     pub reward_amount: u64,
-    pub hours_remaining: u32,
+    pub completed: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -182,7 +197,7 @@ pub struct ReferralProgress {
     pub target_count: u32,
     pub can_claim: bool,
     pub reward_amount: u64,
-    pub hours_remaining: u32,
+    pub completed: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

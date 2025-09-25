@@ -54,6 +54,7 @@ pub struct ServiceCanisters {
     pub user_post_service_canister_id: Principal,
     pub dedup_index_canister_id: Principal,
     pub rate_limits_canister_id: Principal,
+    pub daily_missions_canister_id: Principal,
 }
 
 pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, ServiceCanisters) {
@@ -105,11 +106,20 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         }),
     );
 
+    let daily_missions_canister = pocket_ic.create_canister_with_settings(
+        Some(super_admin),
+        Some(CanisterSettings {
+            controllers: Some(vec![super_admin]),
+            ..Default::default()
+        }),
+    );
+
     pocket_ic.add_cycles(user_service_canister, 10_000_000_000_000_000);
     pocket_ic.add_cycles(notification_store_canister, 10_000_000_000_000_000);
     pocket_ic.add_cycles(user_post_service_canister, 10_000_000_000_000_000);
     pocket_ic.add_cycles(dedup_index_canister, 10_000_000_000_000_000);
     pocket_ic.add_cycles(rate_limits_canister, 10_000_000_000_000_000);
+    pocket_ic.add_cycles(daily_missions_canister, 10_000_000_000_000_000);
 
     let user_info_service_canister_wasm = include_bytes!(
         "../../../../../../target/wasm32-unknown-unknown/release/user_info_service.wasm.gz"
@@ -129,6 +139,10 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         "../../../../../../target/wasm32-unknown-unknown/release/user_post_service.wasm.gz"
     );
 
+    let daily_missions_canister_wasm = include_bytes!(
+        "../../../../../../target/wasm32-unknown-unknown/release/daily_missions.wasm.gz"
+    );
+
     let user_info_service_canister_init_args = UserInfoServiceInitArgs {
         version: "v1.0.0".into(),
     };
@@ -139,6 +153,17 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
 
     let user_post_service_canister_init_args = UserPostServiceInitArgs {
         version: "v1.0.0".into(),
+    };
+
+    #[derive(candid::CandidType)]
+    struct DailyMissionsInitArgs {
+        version: String,
+        known_principal_ids: Option<HashMap<String, Principal>>,
+    }
+
+    let daily_missions_canister_init_args = DailyMissionsInitArgs {
+        version: "v1.0.0".into(),
+        known_principal_ids: None,
     };
 
     pocket_ic.install_canister(
@@ -189,12 +214,20 @@ pub fn get_new_pocket_ic_env_with_service_canisters_provisioned() -> (PocketIc, 
         Some(super_admin),
     );
 
+    pocket_ic.install_canister(
+        daily_missions_canister,
+        daily_missions_canister_wasm.to_vec(),
+        candid::encode_one(daily_missions_canister_init_args).unwrap(),
+        Some(super_admin),
+    );
+
     let service_canisters = ServiceCanisters {
         user_info_service_canister_id: user_service_canister,
         notification_store_canister_id: notification_store_canister,
         user_post_service_canister_id: user_post_service_canister,
         dedup_index_canister_id: dedup_index_canister,
         rate_limits_canister_id: rate_limits_canister,
+        daily_missions_canister_id: daily_missions_canister,
     };
 
     (pocket_ic, service_canisters)

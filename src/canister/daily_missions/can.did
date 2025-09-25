@@ -16,6 +16,14 @@ type ClaimedReward = record {
     day: nat32;
 };
 
+type PendingReward = record {
+    id: text;
+    reward_type: RewardType;
+    amount: nat64;
+    earned_at: SystemTime;
+    mission_day: nat32;
+};
+
 type ReferredUser = record {
     principal_id: Principal;
     referred_at: SystemTime;
@@ -40,18 +48,18 @@ type GameStreak = record {
 };
 
 type GenerateAiVideoCount = record {
-    videos_generated_today: nat32;
+    videos_generated_total: nat32;
     target_videos: nat32;
-    last_reset_date: opt SystemTime;
-    claimed_today: bool;
+    completed: bool;
+    reward_claimed: bool;
     total_videos_generated: nat32;
 };
 
 type ReferralCount = record {
-    referrals_made_today: nat32;
+    referrals_made_total: nat32;
     target_referrals: nat32;
-    last_reset_date: opt SystemTime;
-    claimed_today: bool;
+    completed: bool;
+    reward_claimed: bool;
     total_referrals_made: nat32;
     referred_users: vec ReferredUser;
 };
@@ -62,6 +70,7 @@ type UserDailyMissions = record {
     ai_video_count: GenerateAiVideoCount;
     referral_count: ReferralCount;
     last_updated: SystemTime;
+    pending_rewards: vec PendingReward;
 };
 
 // Progress structures
@@ -86,7 +95,7 @@ type AiVideoProgress = record {
     target_count: nat32;
     can_claim: bool;
     reward_amount: nat64;
-    hours_remaining: nat32;
+    completed: bool;
 };
 
 type ReferralProgress = record {
@@ -94,7 +103,7 @@ type ReferralProgress = record {
     target_count: nat32;
     can_claim: bool;
     reward_amount: nat64;
-    hours_remaining: nat32;
+    completed: bool;
 };
 
 type MissionProgress = record {
@@ -102,6 +111,7 @@ type MissionProgress = record {
     game_progress: GameProgress;
     ai_video_progress: AiVideoProgress;
     referral_progress: ReferralProgress;
+    pending_rewards: vec PendingReward;
 };
 
 // API types
@@ -125,7 +135,7 @@ type UpdateMissionRequest = record {
 };
 
 type ClaimRewardRequest = record {
-    mission_type: MissionType;
+    reward_id: text;
 };
 
 
