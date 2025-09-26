@@ -1,7 +1,6 @@
 use candid::Principal;
-use pocket_ic::PocketIc;
 use shared_utils::canister_specific::user_info_service::types::{
-    FollowersResponse, FollowingResponse, FollowerItem,
+    FollowersResponse, FollowingResponse,
 };
 use test_utils::canister_calls::{query, update};
 use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned;
@@ -671,4 +670,212 @@ fn test_comprehensive_follower_following_functionality() {
     );
 
     println!("✅ Profile details v4 follower/following counts and caller_follows_user field verified!");
+
+    // Test profile pictures in follower/following lists
+    println!("\n🖼️ Testing profile pictures in follower/following lists...");
+
+    // Create a struct matching the candid ProfileUpdateDetails record type
+    #[derive(candid::CandidType)]
+    struct ProfileUpdateDetails {
+        bio: Option<String>,
+        website_url: Option<String>,
+        profile_picture_url: Option<String>,
+    }
+
+    // Update Alice's profile picture
+    let alice_profile_update = ProfileUpdateDetails {
+        bio: Some("Alice's bio".to_string()),
+        website_url: Some("https://alice.example.com".to_string()),
+        profile_picture_url: Some("https://example.com/alice.jpg".to_string()),
+    };
+
+    let result = update::<_, Result<(), String>>(
+        &pocket_ic,
+        user_service_canister,
+        alice,
+        "update_profile_details",
+        (alice_profile_update,),
+    )
+    .expect("Failed to update Alice's profile");
+    assert!(result.is_ok(), "Failed to update Alice's profile: {:?}", result);
+
+    // Update Bob's profile picture
+    let bob_profile_update = ProfileUpdateDetails {
+        bio: None,
+        website_url: None,
+        profile_picture_url: Some("https://example.com/bob.jpg".to_string()),
+    };
+
+    let result = update::<_, Result<(), String>>(
+        &pocket_ic,
+        user_service_canister,
+        bob,
+        "update_profile_details",
+        (bob_profile_update,),
+    )
+    .expect("Failed to update Bob's profile");
+    assert!(result.is_ok(), "Failed to update Bob's profile: {:?}", result);
+
+    // Update Charlie's profile picture
+    let charlie_profile_update = ProfileUpdateDetails {
+        bio: Some("Charlie here!".to_string()),
+        website_url: None,
+        profile_picture_url: Some("https://example.com/charlie.jpg".to_string()),
+    };
+
+    let result = update::<_, Result<(), String>>(
+        &pocket_ic,
+        user_service_canister,
+        charlie,
+        "update_profile_details",
+        (charlie_profile_update,),
+    )
+    .expect("Failed to update Charlie's profile");
+    assert!(result.is_ok(), "Failed to update Charlie's profile: {:?}", result);
+
+    // Test get_followers WITHOUT profile pictures (default behavior)
+    println!("\n📋 Testing get_followers without profile pictures...");
+    let alice_followers_no_pics = query::<_, Result<FollowersResponse, String>>(
+        &pocket_ic,
+        user_service_canister,
+        alice,
+        "get_followers",
+        (alice, None::<Principal>, 10u64, None::<bool>),
+    )
+    .expect("Failed to query followers")
+    .expect("Failed to get Alice's followers without pics");
+
+    // Verify Bob is a follower without profile picture
+    let bob_follower = alice_followers_no_pics
+        .followers
+        .iter()
+        .find(|f| f.principal_id == bob)
+        .expect("Bob should be in Alice's followers");
+
+    assert_eq!(
+        bob_follower.profile_picture_url, None,
+        "Profile picture should be None when not requested"
+    );
+
+    // Test get_followers WITH profile pictures
+    println!("\n🖼️ Testing get_followers with profile pictures...");
+    let alice_followers_with_pics = query::<_, Result<FollowersResponse, String>>(
+        &pocket_ic,
+        user_service_canister,
+        alice,
+        "get_followers",
+        (alice, None::<Principal>, 10u64, Some(true)),
+    )
+    .expect("Failed to query followers with pics")
+    .expect("Failed to get Alice's followers with pics");
+
+    // Verify Bob is a follower with profile picture
+    let bob_follower_with_pic = alice_followers_with_pics
+        .followers
+        .iter()
+        .find(|f| f.principal_id == bob)
+        .expect("Bob should be in Alice's followers");
+
+    assert_eq!(
+        bob_follower_with_pic.profile_picture_url,
+        Some("https://example.com/bob.jpg".to_string()),
+        "Bob's profile picture should be included when requested"
+    );
+
+    // Test get_following WITHOUT profile pictures
+    println!("\n📋 Testing get_following without profile pictures...");
+    let alice_following_no_pics = query::<_, Result<FollowingResponse, String>>(
+        &pocket_ic,
+        user_service_canister,
+        alice,
+        "get_following",
+        (alice, None::<Principal>, 10u64, None::<bool>),
+    )
+    .expect("Failed to query following")
+    .expect("Failed to get Alice's following without pics");
+
+    // Verify Charlie is being followed without profile picture
+    let charlie_following = alice_following_no_pics
+        .following
+        .iter()
+        .find(|f| f.principal_id == charlie)
+        .expect("Charlie should be in Alice's following");
+
+    assert_eq!(
+        charlie_following.profile_picture_url, None,
+        "Profile picture should be None when not requested"
+    );
+
+    // Test get_following WITH profile pictures
+    println!("\n🖼️ Testing get_following with profile pictures...");
+    let alice_following_with_pics = query::<_, Result<FollowingResponse, String>>(
+        &pocket_ic,
+        user_service_canister,
+        alice,
+        "get_following",
+        (alice, None::<Principal>, 10u64, Some(true)),
+    )
+    .expect("Failed to query following with pics")
+    .expect("Failed to get Alice's following with pics");
+
+    // Verify both Bob and Charlie are being followed with profile pictures
+    let bob_following = alice_following_with_pics
+        .following
+        .iter()
+        .find(|f| f.principal_id == bob)
+        .expect("Bob should be in Alice's following");
+
+    assert_eq!(
+        bob_following.profile_picture_url,
+        Some("https://example.com/bob.jpg".to_string()),
+        "Bob's profile picture should be included when requested"
+    );
+
+    let charlie_following_with_pic = alice_following_with_pics
+        .following
+        .iter()
+        .find(|f| f.principal_id == charlie)
+        .expect("Charlie should be in Alice's following");
+
+    assert_eq!(
+        charlie_following_with_pic.profile_picture_url,
+        Some("https://example.com/charlie.jpg".to_string()),
+        "Charlie's profile picture should be included when requested"
+    );
+
+    // Test with a user who has no profile picture set
+    println!("\n📋 Testing user without profile picture...");
+    let dan_followers_with_pics = query::<_, Result<FollowersResponse, String>>(
+        &pocket_ic,
+        user_service_canister,
+        dan,
+        "get_followers",
+        (dan, None::<Principal>, 10u64, Some(true)),
+    )
+    .expect("Failed to query Dan's followers with pics")
+    .expect("Failed to get Dan's followers with pics");
+
+    // Dan has no followers, but let's check Charlie's following list for Dan
+    let charlie_following_with_dan = query::<_, Result<FollowingResponse, String>>(
+        &pocket_ic,
+        user_service_canister,
+        charlie,
+        "get_following",
+        (charlie, None::<Principal>, 10u64, Some(true)),
+    )
+    .expect("Failed to query Charlie's following with pics")
+    .expect("Failed to get Charlie's following with pics");
+
+    let dan_in_following = charlie_following_with_dan
+        .following
+        .iter()
+        .find(|f| f.principal_id == dan)
+        .expect("Dan should be in Charlie's following");
+
+    assert_eq!(
+        dan_in_following.profile_picture_url, None,
+        "Dan's profile picture should be None (never set)"
+    );
+
+    println!("✅ Profile pictures in follower/following lists tests passed!");
 }
