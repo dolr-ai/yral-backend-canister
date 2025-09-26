@@ -1,9 +1,16 @@
-use candid::Principal;
+use candid::{CandidType, Deserialize, Principal};
 
-#[derive(candid::CandidType, candid::Deserialize, Debug, Clone, PartialEq)]
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq)]
 pub struct FollowerItem {
     pub principal_id: Principal,
     pub caller_follows: bool,
+    pub profile_picture_url: Option<String>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct ProfileUpdateDetails {
+    pub bio: Option<String>,
+    pub website_url: Option<String>,
     pub profile_picture_url: Option<String>,
 }
 

@@ -5,22 +5,18 @@ use ciborium::{de, ser};
 use ic_stable_structures::{BTreeMap as StableBTreeMap, Storable, storable::Bound};
 use serde::{Deserialize, Serialize};
 use shared_utils::{
-    canister_specific::individual_user_template::types::{
-        profile::{UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4},
-        session::SessionType,
+    canister_specific::{
+        individual_user_template::types::{
+            profile::{UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4},
+            session::SessionType,
+        },
+        user_info_service::types::ProfileUpdateDetails,
     },
     common::utils::system_time::get_current_system_time,
 };
 pub(crate) mod memory;
 
 use crate::data_model::memory::Memory;
-
-#[derive(CandidType, Deserialize)]
-pub struct ProfileUpdateDetails {
-    pub bio: Option<String>,
-    pub website_url: Option<String>,
-    pub profile_picture_url: Option<String>,
-}
 
 #[derive(CandidType, Deserialize, Serialize)]
 pub(crate) struct UserInfo {

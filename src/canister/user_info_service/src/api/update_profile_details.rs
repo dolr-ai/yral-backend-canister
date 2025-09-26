@@ -1,8 +1,8 @@
 use ic_cdk::caller;
 use ic_cdk_macros::update;
+use shared_utils::canister_specific::user_info_service::types::ProfileUpdateDetails;
 
 use crate::CANISTER_DATA;
-use crate::data_model::ProfileUpdateDetails;
 
 #[update]
 fn update_profile_details(details: ProfileUpdateDetails) -> Result<(), String> {

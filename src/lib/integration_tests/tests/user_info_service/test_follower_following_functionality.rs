@@ -1,6 +1,6 @@
 use candid::Principal;
 use shared_utils::canister_specific::user_info_service::types::{
-    FollowersResponse, FollowingResponse,
+    FollowersResponse, FollowingResponse, ProfileUpdateDetails,
 };
 use test_utils::canister_calls::{query, update};
 use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned;
@@ -673,14 +673,6 @@ fn test_comprehensive_follower_following_functionality() {
 
     // Test profile pictures in follower/following lists
     println!("\n🖼️ Testing profile pictures in follower/following lists...");
-
-    // Create a struct matching the candid ProfileUpdateDetails record type
-    #[derive(candid::CandidType)]
-    struct ProfileUpdateDetails {
-        bio: Option<String>,
-        website_url: Option<String>,
-        profile_picture_url: Option<String>,
-    }
 
     // Update Alice's profile picture
     let alice_profile_update = ProfileUpdateDetails {

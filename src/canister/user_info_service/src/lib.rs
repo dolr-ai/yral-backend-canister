@@ -6,8 +6,8 @@ use shared_utils::canister_specific::individual_user_template::types::profile::{
 use shared_utils::canister_specific::individual_user_template::types::session::SessionType;
 use shared_utils::canister_specific::user_info_service::args::UserInfoServiceInitArgs;
 
-use crate::data_model::{CanisterData, ProfileUpdateDetails};
-use shared_utils::canister_specific::user_info_service::types::{FollowersResponse, FollowingResponse};
+use crate::data_model::CanisterData;
+use shared_utils::canister_specific::user_info_service::types::{FollowersResponse, FollowingResponse, ProfileUpdateDetails};
 
 mod api;
 pub mod data_model;
