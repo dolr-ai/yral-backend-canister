@@ -411,6 +411,7 @@ impl CanisterData {
         &self,
         caller_principal: Principal,
         follower_principals: Vec<Principal>,
+        include_profile_pics: bool,
     ) -> Result<Vec<shared_utils::canister_specific::user_info_service::types::FollowerItem>, String>
     {
         let items = follower_principals
@@ -426,9 +427,19 @@ impl CanisterData {
                     false
                 };
 
+                // Get profile picture if requested
+                let profile_picture_url = if include_profile_pics {
+                    self.user_infos
+                        .get(&principal)
+                        .and_then(|info| info.profile.profile_picture_url.clone())
+                } else {
+                    None
+                };
+
                 shared_utils::canister_specific::user_info_service::types::FollowerItem {
                     principal_id: principal,
                     caller_follows,
+                    profile_picture_url,
                 }
             })
             .collect();
@@ -440,7 +451,8 @@ impl CanisterData {
         &self,
         caller_principal: Principal,
         following_principals: Vec<Principal>,
-    ) -> Result<Vec<shared_utils::canister_specific::user_info_service::types::FollowingItem>, String>
+        include_profile_pics: bool,
+    ) -> Result<Vec<shared_utils::canister_specific::user_info_service::types::FollowerItem>, String>
     {
         let items = following_principals
             .into_iter()
@@ -455,9 +467,19 @@ impl CanisterData {
                     false
                 };
 
-                shared_utils::canister_specific::user_info_service::types::FollowingItem {
+                // Get profile picture if requested
+                let profile_picture_url = if include_profile_pics {
+                    self.user_infos
+                        .get(&principal)
+                        .and_then(|info| info.profile.profile_picture_url.clone())
+                } else {
+                    None
+                };
+
+                shared_utils::canister_specific::user_info_service::types::FollowerItem {
                     principal_id: principal,
                     caller_follows,
+                    profile_picture_url,
                 }
             })
             .collect();

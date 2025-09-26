@@ -1,7 +1,7 @@
 use candid::Principal;
 use pocket_ic::PocketIc;
 use shared_utils::canister_specific::user_info_service::types::{
-    FollowersResponse, FollowingResponse, FollowerItem, FollowingItem,
+    FollowersResponse, FollowingResponse, FollowerItem,
 };
 use test_utils::canister_calls::{query, update};
 use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned;
@@ -167,7 +167,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         alice,
         "get_followers",
-        (alice, None::<Principal>, 10u64),
+        (alice, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query followers")
     .expect("Failed to get Alice's followers");
@@ -191,7 +191,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         bob,
         "get_followers",
-        (bob, None::<Principal>, 10u64),
+        (bob, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query followers")
     .expect("Failed to get Bob's followers");
@@ -208,7 +208,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         charlie,
         "get_followers",
-        (charlie, None::<Principal>, 10u64),
+        (charlie, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query followers")
     .expect("Failed to get Charlie's followers");
@@ -228,7 +228,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         dan,
         "get_followers",
-        (dan, None::<Principal>, 10u64),
+        (dan, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query followers")
     .expect("Failed to get Dan's followers");
@@ -247,7 +247,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         alice,
         "get_following",
-        (alice, None::<Principal>, 10u64),
+        (alice, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query following")
     .expect("Failed to get Alice's following");
@@ -271,7 +271,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         bob,
         "get_following",
-        (bob, None::<Principal>, 10u64),
+        (bob, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query following")
     .expect("Failed to get Bob's following");
@@ -291,7 +291,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         charlie,
         "get_following",
-        (charlie, None::<Principal>, 10u64),
+        (charlie, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query following")
     .expect("Failed to get Charlie's following");
@@ -315,7 +315,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         dan,
         "get_following",
-        (dan, None::<Principal>, 10u64),
+        (dan, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query following")
     .expect("Failed to get Dan's following");
@@ -337,7 +337,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         alice,
         "get_followers",
-        (alice, None::<Principal>, 1u64),
+        (alice, None::<Principal>, 1u64, None::<bool>),
     )
     .expect("Failed to query followers")
     .expect("Failed to get Alice's followers page 1");
@@ -365,7 +365,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         alice,
         "get_followers",
-        (alice, alice_followers_page1.next_cursor, 1u64),
+        (alice, alice_followers_page1.next_cursor, 1u64, None::<bool>),
     )
     .expect("Failed to query followers")
     .expect("Failed to get Alice's followers page 2");
@@ -454,7 +454,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         alice,
         "get_followers",
-        (alice, None::<Principal>, 10u64),
+        (alice, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query followers")
     .expect("Failed to get Alice's final followers");
@@ -478,7 +478,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         alice,
         "get_following",
-        (alice, None::<Principal>, 10u64),
+        (alice, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query following")
     .expect("Failed to get Alice's final following");
@@ -502,7 +502,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         bob,
         "get_followers",
-        (bob, None::<Principal>, 10u64),
+        (bob, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query followers")
     .expect("Failed to get Bob's final followers");
@@ -522,7 +522,7 @@ fn test_comprehensive_follower_following_functionality() {
         user_service_canister,
         charlie,
         "get_following",
-        (charlie, None::<Principal>, 10u64),
+        (charlie, None::<Principal>, 10u64, None::<bool>),
     )
     .expect("Failed to query following")
     .expect("Failed to get Charlie's final following");
