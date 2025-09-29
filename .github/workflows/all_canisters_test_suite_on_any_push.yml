@@ -53,6 +53,7 @@ jobs:
           nix-shell --run "dfx canister create --no-wallet dedup_index"
           nix-shell --run "dfx canister create --no-wallet user_info_service"
           nix-shell --run "dfx canister create --no-wallet rate_limits"
+          nix-shell --run "dfx canister create --no-wallet daily_missions"
       - name: Stop local replica
         run: nix-shell --run "dfx stop"
       - name: Build platform_orchestrator canister
@@ -87,6 +88,10 @@ jobs:
         run: |
           nix-shell --run "dfx build rate_limits"
           gzip -f -1 ./target/wasm32-unknown-unknown/release/rate_limits.wasm
+      - name: Build daily_missions canister
+        run: |
+          nix-shell --run "dfx build daily_missions"
+          gzip -f -1 ./target/wasm32-unknown-unknown/release/daily_missions.wasm
       - name: Run canister test suite
         env:
           POCKET_IC_BIN: ${{ github.workspace }}/pocket-ic

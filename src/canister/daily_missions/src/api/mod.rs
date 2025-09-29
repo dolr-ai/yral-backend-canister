@@ -236,7 +236,6 @@ fn claim_reward(request: ClaimRewardRequest) -> ClaimRewardResponse {
         if let Some(pending_reward) =
             remove_pending_reward_by_id(&mut missions.pending_rewards, &request.reward_id)
         {
-            // Create a claimed reward record
             let claimed_reward = ClaimedReward {
                 reward_type: pending_reward.reward_type.clone(),
                 amount: pending_reward.amount,
@@ -244,7 +243,6 @@ fn claim_reward(request: ClaimRewardRequest) -> ClaimRewardResponse {
                 day: pending_reward.mission_day,
             };
 
-            // Add to claimed rewards history based on reward type
             match pending_reward.reward_type {
                 RewardType::LoginStreak => {
                     missions
