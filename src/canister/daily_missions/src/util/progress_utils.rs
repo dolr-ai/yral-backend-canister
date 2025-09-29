@@ -2,16 +2,15 @@ use super::mission_utils::{calculate_hours_until_next_day, calculate_hours_until
 use crate::data_model::{
     AiVideoProgress, GameProgress, LoginStreakProgress, MissionProgress, PendingReward,
     ReferralProgress, RewardType, UserDailyMissions, AI_VIDEO_GENERATION_REWARD,
-    GAME_COMPLETION_REWARD, LOGIN_STREAK_REWARD, LOGIN_STREAK_TARGET, REFERRAL_REWARD,
+    DAILY_LOGIN_REWARD, GAME_COMPLETION_REWARD, LOGIN_STREAK_TARGET, REFERRAL_REWARD,
 };
 use std::time::SystemTime;
 
 /// Builds comprehensive mission progress for a user
 pub fn build_mission_progress(missions: &UserDailyMissions, now: SystemTime) -> MissionProgress {
-    let has_pending_login_reward = missions
-        .pending_rewards
-        .iter()
-        .any(|r| r.reward_type == RewardType::LoginStreak);
+    let has_pending_login_reward = missions.pending_rewards.iter().any(|r| {
+        r.reward_type == RewardType::LoginStreak || r.reward_type == RewardType::LoginStreakBonus
+    });
 
     let has_pending_game_reward = missions
         .pending_rewards
@@ -32,10 +31,8 @@ pub fn build_mission_progress(missions: &UserDailyMissions, now: SystemTime) -> 
         login_streak: LoginStreakProgress {
             current_day: missions.login_streak.current_streak,
             target_day: LOGIN_STREAK_TARGET,
-            can_claim: has_pending_login_reward
-                || (missions.login_streak.can_claim_today
-                    && missions.login_streak.current_streak >= LOGIN_STREAK_TARGET),
-            reward_amount: LOGIN_STREAK_REWARD,
+            can_claim: has_pending_login_reward,
+            reward_amount: DAILY_LOGIN_REWARD,
             next_reset_in_hours: calculate_hours_until_next_day(now),
         },
         game_progress: GameProgress {
@@ -179,25 +176,27 @@ mod tests {
                 last_login_date: Some(create_test_time(1)),
                 streak_start_date: Some(create_test_time(1)),
                 claimed_rewards: vec![],
-                can_claim_today: true,
             },
             game_streak: GameStreak {
                 games_played_today: 3,
                 target_games: 5,
                 claimed_today: false,
                 last_reset_date: Some(create_test_time(1)),
+                total_games_completed: 0,
             },
             ai_video_count: GenerateAiVideoCount {
                 videos_generated_total: 2,
                 total_videos_generated: 2,
                 target_videos: 3,
                 completed: false,
+                reward_claimed: false,
             },
             referral_count: ReferralCount {
                 referrals_made_total: 1,
                 total_referrals_made: 1,
                 target_referrals: 3,
                 completed: false,
+                reward_claimed: false,
                 referred_users: vec![ReferredUser {
                     principal_id: Principal::from_slice(&[1, 2, 3, 4]),
                     referred_at: create_test_time(1),
@@ -302,14 +301,18 @@ mod tests {
         let mut missions = create_test_missions();
         let now = create_test_time(2);
 
-        // Initially should have claimable login streak reward
-        missions.login_streak.can_claim_today = true;
-        missions.login_streak.current_streak = LOGIN_STREAK_TARGET;
+        // Add a pending reward to make it claimable
+        missions.pending_rewards.push(PendingReward {
+            id: "test1".to_string(),
+            reward_type: RewardType::LoginStreak,
+            amount: 100,
+            earned_at: create_test_time(1),
+            mission_day: 1,
+        });
         assert!(has_claimable_rewards(&missions, now));
 
-        // Remove claimability
-        missions.login_streak.can_claim_today = false;
-        missions.login_streak.current_streak = 1;
+        // Remove pending rewards to make it not claimable
+        missions.pending_rewards.clear();
         assert!(!has_claimable_rewards(&missions, now));
     }
 

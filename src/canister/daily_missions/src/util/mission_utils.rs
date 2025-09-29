@@ -1,6 +1,6 @@
 use crate::data_model::{
-    ClaimedReward, GameStreak, GenerateAiVideoCount, LoginStreak, PendingReward, ReferralCount,
-    ReferredUser, RewardType, UserDailyMissions,
+    GameStreak, GenerateAiVideoCount, LoginStreak, PendingReward, ReferralCount, ReferredUser,
+    RewardType, UserDailyMissions,
 };
 use candid::Principal;
 use std::time::SystemTime;
@@ -13,24 +13,21 @@ pub fn update_login_streak(login_streak: &mut LoginStreak, now: SystemTime) -> (
         let last_login_day = get_day_from_timestamp(last_login);
 
         if today == last_login_day {
-            return (true, "Already logged in today".to_string());
+            return (false, "Already logged in today".to_string());
         }
 
         if today == last_login_day + 1 {
             // Consecutive day
             login_streak.current_streak += 1;
-            login_streak.can_claim_today = true;
         } else {
             // Streak broken
             login_streak.current_streak = 1;
             login_streak.streak_start_date = Some(now);
-            login_streak.can_claim_today = true;
         }
     } else {
         // First login
         login_streak.current_streak = 1;
         login_streak.streak_start_date = Some(now);
-        login_streak.can_claim_today = true;
     }
 
     login_streak.last_login_date = Some(now);
@@ -253,7 +250,6 @@ mod tests {
         assert!(success);
         assert_eq!(streak.current_streak, 1);
         assert_eq!(streak.max_streak, 1);
-        assert!(streak.can_claim_today);
         assert!(message.contains("Login streak updated to 1 days"));
     }
 
@@ -265,7 +261,6 @@ mod tests {
             last_login_date: Some(create_test_time(1)),
             streak_start_date: Some(create_test_time(1)),
             claimed_rewards: vec![],
-            can_claim_today: false,
         };
         let now = create_test_time(2);
 
@@ -274,7 +269,6 @@ mod tests {
         assert!(success);
         assert_eq!(streak.current_streak, 2);
         assert_eq!(streak.max_streak, 2);
-        assert!(streak.can_claim_today);
         assert!(message.contains("Login streak updated to 2 days"));
     }
 
@@ -287,14 +281,13 @@ mod tests {
             last_login_date: Some(day1),
             streak_start_date: Some(day1),
             claimed_rewards: vec![],
-            can_claim_today: true,
         };
         // Same day, few hours later
         let now = day1 + Duration::from_secs(3600);
 
         let (success, message) = update_login_streak(&mut streak, now);
 
-        assert!(success);
+        assert!(!success); // Should return false for same day login
         assert_eq!(streak.current_streak, 1); // Should not increment
         assert_eq!(message, "Already logged in today");
     }
@@ -307,7 +300,6 @@ mod tests {
             last_login_date: Some(create_test_time(1)),
             streak_start_date: Some(create_test_time(1)),
             claimed_rewards: vec![],
-            can_claim_today: false,
         };
         let now = create_test_time(5); // 4 days gap
 
@@ -316,7 +308,6 @@ mod tests {
         assert!(success);
         assert_eq!(streak.current_streak, 1); // Reset to 1
         assert_eq!(streak.max_streak, 5); // Max should remain
-        assert!(streak.can_claim_today);
         assert!(message.contains("Login streak updated to 1 days"));
     }
 
@@ -327,6 +318,7 @@ mod tests {
             total_videos_generated: 2,
             target_videos: 3,
             completed: false,
+            reward_claimed: false,
         };
         let now = create_test_time(1);
 
@@ -346,6 +338,7 @@ mod tests {
             total_videos_generated: 3,
             target_videos: 3,
             completed: true,
+            reward_claimed: false,
         };
         let now = create_test_time(1);
 

@@ -1,8 +1,8 @@
 use candid::Principal;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use crate::api::{update_ai_video_count, update_referral_count};
 use crate::data_model::{GenerateAiVideoCount, ReferralCount};
+use crate::util::mission_utils::{update_ai_video_count, update_referral_count};
 
 fn create_test_time() -> SystemTime {
     UNIX_EPOCH + Duration::from_secs(1000000)
@@ -218,10 +218,10 @@ mod api_integration_tests {
 
     #[test]
     fn test_pending_rewards_generation() {
-        use crate::api::{add_pending_reward, generate_reward_id};
         use crate::data_model::{
-            RewardType, UserDailyMissions, AI_VIDEO_GENERATION_REWARD, LOGIN_STREAK_REWARD,
+            RewardType, UserDailyMissions, AI_VIDEO_GENERATION_REWARD, DAILY_LOGIN_REWARD,
         };
+        use crate::util::mission_utils::add_pending_reward;
 
         let mut missions = UserDailyMissions::default();
         let user = Principal::from_slice(&[1, 2, 3, 4]);
@@ -235,7 +235,7 @@ mod api_integration_tests {
             &mut missions,
             &user,
             RewardType::LoginStreak,
-            LOGIN_STREAK_REWARD,
+            DAILY_LOGIN_REWARD,
             7,
             now,
         );
@@ -246,7 +246,7 @@ mod api_integration_tests {
             missions.pending_rewards[0].reward_type,
             RewardType::LoginStreak
         );
-        assert_eq!(missions.pending_rewards[0].amount, LOGIN_STREAK_REWARD);
+        assert_eq!(missions.pending_rewards[0].amount, DAILY_LOGIN_REWARD);
         assert_eq!(missions.pending_rewards[0].mission_day, 7);
         assert_eq!(missions.pending_rewards[0].earned_at, now);
 
@@ -274,8 +274,8 @@ mod api_integration_tests {
 
     #[test]
     fn test_reward_id_generation() {
-        use crate::api::generate_reward_id;
         use crate::data_model::RewardType;
+        use crate::util::mission_utils::generate_reward_id;
 
         let user = Principal::from_slice(&[1, 2, 3, 4]);
         let now = create_test_time();

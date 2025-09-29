@@ -142,7 +142,6 @@ pub struct LoginStreak {
     pub last_login_date: Option<std::time::SystemTime>,
     pub streak_start_date: Option<std::time::SystemTime>,
     pub claimed_rewards: Vec<ClaimedReward>,
-    pub can_claim_today: bool,
 }
 
 #[derive(candid::CandidType, serde::Deserialize, Clone, Debug)]

@@ -4,6 +4,7 @@ type SystemTime = int;
 // Core data structures
 type RewardType = variant {
     LoginStreak;
+    LoginStreakBonus;
     GameCompletion;
     AiVideoGeneration;
     Referral;
@@ -36,7 +37,6 @@ type LoginStreak = record {
     last_login_date: opt SystemTime;
     streak_start_date: opt SystemTime;
     claimed_rewards: vec ClaimedReward;
-    can_claim_today: bool;
 };
 
 type GameStreak = record {

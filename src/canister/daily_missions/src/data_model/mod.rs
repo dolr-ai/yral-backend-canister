@@ -9,7 +9,6 @@ use crate::data_model::memory::Memory;
 
 pub mod memory;
 
-
 //This is the source of truth for a user's daily missions.
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UserDailyMissions {
@@ -41,7 +40,6 @@ pub struct LoginStreak {
     pub last_login_date: Option<SystemTime>,
     pub streak_start_date: Option<SystemTime>,
     pub claimed_rewards: Vec<ClaimedReward>,
-    pub can_claim_today: bool,
 }
 
 impl Default for LoginStreak {
@@ -52,7 +50,6 @@ impl Default for LoginStreak {
             last_login_date: None,
             streak_start_date: None,
             claimed_rewards: Vec::new(),
-            can_claim_today: false,
         }
     }
 }
@@ -149,6 +146,7 @@ pub struct PendingReward {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum RewardType {
     LoginStreak,
+    LoginStreakBonus,
     GameCompletion,
     AiVideoGeneration,
     Referral,
@@ -217,7 +215,8 @@ pub struct MissionUpdateResult {
 }
 
 // Reward amounts in YRAL tokens
-pub const LOGIN_STREAK_REWARD: u64 = 5;
+pub const DAILY_LOGIN_REWARD: u64 = 5;
+pub const LOGIN_STREAK_COMPLETION_BONUS: u64 = 30;
 pub const GAME_COMPLETION_REWARD: u64 = 10;
 pub const AI_VIDEO_GENERATION_REWARD: u64 = 30;
 pub const REFERRAL_REWARD: u64 = 15;

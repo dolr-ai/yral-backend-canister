@@ -4,16 +4,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::data_model::{
     ClaimedReward, MissionProgress, MissionType, MissionUpdateResult, RewardType,
-    UserDailyMissions, AI_VIDEO_GENERATION_REWARD, GAME_COMPLETION_REWARD, LOGIN_STREAK_REWARD,
-    LOGIN_STREAK_TARGET, REFERRAL_REWARD,
+    UserDailyMissions, AI_VIDEO_GENERATION_REWARD, DAILY_LOGIN_REWARD, GAME_COMPLETION_REWARD,
+    LOGIN_STREAK_COMPLETION_BONUS, LOGIN_STREAK_TARGET, REFERRAL_REWARD,
 };
 use crate::util::mission_utils::{
-    add_pending_reward, generate_reward_id, update_ai_video_count, update_game_streak,
-    update_login_streak, update_referral_count,
+    add_pending_reward, update_ai_video_count, update_game_streak, update_login_streak,
+    update_referral_count,
 };
-use crate::util::progress_utils::{
-    build_mission_progress, find_pending_reward_by_id, remove_pending_reward_by_id,
-};
+use crate::util::progress_utils::{build_mission_progress, remove_pending_reward_by_id};
 use shared_utils::common::utils::system_time::get_current_system_time_from_ic;
 
 use crate::CANISTER_DATA;
@@ -80,23 +78,33 @@ fn update_mission(request: UpdateMissionRequest) -> MissionUpdateResult {
 
         let result = match request.mission_type {
             MissionType::LoginStreak => {
-                let prev_can_claim = missions.login_streak.can_claim_today;
+                let prev_streak = missions.login_streak.current_streak;
 
                 if let MissionUpdateData::LoginEvent = request.data {
                     let result = update_login_streak(&mut missions.login_streak, now);
 
-                    // Check if we should add a pending reward
-                    if !prev_can_claim
-                        && missions.login_streak.can_claim_today
-                        && missions.login_streak.current_streak >= LOGIN_STREAK_TARGET
-                    {
+                    // Add daily login reward if this is a new login (streak increased or started)
+                    if result.0 && missions.login_streak.current_streak > prev_streak {
                         let current_streak = missions.login_streak.current_streak;
                         add_pending_reward(
                             &mut missions,
                             &user,
                             RewardType::LoginStreak,
-                            LOGIN_STREAK_REWARD,
+                            DAILY_LOGIN_REWARD,
                             current_streak,
+                            now,
+                        );
+                    }
+
+                    // Add streak completion bonus when reaching 7-day target
+                    let current_streak = missions.login_streak.current_streak;
+                    if current_streak == LOGIN_STREAK_TARGET && prev_streak < LOGIN_STREAK_TARGET {
+                        add_pending_reward(
+                            &mut missions,
+                            &user,
+                            RewardType::LoginStreakBonus,
+                            LOGIN_STREAK_COMPLETION_BONUS,
+                            LOGIN_STREAK_TARGET,
                             now,
                         );
                     }
@@ -243,7 +251,12 @@ fn claim_reward(request: ClaimRewardRequest) -> ClaimRewardResponse {
                         .login_streak
                         .claimed_rewards
                         .push(claimed_reward.clone());
-                    missions.login_streak.can_claim_today = false;
+                }
+                RewardType::LoginStreakBonus => {
+                    missions
+                        .login_streak
+                        .claimed_rewards
+                        .push(claimed_reward.clone());
                 }
                 RewardType::GameCompletion => {
                     missions.game_streak.claimed_today = true;
