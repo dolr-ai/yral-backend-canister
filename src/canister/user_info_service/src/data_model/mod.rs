@@ -5,22 +5,18 @@ use ciborium::{de, ser};
 use ic_stable_structures::{BTreeMap as StableBTreeMap, Storable, storable::Bound};
 use serde::{Deserialize, Serialize};
 use shared_utils::{
-    canister_specific::individual_user_template::types::{
-        profile::{UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4},
-        session::SessionType,
+    canister_specific::{
+        individual_user_template::types::{
+            profile::{UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4},
+            session::SessionType,
+        },
+        user_info_service::types::ProfileUpdateDetails,
     },
     common::utils::system_time::get_current_system_time,
 };
 pub(crate) mod memory;
 
 use crate::data_model::memory::Memory;
-
-#[derive(CandidType, Deserialize)]
-pub struct ProfileUpdateDetails {
-    pub bio: Option<String>,
-    pub website_url: Option<String>,
-    pub profile_picture_url: Option<String>,
-}
 
 #[derive(CandidType, Deserialize, Serialize)]
 pub(crate) struct UserInfo {
@@ -411,6 +407,7 @@ impl CanisterData {
         &self,
         caller_principal: Principal,
         follower_principals: Vec<Principal>,
+        include_profile_pics: bool,
     ) -> Result<Vec<shared_utils::canister_specific::user_info_service::types::FollowerItem>, String>
     {
         let items = follower_principals
@@ -426,9 +423,19 @@ impl CanisterData {
                     false
                 };
 
+                // Get profile picture if requested
+                let profile_picture_url = if include_profile_pics {
+                    self.user_infos
+                        .get(&principal)
+                        .and_then(|info| info.profile.profile_picture_url.clone())
+                } else {
+                    None
+                };
+
                 shared_utils::canister_specific::user_info_service::types::FollowerItem {
                     principal_id: principal,
                     caller_follows,
+                    profile_picture_url,
                 }
             })
             .collect();
@@ -440,7 +447,8 @@ impl CanisterData {
         &self,
         caller_principal: Principal,
         following_principals: Vec<Principal>,
-    ) -> Result<Vec<shared_utils::canister_specific::user_info_service::types::FollowingItem>, String>
+        include_profile_pics: bool,
+    ) -> Result<Vec<shared_utils::canister_specific::user_info_service::types::FollowerItem>, String>
     {
         let items = following_principals
             .into_iter()
@@ -455,9 +463,19 @@ impl CanisterData {
                     false
                 };
 
-                shared_utils::canister_specific::user_info_service::types::FollowingItem {
+                // Get profile picture if requested
+                let profile_picture_url = if include_profile_pics {
+                    self.user_infos
+                        .get(&principal)
+                        .and_then(|info| info.profile.profile_picture_url.clone())
+                } else {
+                    None
+                };
+
+                shared_utils::canister_specific::user_info_service::types::FollowerItem {
                     principal_id: principal,
                     caller_follows,
+                    profile_picture_url,
                 }
             })
             .collect();
