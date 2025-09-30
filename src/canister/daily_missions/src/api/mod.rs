@@ -3,15 +3,15 @@ use ic_cdk::{caller, query, update};
 use serde::{Deserialize, Serialize};
 
 use crate::data_model::{
-    ClaimedReward, MissionProgress, MissionType, MissionUpdateResult, RewardType,
-    UserDailyMissions, AI_VIDEO_GENERATION_REWARD, DAILY_LOGIN_REWARD, GAME_COMPLETION_REWARD,
+    ClaimedReward, MissionType, MissionUpdateResult, RewardType, UserDailyMissions,
+    AI_VIDEO_GENERATION_REWARD, DAILY_LOGIN_REWARD, GAME_COMPLETION_REWARD,
     LOGIN_STREAK_COMPLETION_BONUS, LOGIN_STREAK_TARGET, REFERRAL_REWARD,
 };
 use crate::util::mission_utils::{
     add_pending_reward, update_ai_video_count, update_game_streak, update_login_streak,
     update_referral_count,
 };
-use crate::util::progress_utils::{build_mission_progress, remove_pending_reward_by_id};
+use crate::util::progress_utils::remove_pending_reward_by_id;
 use shared_utils::common::utils::system_time::get_current_system_time_from_ic;
 
 use crate::CANISTER_DATA;
@@ -45,24 +45,16 @@ pub struct ClaimRewardResponse {
 
 // Query endpoints
 #[query]
-fn get_current_missions() -> UserDailyMissions {
-    let user = caller();
-    CANISTER_DATA.with_borrow(|canister_data| canister_data.get_user_missions(&user))
-}
+fn get_user_daily_missions(principal: Option<Principal>) -> Result<UserDailyMissions, String> {
+    let user = match principal {
+        Some(p) => p,
+        None => caller(),
+    };
 
-#[query]
-fn get_current_mission_progress() -> MissionProgress {
-    let user = caller();
-    let now = get_current_system_time_from_ic();
     CANISTER_DATA.with_borrow(|canister_data| {
         let missions = canister_data.get_user_missions(&user);
-        build_mission_progress(&missions, now)
+        Ok(missions)
     })
-}
-
-#[query]
-fn get_user_missions_for_principal(principal: Principal) -> UserDailyMissions {
-    CANISTER_DATA.with_borrow(|canister_data| canister_data.get_user_missions(&principal))
 }
 
 // Update endpoints
@@ -218,7 +210,7 @@ fn update_mission(request: UpdateMissionRequest) -> MissionUpdateResult {
         MissionUpdateResult {
             success: result.0,
             message: result.1,
-            new_progress: Some(build_mission_progress(&missions, now)),
+            new_progress: Some(missions),
             reward_earned,
         }
     })

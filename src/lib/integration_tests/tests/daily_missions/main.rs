@@ -50,7 +50,7 @@ pub struct ClaimRewardResponse {
 pub struct MissionUpdateResult {
     pub success: bool,
     pub message: String,
-    pub new_progress: Option<MissionProgress>,
+    pub new_progress: Option<UserDailyMissions>,
     pub reward_earned: Option<ClaimedReward>,
 }
 
@@ -111,6 +111,7 @@ pub struct PendingReward {
 #[derive(candid::CandidType, serde::Deserialize, Clone, Debug, PartialEq)]
 pub enum RewardType {
     LoginStreak,
+    LoginStreakBonus,
     GameCompletion,
     AiVideoGeneration,
     Referral,
@@ -181,25 +182,78 @@ pub struct ReferredUser {
 
 mod helper {
     use super::*;
+    use shared_utils::common::utils::system_time::get_current_system_time_from_ic;
+
+    fn convert_user_missions_to_progress(missions: &UserDailyMissions) -> MissionProgress {
+        let has_pending_login_reward = missions.pending_rewards.iter().any(|r| {
+            matches!(
+                r.reward_type,
+                RewardType::LoginStreak | RewardType::LoginStreakBonus
+            )
+        });
+
+        let has_pending_game_reward = missions
+            .pending_rewards
+            .iter()
+            .any(|r| r.reward_type == RewardType::GameCompletion);
+
+        let has_pending_ai_reward = missions
+            .pending_rewards
+            .iter()
+            .any(|r| r.reward_type == RewardType::AiVideoGeneration);
+
+        let has_pending_referral_reward = missions
+            .pending_rewards
+            .iter()
+            .any(|r| r.reward_type == RewardType::Referral);
+
+        MissionProgress {
+            login_streak: LoginStreakProgress {
+                current_day: missions.login_streak.current_streak,
+                target_day: 7, // LOGIN_STREAK_TARGET
+                can_claim: has_pending_login_reward,
+                reward_amount: 5,        // DAILY_LOGIN_REWARD
+                next_reset_in_hours: 24, // Simplified for tests
+            },
+            game_progress: GameProgress {
+                current_count: missions.game_streak.games_played_today,
+                target_count: missions.game_streak.target_games,
+                can_claim: has_pending_game_reward
+                    || (!missions.game_streak.claimed_today
+                        && missions.game_streak.games_played_today
+                            >= missions.game_streak.target_games),
+                reward_amount: 10,   // GAME_COMPLETION_REWARD
+                hours_remaining: 24, // Simplified for tests
+            },
+            ai_video_progress: AiVideoProgress {
+                current_count: missions.ai_video_count.videos_generated_total,
+                target_count: missions.ai_video_count.target_videos,
+                can_claim: has_pending_ai_reward
+                    || (!missions.ai_video_count.reward_claimed
+                        && missions.ai_video_count.completed),
+                reward_amount: 30, // AI_VIDEO_GENERATION_REWARD
+                completed: missions.ai_video_count.completed,
+            },
+            referral_progress: ReferralProgress {
+                current_count: missions.referral_count.referrals_made_total,
+                target_count: missions.referral_count.target_referrals,
+                can_claim: has_pending_referral_reward
+                    || (!missions.referral_count.reward_claimed
+                        && missions.referral_count.completed),
+                reward_amount: 15, // REFERRAL_REWARD
+                completed: missions.referral_count.completed,
+            },
+            pending_rewards: missions.pending_rewards.clone(),
+        }
+    }
 
     pub fn get_mission_progress(
         pic: &PocketIc,
         canister_id: Principal,
         sender: Principal,
     ) -> MissionProgress {
-        let res = pic
-            .query_call(
-                canister_id,
-                sender,
-                "get_current_mission_progress",
-                encode_one(()).unwrap(),
-            )
-            .unwrap();
-
-        match res {
-            WasmResult::Reply(bytes) => decode_one(&bytes).unwrap(),
-            WasmResult::Reject(reason) => panic!("Query call rejected: {reason}"),
-        }
+        let missions = get_user_missions(pic, canister_id, sender);
+        convert_user_missions_to_progress(&missions)
     }
 
     pub fn get_user_missions(
@@ -211,13 +265,16 @@ mod helper {
             .query_call(
                 canister_id,
                 sender,
-                "get_current_missions",
-                encode_one(()).unwrap(),
+                "get_user_daily_missions",
+                encode_one(None::<Principal>).unwrap(),
             )
             .unwrap();
 
         match res {
-            WasmResult::Reply(bytes) => decode_one(&bytes).unwrap(),
+            WasmResult::Reply(bytes) => {
+                let result: Result<UserDailyMissions, String> = decode_one(&bytes).unwrap();
+                result.unwrap()
+            }
             WasmResult::Reject(reason) => panic!("Query call rejected: {reason}"),
         }
     }
@@ -285,13 +342,16 @@ mod helper {
             .query_call(
                 canister_id,
                 sender,
-                "get_user_missions_for_principal",
-                encode_one(target_principal).unwrap(),
+                "get_user_daily_missions",
+                encode_one(Some(target_principal)).unwrap(),
             )
             .unwrap();
 
         match res {
-            WasmResult::Reply(bytes) => decode_one(&bytes).unwrap(),
+            WasmResult::Reply(bytes) => {
+                let result: Result<UserDailyMissions, String> = decode_one(&bytes).unwrap();
+                result.unwrap()
+            }
             WasmResult::Reject(reason) => panic!("Query user missions call rejected: {reason}"),
         }
     }

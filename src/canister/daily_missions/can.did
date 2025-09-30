@@ -73,46 +73,7 @@ type UserDailyMissions = record {
     pending_rewards: vec PendingReward;
 };
 
-// Progress structures
-type LoginStreakProgress = record {
-    current_day: nat32;
-    target_day: nat32;
-    can_claim: bool;
-    reward_amount: nat64;
-    next_reset_in_hours: nat32;
-};
 
-type GameProgress = record {
-    current_count: nat32;
-    target_count: nat32;
-    can_claim: bool;
-    reward_amount: nat64;
-    hours_remaining: nat32;
-};
-
-type AiVideoProgress = record {
-    current_count: nat32;
-    target_count: nat32;
-    can_claim: bool;
-    reward_amount: nat64;
-    completed: bool;
-};
-
-type ReferralProgress = record {
-    current_count: nat32;
-    target_count: nat32;
-    can_claim: bool;
-    reward_amount: nat64;
-    completed: bool;
-};
-
-type MissionProgress = record {
-    login_streak: LoginStreakProgress;
-    game_progress: GameProgress;
-    ai_video_progress: AiVideoProgress;
-    referral_progress: ReferralProgress;
-    pending_rewards: vec PendingReward;
-};
 
 // API types
 type MissionType = variant {
@@ -143,7 +104,7 @@ type ClaimRewardRequest = record {
 type MissionUpdateResult = record {
     success: bool;
     message: text;
-    new_progress: opt MissionProgress;
+    new_progress: opt UserDailyMissions;
     reward_earned: opt ClaimedReward;
 };
 
@@ -163,8 +124,7 @@ type DailyMissionsInitArgs = record {
 service : (DailyMissionsInitArgs) -> {
     // Query methods
     "get_version": () -> (text) query;
-    "get_current_missions": () -> (variant { Ok: MissionProgress; Err: text }) query;
-    "get_user_missions_for_principal": (Principal) -> (variant { Ok: MissionProgress; Err: text }) query;
+    "get_user_daily_missions": (opt Principal) -> (variant { Ok: UserDailyMissions; Err: text }) query;
 
     // Update methods
     "update_mission": (UpdateMissionRequest) -> (MissionUpdateResult);

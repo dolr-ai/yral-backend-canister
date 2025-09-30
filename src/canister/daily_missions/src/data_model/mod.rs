@@ -210,7 +210,7 @@ pub enum MissionType {
 pub struct MissionUpdateResult {
     pub success: bool,
     pub message: String,
-    pub new_progress: Option<MissionProgress>,
+    pub new_progress: Option<UserDailyMissions>,
     pub reward_earned: Option<ClaimedReward>,
 }
 
