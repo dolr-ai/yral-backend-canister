@@ -9,11 +9,14 @@ use shared_utils::{
     canister_specific::{
         individual_user_template::types::error::GetPostsOfUserProfileError,
         user_post_service::types::{
-            args::PostDetailsForFrontend, args::PostDetailsFromFrontend,
-            error::UserPostServiceError, storage::Post,
+            args::PostDetailsForFrontend,
+            args::PostDetailsFromFrontend,
+            error::UserPostServiceError,
+            storage::{Post, PostIdList},
         },
     },
     common::types::top_posts::post_score_index_item::PostStatus,
+    pagination::{self, PaginationError},
 };
 
 type Memory = VirtualMemory<DefaultMemoryImpl>;
@@ -65,7 +68,7 @@ impl CanisterData {
         offset: usize,
     ) -> Vec<Post> {
         limit = limit.min(100);
-        let posts: Vec<Post> = self
+        let mut posts: Vec<Post> = self
             .posts
             .iter()
             .filter(|(_, post)| {
@@ -85,38 +88,37 @@ impl CanisterData {
         limit: usize,
         offset: usize,
     ) -> Result<Vec<Post>, GetPostsOfUserProfileError> {
-        if limit == 0 {
-            return Err(GetPostsOfUserProfileError::InvalidBoundsPassed);
-        }
+        let mut posts_created_by_user: Vec<Post> = self
+            .posts
+            .iter()
+            .filter(|(_, post)| {
+                post.creator_principal == creator
+                    && post.status != PostStatus::Deleted
+                    && post.status != PostStatus::BannedDueToUserReporting
+            })
+            .map(|(_, post)| post)
+            .collect();
 
-        let max_items_needed = offset + limit;
-        let mut posts_created_by_user: Vec<Post> = Vec::with_capacity(max_items_needed);
-
-        // Collect posts until we have enough (offset + limit) or exhaust all posts
-        for (_, post) in self.posts.iter() {
-            if post.creator_principal == creator
-                && post.status != PostStatus::Deleted
-                && post.status != PostStatus::BannedDueToUserReporting
-            {
-                posts_created_by_user.push(post);
-
-                // Stop early if we have collected enough posts for pagination
-                if posts_created_by_user.len() >= max_items_needed {
-                    break;
-                }
+        let (from_inclusive_index, limit) = pagination::get_pagination_bounds_cursor(
+            offset as u64,
+            limit as u64,
+            posts_created_by_user.len() as u64,
+        )
+        .map_err(|e| match e {
+            PaginationError::InvalidBoundsPassed => GetPostsOfUserProfileError::InvalidBoundsPassed,
+            PaginationError::ReachedEndOfItemsList => {
+                GetPostsOfUserProfileError::ReachedEndOfItemsList
             }
-        }
+            PaginationError::ExceededMaxNumberOfItemsAllowedInOneRequest => {
+                GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest
+            }
+        })?;
 
-        // Check if we have enough posts for the requested offset
-        if offset >= posts_created_by_user.len() {
-            return Err(GetPostsOfUserProfileError::ReachedEndOfItemsList);
-        }
-
-        posts_created_by_user.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-
-        // Return the requested slice
-        let end_index = std::cmp::min(offset + limit, posts_created_by_user.len());
-        Ok(posts_created_by_user[offset..end_index].to_vec())
+        Ok(posts_created_by_user
+            .into_iter()
+            .skip(from_inclusive_index as usize)
+            .take(limit as usize)
+            .collect())
     }
 
     pub fn get_post(&self, post_id: &PostId) -> Result<Post, UserPostServiceError> {
@@ -165,4 +167,8 @@ impl Default for CanisterData {
 
 fn _init_posts() -> StableBTreeMap<PostId, Post, Memory> {
     StableBTreeMap::init(memory::get_posts_memory())
+}
+
+fn _init_posts_by_creator() -> StableBTreeMap<Principal, PostIdList, Memory> {
+    StableBTreeMap::init(memory::get_posts_by_creator_memory())
 }
