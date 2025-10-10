@@ -5,10 +5,9 @@ use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, Sta
 use serde::{Deserialize, Serialize};
 use shared_utils::{
     canister_specific::{
-        individual_user_template::types::error::GetPostsOfUserProfileError,
+        individual_user_template::types::{error::GetPostsOfUserProfileError, post},
         user_post_service::types::{
-            args::PostDetailsForFrontend,
-            args::PostDetailsFromFrontend,
+            args::{PostDetailsForFrontend, PostDetailsFromFrontend},
             error::UserPostServiceError,
             storage::{Post, PostIdStringList},
         },
@@ -46,25 +45,8 @@ impl CanisterData {
             let creator = post.creator_principal;
             let mut post_ids = self.posts_by_creator.get(&creator).unwrap_or_default();
 
-            post_ids.push(post_id.clone()); // Uses helper method that prevents duplicates
+            post_ids.push(post_id.clone());
             self.posts_by_creator.insert(creator, post_ids);
-        }
-
-        let creators: Vec<Principal> = self
-            .posts_by_creator
-            .iter()
-            .map(|(creator, _)| creator)
-            .collect();
-        for creator in creators {
-            if let Some(mut post_ids) = self.posts_by_creator.get(&creator) {
-                // Sort by creation time using the new helper method
-                post_ids.sort_by_creation_time(|post_id: &str| {
-                    self.posts
-                        .get(&post_id.to_string())
-                        .map(|post| post.created_at)
-                });
-                self.posts_by_creator.insert(creator, post_ids);
-            }
         }
     }
 
@@ -135,10 +117,15 @@ impl CanisterData {
     ) -> Vec<Post> {
         limit = limit.min(100);
 
-        // Use the posts_by_creator index for fast lookup
         let post_ids = match self.posts_by_creator.get(&creator) {
-            Some(post_ids) => post_ids.0.clone(),
-            None => return Vec::new(), // No posts for this creator
+            Some(mut post_ids) => {
+                post_ids.sort_by_creation_time(|post| {
+                    self.posts.get(&post.to_string()).map(|p| p.created_at)
+                });
+
+                post_ids.0.clone()
+            }
+            None => return Vec::new(),
         };
 
         // Get posts from the index (already sorted by creation time)
@@ -167,7 +154,13 @@ impl CanisterData {
     ) -> Result<Vec<Post>, GetPostsOfUserProfileError> {
         // Use the posts_by_creator index for fast lookup - O(1) instead of O(n)
         let post_ids = match self.posts_by_creator.get(&creator) {
-            Some(post_ids) => post_ids.0.clone(),
+            Some(mut post_ids) => {
+                post_ids.sort_by_creation_time(|post| {
+                    self.posts.get(&post.to_string()).map(|p| p.created_at)
+                });
+
+                post_ids.0.clone()
+            }
             None => return Ok(Vec::new()), // No posts for this creator
         };
 
@@ -188,14 +181,12 @@ impl CanisterData {
                     }
                 })?;
 
-        // Get posts from the index (already sorted by creation time)
         let posts: Vec<Post> = post_ids
             .iter()
             .skip(from_inclusive_index as usize)
             .take(limit as usize)
             .filter_map(|post_id| self.posts.get(post_id))
             .filter(|post| {
-                // Double-check status (should already be filtered in index)
                 post.status != PostStatus::Deleted
                     && post.status != PostStatus::BannedDueToUserReporting
             })

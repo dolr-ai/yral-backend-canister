@@ -9,6 +9,7 @@ use shared_utils::canister_specific::user_post_service::types::args::UserPostSer
 pub fn post_upgrade() {
     restore_data_from_stable_memory();
     update_version_from_args();
+    update_post_creator_index();
 }
 
 fn restore_data_from_stable_memory() {
