@@ -92,6 +92,7 @@ impl CanisterData {
         let max_items_needed = offset + limit;
         let mut posts_created_by_user: Vec<Post> = Vec::with_capacity(max_items_needed);
 
+        // Collect posts until we have enough (offset + limit) or exhaust all posts
         for (_, post) in self.posts.iter() {
             if post.creator_principal == creator
                 && post.status != PostStatus::Deleted
@@ -99,15 +100,19 @@ impl CanisterData {
             {
                 posts_created_by_user.push(post);
 
+                // Stop early if we have collected enough posts for pagination
                 if posts_created_by_user.len() >= max_items_needed {
                     break;
                 }
             }
         }
 
+        // Check if we have enough posts for the requested offset
         if offset >= posts_created_by_user.len() {
             return Err(GetPostsOfUserProfileError::ReachedEndOfItemsList);
         }
+
+        posts_created_by_user.sort_by(|a, b| b.created_at.cmp(&a.created_at));
 
         // Return the requested slice
         let end_index = std::cmp::min(offset + limit, posts_created_by_user.len());
