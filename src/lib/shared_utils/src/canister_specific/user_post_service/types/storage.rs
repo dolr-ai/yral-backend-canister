@@ -154,3 +154,67 @@ impl Storable for PostIdList {
         ciborium::de::from_reader(bytes.as_ref()).unwrap()
     }
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, CandidType)]
+pub struct PostIdStringList(pub Vec<String>);
+
+impl PostIdStringList {
+    pub fn add_unique(&mut self, post_id: String) {
+        if !self.0.contains(&post_id) {
+            self.0.insert(0, post_id);
+        }
+    }
+
+    pub fn remove(&mut self, post_id: &str) {
+        self.0.retain(|id| id != post_id);
+    }
+
+    pub fn contains(&self, post_id: &str) -> bool {
+        self.0.contains(&post_id.to_string())
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn push(&mut self, post_id: String) {
+        if !self.0.contains(&post_id) {
+            self.0.push(post_id);
+        }
+    }
+
+    pub fn sort_by_creation_time<F>(&mut self, get_timestamp: F)
+    where
+        F: Fn(&str) -> Option<std::time::SystemTime>,
+    {
+        let mut posts_with_timestamps: Vec<(String, std::time::SystemTime)> = self
+            .0
+            .iter()
+            .filter_map(|post_id| get_timestamp(post_id).map(|ts| (post_id.clone(), ts)))
+            .collect();
+
+        posts_with_timestamps.sort_by(|a, b| b.1.cmp(&a.1)); // Newest first
+        self.0 = posts_with_timestamps
+            .into_iter()
+            .map(|(id, _)| id)
+            .collect();
+    }
+}
+
+impl Storable for PostIdStringList {
+    const BOUND: Bound = Bound::Unbounded;
+
+    fn to_bytes(&self) -> Cow<[u8]> {
+        let mut bytes = vec![];
+        ciborium::ser::into_writer(self, &mut bytes).unwrap();
+        Cow::Owned(bytes)
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        ciborium::de::from_reader(bytes.as_ref()).unwrap()
+    }
+}
