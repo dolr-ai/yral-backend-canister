@@ -34,20 +34,42 @@ pub struct CanisterData {
 }
 
 impl CanisterData {
-    pub fn initialize_posts_by_creator_index(&mut self) {
-        for (post_id, post) in self.posts.iter() {
-            if post.status == PostStatus::Deleted
-                || post.status == PostStatus::BannedDueToUserReporting
-            {
-                continue;
+    pub fn initialize_posts_by_creator_index(
+        &mut self,
+        last_uuid_processed: Option<String>,
+        limit: usize,
+    ) -> Option<String> {
+        let mut processed = 0;
+
+        let mut last_processed_uuid = last_uuid_processed.clone();
+
+        let range = match last_uuid_processed {
+            Some(u) => self
+                .posts
+                .range((std::ops::Bound::Excluded(u), std::ops::Bound::Unbounded)),
+            None => self.posts.range(..),
+        };
+
+        for (post_id, post) in range {
+            if processed >= limit {
+                break;
             }
 
-            let creator = post.creator_principal;
-            let mut post_ids = self.posts_by_creator.get(&creator).unwrap_or_default();
+            if post.status != PostStatus::Deleted
+                && post.status != PostStatus::BannedDueToUserReporting
+            {
+                let creator = post.creator_principal;
+                let mut post_ids = self.posts_by_creator.get(&creator).unwrap_or_default();
 
-            post_ids.push(post_id.clone());
-            self.posts_by_creator.insert(creator, post_ids);
+                post_ids.push(post_id.clone());
+                self.posts_by_creator.insert(creator, post_ids);
+            }
+
+            last_processed_uuid = Some(post_id.clone());
+            processed += 1;
         }
+
+        last_processed_uuid
     }
 
     pub fn add_post_to_memory(
