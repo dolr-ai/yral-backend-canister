@@ -80,16 +80,7 @@ impl CanisterData {
             .collect();
 
         // Sort by created_at in descending order (most recent first)
-        posts.sort_by(|a, b| {
-            b.created_at
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap_or_default()
-                .cmp(
-                    &a.created_at
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap_or_default(),
-                )
-        });
+        posts.sort_by(|a, b| b.created_at.cmp(&a.created_at));
 
         posts.into_iter().skip(offset).take(limit).collect()
     }
@@ -112,16 +103,7 @@ impl CanisterData {
             .collect();
 
         // Sort by created_at in descending order (most recent first)
-        posts_created_by_user.sort_by(|a, b| {
-            b.created_at
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap_or_default()
-                .cmp(
-                    &a.created_at
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap_or_default(),
-                )
-        });
+        posts_created_by_user.sort_by(|a, b| b.created_at.cmp(&a.created_at));
 
         let (from_inclusive_index, limit) = pagination::get_pagination_bounds_cursor(
             offset as u64,
