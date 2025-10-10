@@ -37,7 +37,7 @@ jobs:
       - name: Import DFX identity
         run: |
           touch actions_identity.pem
-          echo "${{ secrets.CANISTER_CONTROLLER_SECRET_KEY }}" > actions_identity.pem
+          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > actions_identity.pem
           nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem"
           rm actions_identity.pem
           nix-shell --run "dfx identity use actions"
