@@ -17,7 +17,7 @@ fn get_followers(
 
     CANISTER_DATA.with_borrow(|canister_data| {
         let (follower_principals, next_cursor) = canister_data.get_followers_paginated(user, start, limit)?;
-        let total_count = canister_data.get_followers_count(user)?;
+    let total_count = canister_data.get_followers_count(user)?;
 
         // Check if caller follows each follower and optionally include profile pics
         let followers = canister_data.build_follower_items(caller_principal, follower_principals, include_pics)?;

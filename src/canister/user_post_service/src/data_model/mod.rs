@@ -1,5 +1,7 @@
 pub mod memory;
 
+use std::time::SystemTime;
+
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
 use serde::{Deserialize, Serialize};
@@ -66,26 +68,7 @@ impl CanisterData {
         offset: usize,
     ) -> Vec<Post> {
         limit = limit.min(100);
-        self.posts
-            .iter()
-            .filter(|(_, post)| {
-                post.creator_principal == creator
-                    && post.status != PostStatus::Deleted
-                    && post.status != PostStatus::BannedDueToUserReporting
-            })
-            .map(|(_, post)| post)
-            .skip(offset)
-            .take(limit)
-            .collect()
-    }
-
-    pub fn get_posts_of_this_user_profile_with_pagination(
-        &self,
-        creator: Principal,
-        limit: usize,
-        offset: usize,
-    ) -> Result<Vec<Post>, GetPostsOfUserProfileError> {
-        let posts_created_by_user: Vec<Post> = self
+        let mut posts: Vec<Post> = self
             .posts
             .iter()
             .filter(|(_, post)| {
@@ -95,6 +78,50 @@ impl CanisterData {
             })
             .map(|(_, post)| post)
             .collect();
+
+        // Sort by created_at in descending order (most recent first)
+        posts.sort_by(|a, b| {
+            b.created_at
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap_or_default()
+                .cmp(
+                    &a.created_at
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap_or_default(),
+                )
+        });
+
+        posts.into_iter().skip(offset).take(limit).collect()
+    }
+
+    pub fn get_posts_of_this_user_profile_with_pagination(
+        &self,
+        creator: Principal,
+        limit: usize,
+        offset: usize,
+    ) -> Result<Vec<Post>, GetPostsOfUserProfileError> {
+        let mut posts_created_by_user: Vec<Post> = self
+            .posts
+            .iter()
+            .filter(|(_, post)| {
+                post.creator_principal == creator
+                    && post.status != PostStatus::Deleted
+                    && post.status != PostStatus::BannedDueToUserReporting
+            })
+            .map(|(_, post)| post)
+            .collect();
+
+        // Sort by created_at in descending order (most recent first)
+        posts_created_by_user.sort_by(|a, b| {
+            b.created_at
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap_or_default()
+                .cmp(
+                    &a.created_at
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap_or_default(),
+                )
+        });
 
         let (from_inclusive_index, limit) = pagination::get_pagination_bounds_cursor(
             offset as u64,
