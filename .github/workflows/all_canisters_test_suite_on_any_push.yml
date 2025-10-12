@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+      - name: Check Nix shell version
+        run: nix-shell --run "nix --version && nix-shell --version"
       - name: Cache rust dependencies, build output and DFX build cache
         uses: actions/cache@v3
         with:
