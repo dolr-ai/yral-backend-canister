@@ -28,11 +28,11 @@ jobs:
           key: rust-test-${{ hashFiles('**/Cargo.lock') }}
       - name: Import DFX identity
         run: |
-          touch actions_identity.pem
-          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > actions_identity.pem
-          nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem"
-          rm actions_identity.pem
-          nix-shell --run "dfx identity use actions"
+          touch actions_identity.pem;
+          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > actions_identity.pem;
+          nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem";
+          rm actions_identity.pem;
+          nix-shell --run "dfx identity use actions";
       - name: Start local replica
         run: nix-shell --run "dfx start --background"
       - name: Provision local canister IDs for the canisters
