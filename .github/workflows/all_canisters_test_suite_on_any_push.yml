@@ -11,28 +11,36 @@ concurrency:
 jobs:
   test:
     name: Run canister test suite
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 8
       - name: Checkout repo
         uses: actions/checkout@v3
-      # - name: Cache rust dependencies, build output and DFX build cache
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: |
-      #       ~/.cargo/bin/
-      #       ~/.cargo/registry/index/
-      #       ~/.cargo/registry/cache/
-      #       ~/.cargo/git/db/
-      #       target/
-      #       .dfx/
-      #     key: rust-test-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache install Nix packages
+        uses: rikhuijzer/cache-install@v1.1.4
+        with:
+          key: nix-${{ hashFiles('default.nix') }}
+      - name: Cache rust dependencies, build output and DFX build cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            .dfx/
+          key: rust-test-${{ hashFiles('**/Cargo.lock') }}
       - name: Import DFX identity
         run: |
-          touch actions_identity.pem;
-          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > actions_identity.pem;
-          nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem";
-          rm actions_identity.pem;
-          nix-shell --run "dfx identity use actions";
+          touch actions_identity.pem
+          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > actions_identity.pem
+          nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem"
+          rm actions_identity.pem
+          nix-shell --run "dfx identity use actions"
       - name: Start local replica
         run: nix-shell --run "dfx start --background"
       - name: Provision local canister IDs for the canisters
