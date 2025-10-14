@@ -28,12 +28,7 @@
         }
     },
     "features": {
-        // rust toolchain
-        "ghcr.io/devcontainers/features/rust:1": {},
-        // for clang required to build ring
-        // "ghcr.io/devcontainers-community/features/llvm": {},
-        // build dependency for ml-feed-server bindings
-        // "ghcr.io/devcontainers-extra/features/protoc:1": {}
+        "ghcr.io/devcontainers/features/rust:1": {}
     },
     "onCreateCommand": "rustup install;",
     "postCreateCommand": "bash -i .devcontainer/setup.sh"
