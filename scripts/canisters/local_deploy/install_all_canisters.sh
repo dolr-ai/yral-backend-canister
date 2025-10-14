@@ -110,10 +110,6 @@ dfx canister install rate_limits --argument "(record {
   version= \"v1.0.0\";
 })"
 
-dfx canister install rate_limits --argument "(record {
-  version= \"v1.0.0\";
-})"
-
 scripts/canisters/local_deploy/create_pool_of_individual_canister_user_index.sh
 
 dfx canister update-settings user_index --set-controller $(dfx canister id platform_orchestrator) --yes 

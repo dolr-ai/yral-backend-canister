@@ -1,9 +1,9 @@
-use candid::Principal;
 use shared_utils::canister_specific::rate_limits::RateLimitResult;
 use test_utils::canister_calls::{query, update};
 use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned;
 use test_utils::setup::test_constants::{
-    get_global_super_admin_principal_id, get_mock_user_charlie_principal_id,
+    get_global_super_admin_principal_id, get_mock_user_alice_principal_id,
+    get_mock_user_bob_principal_id, get_mock_user_charlie_principal_id,
 };
 
 use super::common::register_user_for_testing;
@@ -15,8 +15,8 @@ fn test_property_wide_rate_limit() {
     let global_admin = get_global_super_admin_principal_id();
     
     let property = "test_property";
-    let principal1 = Principal::from_text("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap();
-    let principal2 = Principal::from_text("2vxsx-fae").unwrap();
+    let principal1 = get_mock_user_alice_principal_id();
+    let principal2 = get_mock_user_bob_principal_id();
     
     // Register users
     register_user_for_testing(&pocket_ic, &service_canisters, principal1)
