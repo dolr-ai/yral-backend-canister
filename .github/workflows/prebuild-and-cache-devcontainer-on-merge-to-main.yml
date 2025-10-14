@@ -20,7 +20,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Pre-build image and run make ci-build in dev container
+      - name: Pre-build image and push dev container image
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer

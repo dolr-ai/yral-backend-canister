@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-      - name: Pre-build image and run make ci-build in dev container
+      - name: Use prebuilt devcontainer image and run canister test suite
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
