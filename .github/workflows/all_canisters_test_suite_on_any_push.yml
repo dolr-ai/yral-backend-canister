@@ -25,8 +25,10 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
+          inheritEnv: true
           runCmd: |
             pwd;
+            echo $POCKET_IC_BIN;
             # dfx identity list;
             # dfx start --background;
             # dfx canister create --no-wallet individual_user_template;
