@@ -15,52 +15,24 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
-      - name: Check if Nix is installed
-        id: check-nix
-        run: |
-          if command -v nix &> /dev/null; then
-            echo "installed=true" >> $GITHUB_OUTPUT
-          else
-            echo "installed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Install Nix
-        if: steps.check-nix.outputs.installed == 'false'
-        run: |
-          sh <(curl -L https://nixos.org/nix/install) --no-daemon
-          echo "$HOME/.nix-profile/bin" >> $GITHUB_PATH
-
-      - name: Cache Nix store
-        uses: actions/cache@v4
-        with:
-          path: |
-            /nix/store
-            ~/.nix-profile
-            ~/.nix-defexpr
-            ~/.nix-channels
-          key: nix-${{ hashFiles('default.nix') }}
-          restore-keys: |
-            nix-
-
-      - name: Cache rust dependencies, build output and DFX build cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            .dfx/
-          key: rust-test-${{ hashFiles('**/Cargo.lock') }}
+      # - name: Cache rust dependencies, build output and DFX build cache
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       ~/.cargo/bin/
+      #       ~/.cargo/registry/index/
+      #       ~/.cargo/registry/cache/
+      #       ~/.cargo/git/db/
+      #       target/
+      #       .dfx/
+      #     key: rust-test-${{ hashFiles('**/Cargo.lock') }}
       - name: Import DFX identity
         run: |
-          touch actions_identity.pem
-          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > actions_identity.pem
-          nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem"
-          rm actions_identity.pem
-          nix-shell --run "dfx identity use actions"
+          touch actions_identity.pem;
+          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > actions_identity.pem;
+          nix-shell --run "dfx identity import --disable-encryption actions actions_identity.pem";
+          rm actions_identity.pem;
+          nix-shell --run "dfx identity use actions";
       - name: Start local replica
         run: nix-shell --run "dfx start --background"
       - name: Provision local canister IDs for the canisters
