@@ -25,7 +25,8 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
-          inheritEnv: true
+          env: |
+            POCKET_IC_BIN=${{ github.workspace }}/pocket-ic
           runCmd: |
             pwd;
             echo $POCKET_IC_BIN;
