@@ -15,16 +15,11 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Pre-build image and run make ci-build in dev container
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
+          push: never
           env: |
             POCKET_IC_BIN=/workspaces/hot-or-not-backend-canister/pocket-ic
           runCmd: |
