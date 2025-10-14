@@ -11,12 +11,19 @@ fn get_notifications(limit: usize, offset: usize) -> Vec<NotificationData> {
         canister_data
             .notifications
             .get(&caller)
-            .map(|notifications| {
-                notifications
-                    .0
+            .map(|notification_data| {
+                let total = notification_data.notifications.len();
+                if offset >= total {
+                    return Vec::new();
+                }
+                
+                let end = total.saturating_sub(offset);
+                let start = end.saturating_sub(limit);
+                
+                notification_data
+                    .notifications[start..end]
                     .iter()
-                    .skip(offset)
-                    .take(limit)
+                    .rev()
                     .cloned()
                     .collect()
             })

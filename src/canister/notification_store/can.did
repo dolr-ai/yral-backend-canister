@@ -1,6 +1,5 @@
-type LikedPayload = record { post_id : nat64; by_user_principal : principal };
+type LikedPayload = record { post_id : text; by_user_principal : principal };
 type NotificationData = record {
-  read : bool;
   created_at : SystemTime;
   notification_id : nat64;
   payload : NotificationType;
@@ -28,11 +27,11 @@ type SystemTime = record {
   nanos_since_epoch : nat32;
   secs_since_epoch : nat64;
 };
-type VideoUploadPayload = record { video_uid : nat64 };
+type VideoUploadPayload = record { video_uid : text };
 service : (NotificationStoreInitArgs) -> {
   add_notification : (principal, NotificationType) -> (Result);
+  get_notification_panel_viewed : () -> (opt SystemTime) query;
   get_notifications : (nat64, nat64) -> (vec NotificationData) query;
   get_version : () -> (text) query;
-  mark_notification_as_read : (nat64) -> (Result);
-  prune_notifications : () -> ();
+  set_notification_panel_viewed : () -> (Result);
 }

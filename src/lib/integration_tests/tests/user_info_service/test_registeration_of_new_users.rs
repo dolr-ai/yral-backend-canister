@@ -12,15 +12,14 @@ fn test_registration_of_new_users() {
     let (pocket_ic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
 
     let user_service_canister = service_canisters.user_info_service_canister_id;
-    let global_admin = get_global_super_admin_principal_id();
     let charlie_principal_id = get_mock_user_charlie_principal_id();
 
     let result = update::<_, Result<(), String>>(
         &pocket_ic,
         user_service_canister,
-        global_admin,
+        charlie_principal_id,
         "register_new_user",
-        (charlie_principal_id,),
+        (),
     )
     .expect("Failed to register new user");
 

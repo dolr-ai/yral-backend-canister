@@ -30,7 +30,7 @@ fn restore_data_from_stable_memory() {
 
 fn update_version_from_args() {
     let raw_args = ic_cdk::api::call::arg_data_raw();
-    let (upgrade_args,): (NotificationStoreInitArgs,) =
+    let upgrade_args: NotificationStoreInitArgs =
         candid::decode_one(&raw_args).expect("Failed to decode upgrade args");
 
     CANISTER_DATA.with_borrow_mut(|canister_data| {

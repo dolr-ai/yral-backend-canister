@@ -1,8 +1,11 @@
+use shared_utils::canister_specific::individual_user_template::types::error::GetPostsOfUserProfileError;
 use shared_utils::canister_specific::user_post_service::types::{
-    args::PostDetailsFromFrontend,
+    args::{PostDetailsForFrontend, PostDetailsFromFrontend},
     error::UserPostServiceError,
-    storage::{Post, PostViewDetailsFromFrontend},
+    storage::{Post, PostViewDetailsFromFrontend, PostViewStatistics},
 };
+use shared_utils::common::types::top_posts::post_score_index_item::PostStatus;
+use std::{collections::HashSet, time::SystemTime};
 use test_utils::{
     canister_calls::{query, update},
     setup::{
@@ -52,6 +55,109 @@ fn add_post_as_admin(
             Err(UserPostServiceError::Unauthorized)
         }
     }
+}
+
+// Helper function to create a complete Post struct with controlled creation time
+fn create_test_post_with_timestamp(
+    id: &str,
+    creator_principal: candid::Principal,
+    video_uid: &str,
+    description: &str,
+    created_at: SystemTime,
+) -> Post {
+    Post {
+        id: id.to_string(),
+        creator_principal,
+        video_uid: video_uid.to_string(),
+        description: description.to_string(),
+        hashtags: vec!["test".to_string(), "sorting".to_string()],
+        status: PostStatus::ReadyToView,
+        created_at,
+        likes: HashSet::new(),
+        share_count: 0,
+        view_stats: PostViewStatistics {
+            total_view_count: 0,
+            threshold_view_count: 0,
+            average_watch_percentage: 0,
+        },
+    }
+}
+
+// Helper function to sync a post with controlled creation time
+fn sync_post_with_timestamp(
+    pic: &pocket_ic::PocketIc,
+    user_post_service_canister_id: candid::Principal,
+    post: Post,
+) -> Result<Option<Post>, Box<dyn std::error::Error>> {
+    let admin_principal = get_global_super_admin_principal_id();
+    update(
+        pic,
+        user_post_service_canister_id,
+        admin_principal,
+        "sync_post_from_individual_canister",
+        (post,),
+    )
+}
+
+#[test]
+fn test_get_posts_of_this_user_profile_with_pagination() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+    let bob_principal = get_mock_user_bob_principal_id();
+
+    // Add multiple posts for Alice
+    for i in 0..5 {
+        let post_details = create_test_post_details(
+            &format!("alice_pagination_post_{}", i),
+            alice_principal,
+            &format!("video_alice_pagination_{}", i),
+            &format!("Alice's pagination post #{}", i),
+        );
+        let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+    }
+
+    // Add multiple posts for Bob
+    for i in 0..3 {
+        let post_details = create_test_post_details(
+            &format!("bob_pagination_post_{}", i),
+            bob_principal,
+            &format!("video_bob_pagination_{}", i),
+            &format!("Bob's pagination post #{}", i),
+        );
+        let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+    }
+
+    // Get Alice's posts with pagination (limit: 3, offset: 0)
+    let posts = query::<_, Result<Vec<Post>, GetPostsOfUserProfileError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_posts_of_this_user_profile_with_pagination",
+        (alice_principal, 0usize, 3usize),
+    );
+    let posts = posts.unwrap().unwrap();
+    assert_eq!(posts.len(), 3);
+    for post in &posts {
+        assert_eq!(post.creator_principal, alice_principal);
+        assert!(post.id.starts_with("alice_pagination_post_"));
+    }
+
+    let posts_res = query::<_, Result<Vec<Post>, GetPostsOfUserProfileError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_posts_of_this_user_profile_with_pagination",
+        (alice_principal, 6usize, 3usize),
+    )
+    .unwrap();
+
+    assert!(posts_res.is_err());
+
+    assert!(matches!(
+        posts_res,
+        Err(GetPostsOfUserProfileError::ReachedEndOfItemsList)
+    ));
 }
 
 #[test]
@@ -702,4 +808,357 @@ fn test_delete_post_nonexistent() {
     .unwrap();
 
     assert!(matches!(result, Err(UserPostServiceError::PostNotFound)));
+}
+
+#[test]
+fn test_get_individual_post_details_by_id_for_user_success() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+    let bob_principal = get_mock_user_bob_principal_id();
+
+    // Add a post first
+    let post_details = create_test_post_details(
+        "test_post_for_user",
+        alice_principal,
+        "video_789",
+        "Test post for user details",
+    );
+    let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+
+    // Get post details as Alice (creator)
+    let result: Result<PostDetailsForFrontend, UserPostServiceError> = query(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_individual_post_details_by_id_for_user",
+        ("test_post_for_user".to_string(), alice_principal),
+    )
+    .unwrap();
+
+    let post_details = result.unwrap();
+    assert_eq!(post_details.id, "test_post_for_user");
+    assert_eq!(post_details.creator_principal, alice_principal);
+    assert_eq!(post_details.video_uid, "video_789");
+    assert_eq!(post_details.description, "Test post for user details");
+    assert_eq!(
+        post_details.hashtags,
+        vec!["test".to_string(), "integration".to_string()]
+    );
+    assert_eq!(post_details.like_count, 0);
+    assert_eq!(post_details.liked_by_me, false);
+
+    // Get post details as Bob (different user)
+    let result: Result<PostDetailsForFrontend, UserPostServiceError> = query(
+        &pic,
+        user_post_service_canister_id,
+        bob_principal,
+        "get_individual_post_details_by_id_for_user",
+        ("test_post_for_user".to_string(), bob_principal),
+    )
+    .unwrap();
+
+    let post_details = result.unwrap();
+    assert_eq!(post_details.id, "test_post_for_user");
+    assert_eq!(post_details.creator_principal, alice_principal);
+    assert_eq!(post_details.video_uid, "video_789");
+    assert_eq!(post_details.description, "Test post for user details");
+    assert_eq!(
+        post_details.hashtags,
+        vec!["test".to_string(), "integration".to_string()]
+    );
+    assert_eq!(post_details.like_count, 0);
+    assert_eq!(post_details.liked_by_me, false);
+}
+
+#[test]
+fn test_get_individual_post_details_by_id_for_user_not_found() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+
+    // Try to get a non-existent post
+    let result: Result<PostDetailsForFrontend, UserPostServiceError> = query(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_individual_post_details_by_id_for_user",
+        ("non_existent_post".to_string(), alice_principal),
+    )
+    .unwrap();
+
+    assert!(matches!(result, Err(UserPostServiceError::PostNotFound)));
+}
+
+#[test]
+fn test_get_individual_post_details_by_id_for_user_with_likes() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+    let bob_principal = get_mock_user_bob_principal_id();
+
+    // Add a post first
+    let post_details = create_test_post_details(
+        "liked_post",
+        alice_principal,
+        "video_likes",
+        "Test post with likes",
+    );
+    let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+
+    // Bob likes the post
+    let _: Result<bool, UserPostServiceError> = update(
+        &pic,
+        user_post_service_canister_id,
+        bob_principal,
+        "update_post_toggle_like_status_by_caller",
+        ("liked_post",),
+    )
+    .unwrap();
+
+    // Get post details as Bob
+    let result: Result<PostDetailsForFrontend, UserPostServiceError> = query(
+        &pic,
+        user_post_service_canister_id,
+        bob_principal,
+        "get_individual_post_details_by_id_for_user",
+        ("liked_post".to_string(), bob_principal),
+    )
+    .unwrap();
+
+    let post_details = result.unwrap();
+    assert_eq!(post_details.like_count, 1);
+    assert_eq!(post_details.liked_by_me, true);
+
+    // Get post details as Alice
+    let result: Result<PostDetailsForFrontend, UserPostServiceError> = query(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_individual_post_details_by_id_for_user",
+        ("liked_post".to_string(), alice_principal),
+    )
+    .unwrap();
+
+    let post_details = result.unwrap();
+    assert_eq!(post_details.like_count, 1);
+    assert_eq!(post_details.liked_by_me, false);
+}
+
+#[test]
+fn test_update_post_status_success() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let admin_principal = get_global_super_admin_principal_id();
+    let alice_principal = get_mock_user_alice_principal_id();
+
+    // Add a post first
+    let post_details = create_test_post_details(
+        "status_test_post",
+        alice_principal,
+        "video_status",
+        "Post for status testing",
+    );
+    let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+
+    // Update post status as admin
+    let result = update::<_, ()>(
+        &pic,
+        user_post_service_canister_id,
+        admin_principal,
+        "update_post_status",
+        (
+            "status_test_post".to_string(),
+            PostStatus::BannedDueToUserReporting,
+        ),
+    );
+    assert!(result.is_ok());
+
+    // Verify status was updated
+    let post = query::<_, Result<Post, UserPostServiceError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_individual_post_details_by_id",
+        ("status_test_post",),
+    )
+    .unwrap();
+    let post = post.unwrap();
+    assert_eq!(post.status, PostStatus::BannedDueToUserReporting);
+}
+
+#[test]
+fn test_update_post_status_unauthorized() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+
+    // Add a post first
+    let post_details = create_test_post_details(
+        "unauth_status_post",
+        alice_principal,
+        "video_unauth_status",
+        "Post for unauthorized status update",
+    );
+    let _ = add_post_as_admin(&pic, user_post_service_canister_id, post_details);
+
+    // Try to update post status as non-admin (should fail)
+    let result: Result<Result<(), UserPostServiceError>, Box<dyn std::error::Error>> = update(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "update_post_status",
+        (
+            "unauth_status_post".to_string(),
+            PostStatus::BannedDueToUserReporting,
+        ),
+    );
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_update_post_status_nonexistent_post() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let admin_principal = get_global_super_admin_principal_id();
+
+    // Try to update status of a non-existent post
+    let result = update::<_, ()>(
+        &pic,
+        user_post_service_canister_id,
+        admin_principal,
+        "update_post_status",
+        (
+            "nonexistent_status_post".to_string(),
+            PostStatus::BannedDueToUserReporting,
+        ),
+    );
+    // Should error (likely panic or unwrap error in canister)
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_posts_are_sorted_by_creation_time_desc() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+
+    let now = SystemTime::now();
+    let one_hour_ago = now - std::time::Duration::from_secs(3600);
+    let two_hours_ago = now - std::time::Duration::from_secs(7200);
+
+    let post2 = create_test_post_with_timestamp(
+        "post_second_created",
+        alice_principal,
+        "video_2",
+        "Second created post (middle)",
+        one_hour_ago,
+    );
+    let _ = sync_post_with_timestamp(&pic, user_post_service_canister_id, post2);
+
+    let post3 = create_test_post_with_timestamp(
+        "post_third_created",
+        alice_principal,
+        "video_3",
+        "Third created post (newest)",
+        now,
+    );
+    let _ = sync_post_with_timestamp(&pic, user_post_service_canister_id, post3);
+
+    // Create posts with controlled timestamps
+    let post1 = create_test_post_with_timestamp(
+        "post_first_created",
+        alice_principal,
+        "video_1",
+        "First created post (oldest)",
+        two_hours_ago,
+    );
+    let _ = sync_post_with_timestamp(&pic, user_post_service_canister_id, post1);
+
+    // Get posts using pagination method
+    let posts_result = query::<_, Result<Vec<Post>, GetPostsOfUserProfileError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_posts_of_this_user_profile_with_pagination",
+        (alice_principal, 0usize, 10usize),
+    );
+
+    let posts = posts_result.unwrap().unwrap();
+    assert_eq!(posts.len(), 3);
+
+    // Posts should be in reverse chronological order (most recent first)
+    assert_eq!(posts[0].id, "post_third_created"); // Most recent
+    assert_eq!(posts[1].id, "post_second_created"); // Middle
+    assert_eq!(posts[2].id, "post_first_created"); // Oldest
+
+    // Verify that each post has a later or equal creation time than the next
+    for i in 0..posts.len() - 1 {
+        assert!(
+            posts[i].created_at >= posts[i + 1].created_at,
+            "Posts not properly sorted by creation time. Post {} created at {:?}, Post {} created at {:?}",
+            i, posts[i].created_at, i + 1, posts[i + 1].created_at
+        );
+    }
+
+    // Verify the exact timestamps match what we set
+    assert_eq!(posts[0].created_at, now);
+    assert_eq!(posts[1].created_at, one_hour_ago);
+    assert_eq!(posts[2].created_at, two_hours_ago);
+}
+
+#[test]
+fn test_posts_pagination_preserves_sorting() {
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let alice_principal = get_mock_user_alice_principal_id();
+
+    let now = SystemTime::now();
+
+    // Create 6 posts with controlled timestamps (each 1 hour apart)
+    for i in 0..6 {
+        let created_at = now - std::time::Duration::from_secs((5 - i) * 3600); // i=0 -> 5 hours ago, i=5 -> now
+        let post = create_test_post_with_timestamp(
+            &format!("sorted_post_{}", i),
+            alice_principal,
+            &format!("video_{}", i),
+            &format!("Post number {}", i),
+            created_at,
+        );
+        let _ = sync_post_with_timestamp(&pic, user_post_service_canister_id, post);
+    }
+
+    // Get first page (3 posts)
+    let page1_result = query::<_, Result<Vec<Post>, GetPostsOfUserProfileError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_posts_of_this_user_profile_with_pagination",
+        (alice_principal, 0usize, 3usize),
+    );
+
+    // Get second page (3 posts)
+    let page2_result = query::<_, Result<Vec<Post>, GetPostsOfUserProfileError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_posts_of_this_user_profile_with_pagination",
+        (alice_principal, 3usize, 3usize),
+    );
+
+    let page1_posts = page1_result.unwrap().unwrap();
+    let page2_posts = page2_result.unwrap().unwrap();
+
+    assert_eq!(page1_posts.len(), 3);
+    assert_eq!(page2_posts.len(), 3);
+
+    // First page should have the most recent posts (sorted_post_5, sorted_post_4, sorted_post_3)
+    assert_eq!(page1_posts[0].id, "sorted_post_5"); // Most recent
+    assert_eq!(page1_posts[1].id, "sorted_post_4");
+    assert_eq!(page1_posts[2].id, "sorted_post_3");
+
+    // Second page should have the older posts (sorted_post_2, sorted_post_1, sorted_post_0)
+    assert_eq!(page2_posts[0].id, "sorted_post_2");
+    assert_eq!(page2_posts[1].id, "sorted_post_1");
+    assert_eq!(page2_posts[2].id, "sorted_post_0"); // Oldest
 }

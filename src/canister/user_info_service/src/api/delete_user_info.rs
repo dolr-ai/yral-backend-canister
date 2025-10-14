@@ -1,11 +1,11 @@
 use candid::Principal;
 use ic_cdk::caller;
 use ic_cdk_macros::update;
-use shared_utils::common::utils::permissions::is_caller_global_admin;
+use shared_utils::common::utils::permissions::{is_caller_global_admin, is_not_anonymous};
 
 use crate::CANISTER_DATA;
 
-#[update]
+#[update(guard = "is_not_anonymous")]
 fn delete_user_info(user_principal: Principal) -> Result<(), String> {
     if is_caller_global_admin().is_ok() || caller() == user_principal {
         CANISTER_DATA

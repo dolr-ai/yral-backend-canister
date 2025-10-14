@@ -5,6 +5,7 @@ use crate::{
         RECLAIM_CANISTER_PRINCIPAL_ID,
     },
 };
+use candid::Principal;
 use ic_cdk::{api::is_controller, caller};
 
 pub fn is_reclaim_canister_id() -> Result<(), String> {
@@ -24,6 +25,13 @@ pub fn is_caller_global_admin() -> Result<(), String> {
 
     if !valid_canisters.contains(&caller().to_string().as_str()) {
         return Err("Unauthorized".into());
+    }
+    Ok(())
+}
+
+pub fn is_not_anonymous() -> Result<(), String> {
+    if caller() == Principal::anonymous() {
+        return Err("Anonymous caller is not allowed.".into());
     }
     Ok(())
 }

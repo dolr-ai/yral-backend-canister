@@ -26,6 +26,14 @@ pub struct ListArgs {
     pub size: usize,
 }
 
+#[derive(Debug, candid::CandidType, Serialize, Deserialize)]
+pub struct RemoveVideoIdArgs {
+    pub video_id: VideoId,
+    pub video_hash: VideoHash,
+}
+
+pub type VideoListByHash = Vec<(VideoId, SystemTime)>;
+
 pub type Video = (VideoId, SystemTime);
 #[derive(Clone, Debug, Serialize, Deserialize, CandidType, Default)]
 pub struct Videos(pub BTreeSet<Video>);
