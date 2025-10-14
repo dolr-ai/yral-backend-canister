@@ -26,7 +26,7 @@ jobs:
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
           env: |
-            POCKET_IC_BIN=${{ github.workspace }}/pocket-ic
+            POCKET_IC_BIN=/workspaces/hot-or-not-backend-canister/pocket-ic
           runCmd: |
             pwd;
             echo $POCKET_IC_BIN;
