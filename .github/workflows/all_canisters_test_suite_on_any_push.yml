@@ -11,12 +11,8 @@ concurrency:
 jobs:
   test:
     name: Run canister test suite
-    runs-on: warp-ubuntu-latest-x64-16x
+    runs-on: self-hosted
     steps:
-      - name: Set Swap Space
-        uses: pierotofy/set-swap-space@master
-        with:
-          swap-size-gb: 8
       - name: Checkout repo
         uses: actions/checkout@v3
       - name: Cache install Nix packages
