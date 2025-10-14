@@ -22,5 +22,9 @@
 # chmod +x .cargo-husky/hooks/*;
 # # Git hook for cargo husky gets registered with cargo test. Please run
 # # cargo test --all-features;
-DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)" &&
-source "$HOME/.local/share/dfx/env"
+DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)";
+source "$HOME/.local/share/dfx/env";
+
+# set to pwd
+pwd;
+echo $POCKET_IC_BIN;
