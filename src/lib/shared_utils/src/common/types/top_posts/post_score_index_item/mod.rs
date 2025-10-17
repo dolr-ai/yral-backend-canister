@@ -14,6 +14,32 @@ pub enum PostStatus {
     Deleted,
 }
 
+impl From<PostStatus> for PostStatusV1 {
+    fn from(value: PostStatus) -> Self {
+        match value {
+            PostStatus::Transcoding => PostStatusV1::Published,
+            PostStatus::CheckingExplicitness => PostStatusV1::CheckingExplicitness,
+            PostStatus::BannedForExplicitness => PostStatusV1::BannedForExplicitness,
+            PostStatus::ReadyToView => PostStatusV1::Published,
+            PostStatus::BannedDueToUserReporting => PostStatusV1::BannedDueToUserReporting,
+            PostStatus::Deleted => PostStatusV1::Deleted,
+            PostStatus::Uploaded => PostStatusV1::Published,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, CandidType, Clone, Default, Debug, PartialEq, Eq, Hash, Copy)]
+#[serde(from = "PostStatus")]
+pub enum PostStatusV1 {
+    #[default]
+    Published,
+    BannedForExplicitness,
+    CheckingExplicitness,
+    BannedDueToUserReporting,
+    Deleted,
+    Draft,
+}
+
 #[derive(Clone, CandidType, Deserialize, Debug, Serialize)]
 pub struct PostScoreIndexItem {
     pub score: u64,

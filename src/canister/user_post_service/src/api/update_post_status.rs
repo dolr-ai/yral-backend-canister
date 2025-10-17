@@ -10,7 +10,7 @@ fn update_post_status(id: String, status: PostStatus) {
     CANISTER_DATA.with_borrow_mut(|canister_data| {
         let mut post_to_update = canister_data.get_post(&id).unwrap().clone();
 
-        post_to_update.update_status(status);
+        post_to_update.update_status(status.into());
         canister_data.add_post(post_to_update)
     });
 }

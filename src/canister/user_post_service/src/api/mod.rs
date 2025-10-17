@@ -1,5 +1,6 @@
 pub mod add_post;
 pub mod delete_post;
+pub mod get_draft_posts_of_this_user_profile_with_pagination;
 pub mod get_individual_post_details_by_id;
 pub mod get_individual_post_details_by_id_for_user;
 pub mod get_posts_of_this_user_profile_with_pagination_cursor;

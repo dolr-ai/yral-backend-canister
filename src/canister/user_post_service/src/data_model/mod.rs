@@ -12,7 +12,7 @@ use shared_utils::{
             storage::{Post, PostIdStringList},
         },
     },
-    common::types::top_posts::post_score_index_item::PostStatus,
+    common::types::top_posts::post_score_index_item::{PostStatus, PostStatusV1},
     pagination::{self, PaginationError},
 };
 
@@ -55,8 +55,8 @@ impl CanisterData {
                 break;
             }
 
-            if post.status != PostStatus::Deleted
-                && post.status != PostStatus::BannedDueToUserReporting
+            if post.status != PostStatusV1::Deleted
+                && post.status != PostStatusV1::BannedDueToUserReporting
             {
                 let creator = post.creator_principal;
                 let mut post_ids = self.posts_by_creator.get(&creator).unwrap_or_default();
@@ -74,9 +74,9 @@ impl CanisterData {
 
     pub fn add_post_to_memory(
         &mut self,
-        post_from_frontend: PostDetailsFromFrontend,
+        post_from_frontend: impl Into<Post>,
     ) -> Result<(), UserPostServiceError> {
-        let post = Post::from(post_from_frontend);
+        let post: Post = post_from_frontend.into();
 
         if self.posts.contains_key(&post.id) {
             return Err(UserPostServiceError::DuplicatePostId);
@@ -90,7 +90,8 @@ impl CanisterData {
     }
 
     fn add_post_to_creator_index(&mut self, post: &Post) {
-        if post.status == PostStatus::Deleted || post.status == PostStatus::BannedDueToUserReporting
+        if post.status == PostStatusV1::Deleted
+            || post.status == PostStatusV1::BannedDueToUserReporting
         {
             return;
         }
@@ -156,11 +157,7 @@ impl CanisterData {
             .skip(offset)
             .take(limit)
             .filter_map(|post_id| self.posts.get(post_id))
-            .filter(|post| {
-                // Double-check status (should already be filtered in index)
-                post.status != PostStatus::Deleted
-                    && post.status != PostStatus::BannedDueToUserReporting
-            })
+            .filter(|post| post.status == PostStatusV1::Published)
             .collect();
 
         posts
@@ -208,10 +205,53 @@ impl CanisterData {
             .skip(from_inclusive_index as usize)
             .take(limit as usize)
             .filter_map(|post_id| self.posts.get(post_id))
-            .filter(|post| {
-                post.status != PostStatus::Deleted
-                    && post.status != PostStatus::BannedDueToUserReporting
-            })
+            .filter(|post| post.status == PostStatusV1::Published)
+            .collect();
+
+        Ok(posts)
+    }
+
+    pub fn get_draft_posts_of_this_user_profile_with_pagination(
+        &self,
+        creator: Principal,
+        limit: usize,
+        offset: usize,
+    ) -> Result<Vec<Post>, GetPostsOfUserProfileError> {
+        // Use the posts_by_creator index for fast lookup - O(1) instead of O(n)
+        let post_ids = match self.posts_by_creator.get(&creator) {
+            Some(mut post_ids) => {
+                post_ids.sort_by_creation_time(|post| {
+                    self.posts.get(&post.to_string()).map(|p| p.created_at)
+                });
+
+                post_ids.0.clone()
+            }
+            None => return Ok(Vec::new()), // No posts for this creator
+        };
+
+        // Get total count of valid posts for pagination calculation
+        let valid_post_count = post_ids.len() as u64;
+
+        let (from_inclusive_index, limit) =
+            pagination::get_pagination_bounds_cursor(offset as u64, limit as u64, valid_post_count)
+                .map_err(|e| match e {
+                    PaginationError::InvalidBoundsPassed => {
+                        GetPostsOfUserProfileError::InvalidBoundsPassed
+                    }
+                    PaginationError::ReachedEndOfItemsList => {
+                        GetPostsOfUserProfileError::ReachedEndOfItemsList
+                    }
+                    PaginationError::ExceededMaxNumberOfItemsAllowedInOneRequest => {
+                        GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest
+                    }
+                })?;
+
+        let posts: Vec<Post> = post_ids
+            .iter()
+            .skip(from_inclusive_index as usize)
+            .take(limit as usize)
+            .filter_map(|post_id| self.posts.get(post_id))
+            .filter(|post| post.status == PostStatusV1::Draft)
             .collect();
 
         Ok(posts)
@@ -220,7 +260,7 @@ impl CanisterData {
     pub fn get_post(&self, post_id: &PostId) -> Result<Post, UserPostServiceError> {
         match self.posts.get(post_id) {
             Some(post) => match post.status {
-                PostStatus::Deleted => Err(UserPostServiceError::PostNotFound),
+                PostStatusV1::Deleted => Err(UserPostServiceError::PostNotFound),
                 _ => Ok(post),
             },
             None => Err(UserPostServiceError::PostNotFound),
@@ -242,10 +282,10 @@ impl CanisterData {
         }
 
         match post.status {
-            PostStatus::Deleted => Err(UserPostServiceError::PostNotFound),
+            PostStatusV1::Deleted => Err(UserPostServiceError::PostNotFound),
             _ => {
                 let creator = post.creator_principal;
-                post.status = PostStatus::Deleted;
+                post.status = PostStatusV1::Deleted;
 
                 // Update the main posts map
                 self.posts.insert(post_id.clone(), post);
