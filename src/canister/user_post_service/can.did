@@ -34,6 +34,10 @@ type PostDetailsFromFrontend = record {
   video_uid : text;
   creator_principal : principal;
 };
+type PostIdVideoUidMappingPaginationResult = record {
+  result : vec record { text; text };
+  last_uuid_processed : opt text;
+};
 type PostStatus = variant {
   BannedForExplicitness;
   BannedDueToUserReporting;
@@ -90,6 +94,9 @@ service : (UserPostServiceInitArgs) -> {
   get_individual_post_details_by_id : (text) -> (Result_1) query;
   get_individual_post_details_by_id_for_user : (text, principal) -> (
       Result_2,
+    ) query;
+  get_post_id_video_uid_mapping_with_pagination : (opt text, nat64) -> (
+      PostIdVideoUidMappingPaginationResult,
     ) query;
   get_posts_of_this_user_profile_with_pagination : (
       principal,

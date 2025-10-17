@@ -5,7 +5,8 @@ use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, Sta
 use serde::{Deserialize, Serialize};
 use shared_utils::{
     canister_specific::{
-        individual_user_template::types::{error::GetPostsOfUserProfileError, post},
+        individual_user_template::types::error::GetPostsOfUserProfileError,
+        user_info_service::args::PostIdVideoUidMappingPaginationResult,
         user_post_service::types::{
             args::{PostDetailsForFrontend, PostDetailsFromFrontend},
             error::UserPostServiceError,
@@ -120,6 +121,40 @@ impl CanisterData {
         self.add_post_to_creator_index(&post);
 
         result
+    }
+
+    pub fn get_post_id_video_uid_mapping_with_pagination(
+        &self,
+        limit: usize,
+        mut last_uuid_processed: Option<String>,
+    ) -> PostIdVideoUidMappingPaginationResult {
+        let mut result = Vec::new();
+
+        let range = match last_uuid_processed {
+            Some(ref u) => self.posts.range((
+                std::ops::Bound::Excluded(u.clone()),
+                std::ops::Bound::Unbounded,
+            )),
+            None => self.posts.range(..),
+        };
+
+        let mut processed = 0;
+
+        for (post_id, post) in range {
+            if processed >= limit {
+                break;
+            }
+
+            result.push((post.video_uid.clone(), post_id.clone()));
+
+            last_uuid_processed = Some(post_id.clone());
+            processed += 1;
+        }
+
+        PostIdVideoUidMappingPaginationResult {
+            result,
+            last_uuid_processed,
+        }
     }
 
     pub fn get_post_details_for_user(
