@@ -2,12 +2,15 @@ use std::{borrow::Cow, collections::BTreeSet, time::SystemTime};
 
 use candid::{CandidType, Principal};
 use ciborium::{de, ser};
+use ic_cdk::println;
 use ic_stable_structures::{BTreeMap as StableBTreeMap, Storable, storable::Bound};
 use serde::{Deserialize, Serialize};
 use shared_utils::{
     canister_specific::{
         individual_user_template::types::{
-            profile::{UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4},
+            profile::{
+                UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
+            },
             session::SessionType,
         },
         user_info_service::types::ProfileUpdateDetails,
@@ -89,7 +92,8 @@ pub(crate) struct CanisterData {
 impl CanisterData {
     pub fn register_new_user(&mut self, user_principal: Principal) -> Result<(), String> {
         if self.user_infos.contains_key(&user_principal) {
-            return Err("User already exists".to_string());
+            println!("User already exists");
+            return Ok(());
         }
 
         self.user_infos
@@ -98,13 +102,24 @@ impl CanisterData {
         Ok(())
     }
 
-    pub fn register_authenticated_user(&mut self, user_principal: Principal, authenticated: bool) -> Result<(), String> {
+    pub fn register_authenticated_user(
+        &mut self,
+        user_principal: Principal,
+        authenticated: bool,
+    ) -> Result<(), String> {
         if self.user_infos.contains_key(&user_principal) {
-            return Err("User already exists".to_string());
+            println!("User already exists");
+            return Ok(());
         }
 
-        self.user_infos
-            .insert(user_principal, if authenticated {UserInfo::authenticated(user_principal) } else {UserInfo::new(user_principal)});
+        self.user_infos.insert(
+            user_principal,
+            if authenticated {
+                UserInfo::authenticated(user_principal)
+            } else {
+                UserInfo::new(user_principal)
+            },
+        );
 
         Ok(())
     }
