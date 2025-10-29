@@ -1,5 +1,6 @@
 use candid::Principal;
 use test_utils::canister_calls::{query, update};
+use test_utils::setup::test_constants::get_mock_user_alice_principal_id;
 use test_utils::setup::{
     env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned,
     test_constants::get_global_super_admin_principal_id,
@@ -8,7 +9,7 @@ use test_utils::setup::{
 use super::common::{register_user_for_testing, RateLimitResult};
 
 use shared_utils::canister_specific::rate_limits::{
-    VideoGenRequest, VideoGenRequestKey, VideoGenRequestStatus,
+    types::TokenType, VideoGenRequest, VideoGenRequestKey, VideoGenRequestStatus,
 };
 
 #[test]
@@ -593,7 +594,10 @@ fn test_decrement_video_generation_counter() {
     )
     .expect("Failed to call create_video_generation_request");
 
-    assert!(result.is_ok(), "Fourth request should succeed after decrement");
+    assert!(
+        result.is_ok(),
+        "Fourth request should succeed after decrement"
+    );
     assert_eq!(result.unwrap().counter, 4);
 
     // Now try to create one more - this should fail (we're at the limit)
@@ -651,4 +655,375 @@ fn test_decrement_video_generation_counter() {
         decrement_result.unwrap_err(),
         "Video generation request not found"
     );
+}
+
+#[test]
+fn test_create_video_generation_request_v1_paid_vs_unpaid() {
+    let (pocket_ic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let admin = get_global_super_admin_principal_id();
+    let test_user = get_mock_user_alice_principal_id();
+
+    // Register user
+    register_user_for_testing(&pocket_ic, &service_canisters, test_user).unwrap();
+
+    // Set property config with both user and property-wide limits
+    let _config_result = update::<_, RateLimitResult>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "set_property_rate_limit_config",
+        (
+            "VIDEOGEN".to_string(),
+            2u64,           // max_requests_per_window_registered
+            1u64,           // max_requests_per_window_unregistered
+            60u64,          // window_duration_seconds
+            Some(5u64),     // max_requests_per_property_all_users
+            Some(86400u64), // property_rate_limit_window_duration_seconds (24h)
+        ),
+    )
+    .expect("Failed to set property rate limit config");
+
+    // Test unpaid request - should check both user and property limits
+    let unpaid_result = update::<_, Result<VideoGenRequestKey, String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "create_video_generation_request_v1",
+        (
+            test_user,
+            "VEO3".to_string(),
+            "Unpaid request".to_string(),
+            "VIDEOGEN".to_string(),
+            true,           // is_registered
+            false,          // is_paid
+            None::<String>, // payment_amount
+        ),
+    )
+    .expect("Failed to call create_video_generation_request_v1");
+
+    assert!(unpaid_result.is_ok());
+    let unpaid_key = unpaid_result.unwrap();
+
+    // Test paid request - should only check property-wide limit
+    let paid_result = update::<_, Result<VideoGenRequestKey, String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "create_video_generation_request_v1",
+        (
+            test_user,
+            "LUMALABS".to_string(),
+            "Paid request".to_string(),
+            "VIDEOGEN".to_string(),
+            true,                    // is_registered
+            true,                    // is_paid
+            Some("100".to_string()), // payment_amount
+        ),
+    )
+    .expect("Failed to call create_video_generation_request_v1");
+
+    assert!(paid_result.is_ok());
+    let paid_key = paid_result.unwrap();
+
+    // Verify both requests were created with different counters
+    assert_eq!(unpaid_key.principal, test_user);
+    assert_eq!(paid_key.principal, test_user);
+    assert_ne!(unpaid_key.counter, paid_key.counter);
+
+    // Verify the requests exist and have correct payment amounts
+    let unpaid_request = query::<_, Option<VideoGenRequest>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        test_user,
+        "get_video_generation_request",
+        (unpaid_key,),
+    )
+    .expect("Failed to get unpaid request")
+    .expect("Unpaid request should exist");
+
+    let paid_request = query::<_, Option<VideoGenRequest>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        test_user,
+        "get_video_generation_request",
+        (paid_key,),
+    )
+    .expect("Failed to get paid request")
+    .expect("Paid request should exist");
+
+    assert_eq!(unpaid_request.payment_amount, None);
+    assert_eq!(paid_request.payment_amount, Some("100".to_string()));
+}
+
+#[test]
+fn test_create_video_generation_request_v2_with_token_types() {
+    let (pocket_ic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let admin = get_global_super_admin_principal_id();
+    let test_user = Principal::from_text("xkbqi-2qaaa-aaaah-qbpqq-cai").unwrap();
+
+    // Register user
+    register_user_for_testing(&pocket_ic, &service_canisters, test_user).unwrap();
+
+    // Set a higher rate limit for the test
+    let _config_result = update::<_, RateLimitResult>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "set_property_rate_limit_config",
+        (
+            "VIDEOGEN".to_string(),
+            10u64,       // max_requests_per_window_registered (higher limit)
+            5u64,        // max_requests_per_window_unregistered
+            60u64,       // window_duration_seconds
+            None::<u64>, // max_requests_per_property_all_users
+            None::<u64>, // property_rate_limit_window_duration_seconds
+        ),
+    )
+    .expect("Failed to set property rate limit config");
+
+    // Test with different token types
+    let token_types = vec![
+        (TokenType::Free, "Free token request"),
+        (TokenType::Sats, "Sats token request"),
+        (TokenType::Dolr, "DOLR token request"),
+    ];
+
+    let mut created_keys = Vec::new();
+
+    for (token_type, prompt) in token_types {
+        let result = update::<_, Result<VideoGenRequestKey, String>>(
+            &pocket_ic,
+            service_canisters.rate_limits_canister_id,
+            admin,
+            "create_video_generation_request_v2",
+            (
+                test_user,
+                "VEO3".to_string(),
+                prompt.to_string(),
+                "VIDEOGEN".to_string(),
+                token_type,
+                true,           // is_registered
+                false,          // is_paid (free request)
+                None::<String>, // payment_amount
+            ),
+        )
+        .expect("Failed to call create_video_generation_request_v2");
+
+        if let Err(ref error) = result {
+            panic!(
+                "Failed to create request with token type {:?}: {}",
+                token_type, error
+            );
+        }
+        let key = result.unwrap();
+        created_keys.push((key, token_type, prompt));
+    }
+
+    // Verify all requests were created and have correct token types
+    for (key, expected_token_type, expected_prompt) in created_keys {
+        let request = query::<_, Option<VideoGenRequest>>(
+            &pocket_ic,
+            service_canisters.rate_limits_canister_id,
+            test_user,
+            "get_video_generation_request",
+            (key,),
+        )
+        .expect("Failed to get request")
+        .expect("Request should exist");
+
+        assert_eq!(request.token_type, Some(expected_token_type));
+        assert_eq!(request.prompt, expected_prompt);
+        assert_eq!(request.payment_amount, None);
+    }
+}
+
+#[test]
+fn test_create_video_generation_request_v2_with_paid_sats_request() {
+    let (pocket_ic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let admin = get_global_super_admin_principal_id();
+    let test_user = get_mock_user_alice_principal_id();
+
+    // Register user
+    register_user_for_testing(&pocket_ic, &service_canisters, test_user).unwrap();
+
+    // Create a paid request with SATS token type
+    let result = update::<_, Result<VideoGenRequestKey, String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "create_video_generation_request_v2",
+        (
+            test_user,
+            "LUMALABS".to_string(),
+            "Paid SATS video generation".to_string(),
+            "VIDEOGEN".to_string(),
+            TokenType::Sats,
+            true,                      // is_registered
+            true,                      // is_paid
+            Some("50000".to_string()), // payment_amount (50k sats)
+        ),
+    )
+    .expect("Failed to call create_video_generation_request_v2");
+
+    assert!(result.is_ok());
+    let key = result.unwrap();
+
+    // Verify the request was created with correct details
+    let request = query::<_, Option<VideoGenRequest>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        test_user,
+        "get_video_generation_request",
+        (key,),
+    )
+    .expect("Failed to get request")
+    .expect("Request should exist");
+
+    assert_eq!(request.token_type, Some(TokenType::Sats));
+    assert_eq!(request.payment_amount, Some("50000".to_string()));
+    assert_eq!(request.model_name, "LUMALABS");
+    assert_eq!(request.prompt, "Paid SATS video generation");
+    assert_eq!(request.status, VideoGenRequestStatus::Pending);
+}
+
+#[test]
+fn test_decrement_video_generation_counter_v1_paid_vs_unpaid() {
+    let (pocket_ic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let admin = get_global_super_admin_principal_id();
+    let test_user = Principal::from_text("xkbqi-2qaaa-aaaah-qbpqq-cai").unwrap();
+
+    // Register user
+    register_user_for_testing(&pocket_ic, &service_canisters, test_user).unwrap();
+
+    // Create an unpaid request
+    let unpaid_result = update::<_, Result<VideoGenRequestKey, String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "create_video_generation_request_v1",
+        (
+            test_user,
+            "VEO3".to_string(),
+            "Unpaid request".to_string(),
+            "VIDEOGEN".to_string(),
+            true,           // is_registered
+            false,          // is_paid
+            None::<String>, // payment_amount
+        ),
+    )
+    .expect("Failed to create unpaid request");
+    let unpaid_key = unpaid_result.unwrap();
+
+    // Create a paid request
+    let paid_result = update::<_, Result<VideoGenRequestKey, String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "create_video_generation_request_v1",
+        (
+            test_user,
+            "LUMALABS".to_string(),
+            "Paid request".to_string(),
+            "VIDEOGEN".to_string(),
+            true,                    // is_registered
+            true,                    // is_paid
+            Some("100".to_string()), // payment_amount
+        ),
+    )
+    .expect("Failed to create paid request");
+    let paid_key = paid_result.unwrap();
+
+    // Mark both requests as failed
+    let _unpaid_update = update::<_, Result<(), String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "update_video_generation_status",
+        (
+            unpaid_key.clone(),
+            VideoGenRequestStatus::Failed("Test failure".to_string()),
+        ),
+    )
+    .expect("Failed to mark unpaid request as failed");
+
+    let _paid_update = update::<_, Result<(), String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "update_video_generation_status",
+        (
+            paid_key.clone(),
+            VideoGenRequestStatus::Failed("Test failure".to_string()),
+        ),
+    )
+    .expect("Failed to mark paid request as failed");
+
+    // Test decrement for unpaid request - should decrement both user and property counters
+    let unpaid_decrement = update::<_, Result<(), String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "decrement_video_generation_counter_v1",
+        (unpaid_key, "VIDEOGEN".to_string()),
+    )
+    .expect("Failed to call decrement_video_generation_counter_v1 for unpaid");
+
+    assert!(unpaid_decrement.is_ok());
+
+    // Test decrement for paid request - should only decrement property counter
+    let paid_decrement = update::<_, Result<(), String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "decrement_video_generation_counter_v1",
+        (paid_key, "VIDEOGEN".to_string()),
+    )
+    .expect("Failed to call decrement_video_generation_counter_v1 for paid");
+
+    assert!(paid_decrement.is_ok());
+}
+
+#[test]
+fn test_backwards_compatibility_with_existing_requests() {
+    let (pocket_ic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let admin = get_global_super_admin_principal_id();
+    let test_user = get_mock_user_alice_principal_id();
+
+    // Register user
+    register_user_for_testing(&pocket_ic, &service_canisters, test_user).unwrap();
+
+    // Create request using the original function (should still work)
+    let original_result = update::<_, Result<VideoGenRequestKey, String>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        admin,
+        "create_video_generation_request",
+        (
+            test_user,
+            "VEO3".to_string(),
+            "Original function test".to_string(),
+            "VIDEOGEN".to_string(),
+            true, // is_registered
+        ),
+    )
+    .expect("Failed to call original create_video_generation_request");
+
+    assert!(original_result.is_ok());
+    let key = original_result.unwrap();
+
+    // Verify the request exists and has default token type (None)
+    let request = query::<_, Option<VideoGenRequest>>(
+        &pocket_ic,
+        service_canisters.rate_limits_canister_id,
+        test_user,
+        "get_video_generation_request",
+        (key,),
+    )
+    .expect("Failed to get request")
+    .expect("Request should exist");
+
+    // Original requests should have token_type as None (backward compatibility)
+    assert_eq!(request.token_type, None);
+    assert_eq!(request.payment_amount, None);
+    assert_eq!(request.prompt, "Original function test");
 }
