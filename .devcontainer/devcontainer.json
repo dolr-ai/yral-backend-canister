@@ -1,0 +1,35 @@
+{
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "containerEnv": {
+        "POCKET_IC_BIN": "/workspaces/hot-or-not-backend-canister/pocket-ic"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // copilot
+                "GitHub.copilot",
+                "GitHub.copilot-chat",
+                // docker
+                "ms-azuretools.vscode-containers",
+                // editor
+                "albert.TabOut",
+                // github
+                "mhutchie.git-graph",
+                "github.vscode-github-actions",
+                "GitHub.vscode-pull-request-github",
+                // rust
+                "fill-labs.dependi",
+                "tamasfe.even-better-toml",
+                "rust-lang.rust-analyzer",
+                "vadimcn.vscode-lldb"
+            ]
+        }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/rust:1": {}
+    },
+    "onCreateCommand": "rustup install;",
+    "postCreateCommand": "bash -i .devcontainer/setup.sh"
+}
