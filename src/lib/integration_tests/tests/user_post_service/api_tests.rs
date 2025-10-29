@@ -4,7 +4,7 @@ use shared_utils::canister_specific::user_post_service::types::{
     error::UserPostServiceError,
     storage::{Post, PostViewDetailsFromFrontend, PostViewStatistics},
 };
-use shared_utils::common::types::top_posts::post_score_index_item::PostStatus;
+use shared_utils::common::types::top_posts::post_score_index_item::{PostStatus, PostStatusV1};
 use std::{collections::HashSet, time::SystemTime};
 use test_utils::{
     canister_calls::{query, update},
@@ -71,7 +71,7 @@ fn create_test_post_with_timestamp(
         video_uid: video_uid.to_string(),
         description: description.to_string(),
         hashtags: vec!["test".to_string(), "sorting".to_string()],
-        status: PostStatus::ReadyToView,
+        status: PostStatusV1::Published,
         created_at,
         likes: HashSet::new(),
         share_count: 0,
@@ -984,7 +984,7 @@ fn test_update_post_status_success() {
     )
     .unwrap();
     let post = post.unwrap();
-    assert_eq!(post.status, PostStatus::BannedDueToUserReporting);
+    assert_eq!(post.status, PostStatusV1::BannedDueToUserReporting);
 }
 
 #[test]
