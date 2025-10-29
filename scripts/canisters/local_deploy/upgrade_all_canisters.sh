@@ -61,6 +61,11 @@ dfx canister install rate_limits --mode upgrade --argument "(record {
   user_info_canister= principal \"$(dfx canister id user_info_service)\"
 })"
 
+dfx canister install rate_limits --mode upgrade --argument "(record {
+  version= \"v1.0.0\";
+  user_info_canister= principal \"$(dfx canister id user_info_service)\"
+})"
+
 scripts/canisters/local_deploy/upgrade_subnet_orchestrator.sh
 
 sleep 2

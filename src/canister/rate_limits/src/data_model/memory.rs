@@ -7,6 +7,9 @@ use std::cell::RefCell;
 const RATE_LIMITS: MemoryId = MemoryId::new(0);
 const UPGRADES: MemoryId = MemoryId::new(1);
 const PROPERTY_CONFIGS: MemoryId = MemoryId::new(2);
+const PROPERTY_RATE_LIMITS: MemoryId = MemoryId::new(3);
+const VIDEO_GEN_REQUESTS: MemoryId = MemoryId::new(4);
+const USER_REQUEST_COUNTERS: MemoryId = MemoryId::new(5);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -27,4 +30,16 @@ pub fn get_upgrades_memory() -> Memory {
 
 pub fn get_property_configs_memory() -> Memory {
     MEMORY_MANAGER.with(|m| m.borrow_mut().get(PROPERTY_CONFIGS))
+}
+
+pub fn get_property_rate_limits_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(PROPERTY_RATE_LIMITS))
+}
+
+pub fn get_video_gen_requests_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(VIDEO_GEN_REQUESTS))
+}
+
+pub fn get_user_request_counters_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(USER_REQUEST_COUNTERS))
 }

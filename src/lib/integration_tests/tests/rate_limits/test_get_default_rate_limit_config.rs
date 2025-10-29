@@ -22,7 +22,8 @@ fn test_get_default_rate_limit_config() {
     // Verify the config has reasonable defaults
     assert!(config.window_duration_seconds > 0);
     assert!(config.max_requests_per_window_registered > 0);
-    assert!(config.max_requests_per_window_unregistered > 0);
+    // Note: Unregistered users have max_requests=0 by default
+    assert_eq!(config.max_requests_per_window_unregistered, 0);
     
     // Typically, registered users should have higher limits than unregistered
     assert!(config.max_requests_per_window_registered >= config.max_requests_per_window_unregistered);

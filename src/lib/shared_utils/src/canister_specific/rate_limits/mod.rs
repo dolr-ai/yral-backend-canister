@@ -8,5 +8,6 @@ pub use consts::{
 };
 pub use types::{
     GlobalRateLimitConfig, PropertyRateLimitConfig, RateLimitConfig, RateLimitResult,
-    RateLimitStatus, RateLimitsInitArgs,
+    RateLimitStatus, RateLimitsInitArgs, VideoGenRequest, VideoGenRequestKey, 
+    VideoGenRequestStatus,
 };
