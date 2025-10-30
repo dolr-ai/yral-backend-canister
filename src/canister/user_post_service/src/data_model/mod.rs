@@ -35,7 +35,7 @@ pub struct CanisterData {
 
 impl CanisterData {
     pub fn fetch_posts(
-        &mut self,
+        &self,
         last_uuid_processed: Option<String>,
         limit: usize,
     ) -> FetchPostsResult {

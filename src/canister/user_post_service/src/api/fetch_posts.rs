@@ -8,7 +8,7 @@ use crate::CANISTER_DATA;
 
 #[query]
 fn fetch_posts(fetch_posts_args: FetchPostsArgs) -> FetchPostsResult {
-    CANISTER_DATA.with_borrow_mut(|canister_data| {
+    CANISTER_DATA.with_borrow(|canister_data| {
         canister_data.fetch_posts(fetch_posts_args.last_uuid_processed, fetch_posts_args.limit)
     })
 }
