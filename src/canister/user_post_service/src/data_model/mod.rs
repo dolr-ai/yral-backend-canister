@@ -7,7 +7,7 @@ use shared_utils::{
     canister_specific::{
         individual_user_template::types::{error::GetPostsOfUserProfileError, post},
         user_post_service::types::{
-            args::{PostDetailsForFrontend, PostDetailsFromFrontend},
+            args::{FetchPostsResult, PostDetailsForFrontend, PostDetailsFromFrontend},
             error::UserPostServiceError,
             storage::{Post, PostIdStringList},
         },
@@ -34,6 +34,42 @@ pub struct CanisterData {
 }
 
 impl CanisterData {
+    pub fn fetch_posts(
+        &mut self,
+        last_uuid_processed: Option<String>,
+        limit: usize,
+    ) -> FetchPostsResult {
+        let mut processed = 0;
+        let mut posts = vec![];
+
+        let mut last_processed_uuid = last_uuid_processed.clone();
+
+        let range = match last_uuid_processed {
+            Some(u) => self
+                .posts
+                .range((std::ops::Bound::Excluded(u), std::ops::Bound::Unbounded)),
+            None => self.posts.range(..),
+        };
+
+        for (post_id, post) in range {
+            if processed >= limit {
+                break;
+            }
+
+            {
+                posts.push(post);
+            }
+
+            last_processed_uuid = Some(post_id.clone());
+            processed += 1;
+        }
+
+        FetchPostsResult {
+            posts,
+            last_post_id_fetched: last_processed_uuid,
+        }
+    }
+
     pub fn initialize_posts_by_creator_index(
         &mut self,
         last_uuid_processed: Option<String>,

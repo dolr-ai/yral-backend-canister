@@ -5,8 +5,20 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     canister_specific::user_post_service::types::storage::Post,
-    common::utils::system_time::{get_current_system_time, get_current_system_time_from_ic},
+    common::utils::system_time::get_current_system_time,
 };
+
+#[derive(CandidType, Deserialize, Serialize)]
+pub struct FetchPostsResult {
+    pub posts: Vec<Post>,
+    pub last_post_id_fetched: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize)]
+pub struct FetchPostsArgs {
+    pub last_uuid_processed: Option<String>,
+    pub limit: usize,
+}
 
 #[derive(CandidType, Deserialize)]
 pub struct UserPostServiceInitArgs {
