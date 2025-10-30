@@ -1,3 +1,8 @@
+type FetchPostsArgs = record { limit : nat64; last_uuid_processed : opt text };
+type FetchPostsResult = record {
+  last_post_id_fetched : opt text;
+  posts : vec Post;
+};
 type GetPostsOfUserProfileError = variant {
   ReachedEndOfItemsList;
   InvalidBoundsPassed;
@@ -87,6 +92,7 @@ type UserPostServiceInitArgs = record { version : text };
 service : (UserPostServiceInitArgs) -> {
   add_post : (PostDetailsFromFrontend) -> (Result);
   delete_post : (text) -> (Result);
+  fetch_posts : (FetchPostsArgs) -> (FetchPostsResult) query;
   get_individual_post_details_by_id : (text) -> (Result_1) query;
   get_individual_post_details_by_id_for_user : (text, principal) -> (
       Result_2,
