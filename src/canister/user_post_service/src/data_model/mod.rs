@@ -12,7 +12,7 @@ use shared_utils::{
             storage::{Post, PostIdStringList},
         },
     },
-    common::types::top_posts::post_score_index_item::{PostStatus, PostStatusV1},
+    common::types::top_posts::post_score_index_item::PostStatus,
     pagination::{self, PaginationError},
 };
 
@@ -55,8 +55,8 @@ impl CanisterData {
                 break;
             }
 
-            if post.status != PostStatusV1::Deleted
-                && post.status != PostStatusV1::BannedDueToUserReporting
+            if post.status != PostStatus::Deleted
+                && post.status != PostStatus::BannedDueToUserReporting
             {
                 let creator = post.creator_principal;
                 let mut post_ids = self.posts_by_creator.get(&creator).unwrap_or_default();
@@ -90,8 +90,7 @@ impl CanisterData {
     }
 
     fn add_post_to_creator_index(&mut self, post: &Post) {
-        if post.status == PostStatusV1::Deleted
-            || post.status == PostStatusV1::BannedDueToUserReporting
+        if post.status == PostStatus::Deleted || post.status == PostStatus::BannedDueToUserReporting
         {
             return;
         }
@@ -157,7 +156,7 @@ impl CanisterData {
             .skip(offset)
             .take(limit)
             .filter_map(|post_id| self.posts.get(post_id))
-            .filter(|post| post.status == PostStatusV1::Published)
+            .filter(|post| post.status == PostStatus::Published)
             .collect();
 
         posts
@@ -205,7 +204,7 @@ impl CanisterData {
             .skip(from_inclusive_index as usize)
             .take(limit as usize)
             .filter_map(|post_id| self.posts.get(post_id))
-            .filter(|post| post.status == PostStatusV1::Published)
+            .filter(|post| post.status == PostStatus::Published)
             .collect();
 
         Ok(posts)
@@ -251,7 +250,7 @@ impl CanisterData {
             .skip(from_inclusive_index as usize)
             .take(limit as usize)
             .filter_map(|post_id| self.posts.get(post_id))
-            .filter(|post| post.status == PostStatusV1::Draft)
+            .filter(|post| post.status == PostStatus::Draft)
             .collect();
 
         Ok(posts)
@@ -260,7 +259,7 @@ impl CanisterData {
     pub fn get_post(&self, post_id: &PostId) -> Result<Post, UserPostServiceError> {
         match self.posts.get(post_id) {
             Some(post) => match post.status {
-                PostStatusV1::Deleted => Err(UserPostServiceError::PostNotFound),
+                PostStatus::Deleted => Err(UserPostServiceError::PostNotFound),
                 _ => Ok(post),
             },
             None => Err(UserPostServiceError::PostNotFound),
@@ -282,10 +281,10 @@ impl CanisterData {
         }
 
         match post.status {
-            PostStatusV1::Deleted => Err(UserPostServiceError::PostNotFound),
+            PostStatus::Deleted => Err(UserPostServiceError::PostNotFound),
             _ => {
                 let creator = post.creator_principal;
-                post.status = PostStatusV1::Deleted;
+                post.status = PostStatus::Deleted;
 
                 // Update the main posts map
                 self.posts.insert(post_id.clone(), post);

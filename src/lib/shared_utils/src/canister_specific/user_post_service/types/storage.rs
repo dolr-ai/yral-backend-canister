@@ -8,7 +8,7 @@ use std::{collections::HashSet, time::SystemTime};
 
 use crate::{
     canister_specific::user_post_service::types::args::PostDetailsForFrontend,
-    common::types::top_posts::post_score_index_item::{PostStatus, PostStatusV1},
+    common::types::top_posts::post_score_index_item::PostStatus,
 };
 
 //TODO: Create new struct for PostForFrontend
@@ -20,7 +20,7 @@ pub struct Post {
     pub video_uid: String,
     pub description: String,
     pub hashtags: Vec<String>,
-    pub status: PostStatusV1,
+    pub status: PostStatus,
     pub created_at: SystemTime,
     pub likes: HashSet<Principal>,
     pub share_count: u64,
@@ -119,7 +119,7 @@ impl Post {
         }
     }
 
-    pub fn update_status(&mut self, status: PostStatusV1) {
+    pub fn update_status(&mut self, status: PostStatus) {
         self.status = status;
     }
 }

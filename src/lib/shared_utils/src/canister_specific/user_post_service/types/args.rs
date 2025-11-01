@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     canister_specific::user_post_service::types::storage::Post,
     common::{
-        types::top_posts::post_score_index_item::PostStatusV1,
-        utils::system_time::{get_current_system_time, get_current_system_time_from_ic},
+        types::top_posts::post_score_index_item::PostStatus,
+        utils::system_time::get_current_system_time,
     },
 };
 
@@ -32,8 +32,23 @@ pub struct PostDetailsFromFrontendV1 {
     pub hashtags: Vec<String>,
     pub video_uid: String,
     pub creator_principal: Principal,
-    pub status: PostStatusV1,
+    pub status: PostStatusFromFrontend,
     pub created_at: SystemTime,
+}
+
+#[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
+pub enum PostStatusFromFrontend {
+    Draft,
+    Published,
+}
+
+impl From<PostStatusFromFrontend> for PostStatus {
+    fn from(status: PostStatusFromFrontend) -> Self {
+        match status {
+            PostStatusFromFrontend::Draft => PostStatus::Draft,
+            PostStatusFromFrontend::Published => PostStatus::Published,
+        }
+    }
 }
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
@@ -74,7 +89,7 @@ impl From<PostDetailsFromFrontendV1> for Post {
             hashtags: details.hashtags,
             video_uid: details.video_uid,
             creator_principal: details.creator_principal,
-            status: details.status,
+            status: details.status.into(),
             created_at: details.created_at,
             likes: Default::default(),
             share_count: 0,
