@@ -98,7 +98,7 @@ impl<'de> Deserialize<'de> for PostStatus {
                     8 => Ok(Field::field8),
                     _ => Err(de::Error::invalid_value(
                         de::Unexpected::Unsigned(value),
-                        &"variant index 0 <= i < 7",
+                        &"variant index 0 <= i < 9",
                     )),
                 }
             }
