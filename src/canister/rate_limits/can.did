@@ -26,6 +26,7 @@ type RateLimitsInitArgs = record { version : text };
 type Result = variant { Ok : VideoGenRequestKey; Err : text };
 type Result_1 = variant { Ok; Err : text };
 type Result_2 = variant { Ok : VideoGenRequestStatus; Err : text };
+type TokenType = variant { Dolr; Free; Sats };
 type VideoGenRequest = record {
   status : VideoGenRequestStatus;
   updated_at : nat64;
@@ -33,6 +34,7 @@ type VideoGenRequest = record {
   model_name : text;
   created_at : nat64;
   prompt : text;
+  token_type : opt TokenType;
 };
 type VideoGenRequestKey = record { "principal" : principal; counter : nat64 };
 type VideoGenRequestStatus = variant {
@@ -59,6 +61,16 @@ service : (RateLimitsInitArgs) -> {
       text,
       text,
       text,
+      bool,
+      bool,
+      opt text,
+    ) -> (Result);
+  create_video_generation_request_v2 : (
+      principal,
+      text,
+      text,
+      text,
+      TokenType,
       bool,
       bool,
       opt text,
