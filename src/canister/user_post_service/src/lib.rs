@@ -9,7 +9,6 @@ use candid::Principal;
 
 // Types exposed in public Candid interface
 use shared_utils::canister_specific::individual_user_template::types::error::GetPostsOfUserProfileError;
-use shared_utils::canister_specific::user_info_service::args::PostIdVideoUidMappingPaginationResult;
 use shared_utils::canister_specific::user_post_service::types::args::PostDetailsFromFrontend;
 use shared_utils::canister_specific::user_post_service::types::storage::Post;
 use shared_utils::canister_specific::user_post_service::types::storage::PostViewDetailsFromFrontend;
