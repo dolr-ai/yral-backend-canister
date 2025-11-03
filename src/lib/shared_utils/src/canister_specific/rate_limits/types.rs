@@ -28,6 +28,14 @@ pub struct RateLimitConfig {
     pub window_duration_seconds: u64,
 }
 
+#[derive(Default, CandidType, Debug, Deserialize, Clone, Serialize, Copy, PartialEq)]
+pub enum TokenType {
+    Sats,
+    Dolr,
+    #[default]
+    Free,
+}
+
 #[derive(CandidType, Deserialize, Clone, Debug, Serialize)]
 pub struct PropertyRateLimitConfig {
     pub property: String,
@@ -180,6 +188,8 @@ pub struct VideoGenRequest {
     pub created_at: u64,
     pub updated_at: u64,
     pub payment_amount: Option<String>,
+    #[serde(default)]
+    pub token_type: Option<TokenType>,
 }
 
 impl Storable for VideoGenRequest {
