@@ -44,7 +44,6 @@ type PostDetailsFromFrontendV1 = record {
   status : PostStatusFromFrontend;
   hashtags : vec text;
   description : text;
-  created_at : SystemTime;
   video_uid : text;
   creator_principal : principal;
 };

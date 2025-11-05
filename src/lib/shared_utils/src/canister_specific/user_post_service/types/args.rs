@@ -43,7 +43,6 @@ pub struct PostDetailsFromFrontendV1 {
     pub video_uid: String,
     pub creator_principal: Principal,
     pub status: PostStatusFromFrontend,
-    pub created_at: SystemTime,
 }
 
 #[derive(CandidType, Deserialize, Clone, Serialize, Debug)]
@@ -100,7 +99,7 @@ impl From<PostDetailsFromFrontendV1> for Post {
             video_uid: details.video_uid,
             creator_principal: details.creator_principal,
             status: details.status.into(),
-            created_at: details.created_at,
+            created_at: get_current_system_time(),
             likes: Default::default(),
             share_count: 0,
             id: details.id,
