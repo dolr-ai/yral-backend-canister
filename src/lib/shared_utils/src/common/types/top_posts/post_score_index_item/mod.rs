@@ -82,7 +82,7 @@ pub(crate) mod test {
         use ciborium::{de::from_reader, ser::into_writer};
 
         let item = PostStatus::ReadyToView;
-        let expected_decoded = PostStatus::Published;
+        let expected_decoded = PostStatus::ReadyToView;
 
         let mut buf = Vec::new();
         into_writer(&item, &mut buf).expect("Failed to serialize PostScoreIndexItem");
@@ -97,7 +97,7 @@ pub(crate) mod test {
     fn add_tests_for_candid_serialization() {
         use candid::{Decode, Encode};
 
-        let item = PostStatus::Published;
+        let item = PostStatus::Uploaded;
 
         let encoded = Encode!(&item).expect("Failed to encode PostScoreIndexItem");
         let decoded: PostStatus =
