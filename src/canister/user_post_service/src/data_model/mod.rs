@@ -156,7 +156,11 @@ impl CanisterData {
             .skip(offset)
             .take(limit)
             .filter_map(|post_id| self.posts.get(post_id))
-            .filter(|post| post.status == PostStatus::Published)
+            .filter(|post| {
+                post.status != PostStatus::Deleted
+                    && post.status != PostStatus::BannedDueToUserReporting
+                    && post.status != PostStatus::Draft
+            })
             .collect();
 
         posts
@@ -204,7 +208,11 @@ impl CanisterData {
             .skip(from_inclusive_index as usize)
             .take(limit as usize)
             .filter_map(|post_id| self.posts.get(post_id))
-            .filter(|post| post.status == PostStatus::Published)
+            .filter(|post| {
+                post.status != PostStatus::Deleted
+                    && post.status != PostStatus::BannedDueToUserReporting
+                    && post.status != PostStatus::Draft
+            })
             .collect();
 
         Ok(posts)

@@ -46,7 +46,7 @@ impl From<PostStatusFromFrontend> for PostStatus {
     fn from(status: PostStatusFromFrontend) -> Self {
         match status {
             PostStatusFromFrontend::Draft => PostStatus::Draft,
-            PostStatusFromFrontend::Published => PostStatus::Published,
+            PostStatusFromFrontend::Published => PostStatus::Uploaded,
         }
     }
 }
