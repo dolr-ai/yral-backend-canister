@@ -39,8 +39,18 @@ type PostDetailsFromFrontend = record {
   video_uid : text;
   creator_principal : principal;
 };
+type PostDetailsFromFrontendV1 = record {
+  id : text;
+  status : PostStatusFromFrontend;
+  hashtags : vec text;
+  description : text;
+  created_at : SystemTime;
+  video_uid : text;
+  creator_principal : principal;
+};
 type PostStatus = variant {
   BannedForExplicitness;
+  Draft;
   BannedDueToUserReporting;
   Uploaded;
   CheckingExplicitness;
@@ -48,6 +58,7 @@ type PostStatus = variant {
   Transcoding;
   Deleted;
 };
+type PostStatusFromFrontend = variant { Draft; Published };
 type PostViewDetailsFromFrontend = variant {
   WatchedMultipleTimes : record {
     percentage_watched : nat8;
@@ -70,12 +81,12 @@ type RejectionCode = variant {
   CanisterReject;
 };
 type Result = variant { Ok; Err : UserPostServiceError };
-type Result_1 = variant { Ok : Post; Err : UserPostServiceError };
-type Result_2 = variant {
+type Result_1 = variant { Ok : vec Post; Err : GetPostsOfUserProfileError };
+type Result_2 = variant { Ok : Post; Err : UserPostServiceError };
+type Result_3 = variant {
   Ok : PostDetailsForFrontend;
   Err : UserPostServiceError;
 };
-type Result_3 = variant { Ok : vec Post; Err : GetPostsOfUserProfileError };
 type Result_4 = variant { Ok : nat64; Err : UserPostServiceError };
 type Result_5 = variant { Ok : bool; Err : UserPostServiceError };
 type SystemTime = record {
@@ -91,17 +102,21 @@ type UserPostServiceError = variant {
 type UserPostServiceInitArgs = record { version : text };
 service : (UserPostServiceInitArgs) -> {
   add_post : (PostDetailsFromFrontend) -> (Result);
+  add_post_v1 : (PostDetailsFromFrontendV1) -> (Result);
   delete_post : (text) -> (Result);
   fetch_posts : (FetchPostsArgs) -> (FetchPostsResult) query;
-  get_individual_post_details_by_id : (text) -> (Result_1) query;
+  get_draft_posts_of_this_user_profile_with_pagination : (nat64, nat64) -> (
+      Result_1,
+    ) query;
+  get_individual_post_details_by_id : (text) -> (Result_2) query;
   get_individual_post_details_by_id_for_user : (text, principal) -> (
-      Result_2,
+      Result_3,
     ) query;
   get_posts_of_this_user_profile_with_pagination : (
       principal,
       nat64,
       nat64,
-    ) -> (Result_3) query;
+    ) -> (Result_1) query;
   get_posts_of_this_user_profile_with_pagination_cursor : (
       principal,
       nat64,

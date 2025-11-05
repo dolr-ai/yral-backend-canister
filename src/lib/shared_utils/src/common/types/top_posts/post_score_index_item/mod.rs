@@ -12,7 +12,10 @@ pub enum PostStatus {
     ReadyToView,
     BannedDueToUserReporting,
     Deleted,
+    Draft,
 }
+
+// This is what the #[derive(Deserialize)] macro expands to:
 
 #[derive(Clone, CandidType, Deserialize, Debug, Serialize)]
 pub struct PostScoreIndexItem {
@@ -33,41 +36,6 @@ pub struct PostScoreIndexItemV1 {
     #[serde(default)]
     pub status: PostStatus,
 }
-
-// #[derive(Debug, PartialEq, Eq)]
-// struct MyType {
-//     id: u32,
-//     score: u32,
-// }
-
-// impl Ord for MyType {
-//     fn cmp(&self, other: &Self) -> Ordering {
-//         // Compare by the `id` field for equality first
-//         let id_cmp = self.id.cmp(&other.id);
-
-//         if id_cmp != Ordering::Equal {
-//             // If the `id` fields are equal, compare by the `score` field
-//             self.score.cmp(&other.score)
-//         } else {
-//             // If the `id` fields are different, return the `id` comparison result
-//             id_cmp
-//         }
-//     }
-// }
-
-// impl PartialOrd for MyType {
-//     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-//         Some(self.cmp(other))
-//     }
-// }
-
-// impl PartialEq for MyType {
-//     fn eq(&self, other: &Self) -> bool {
-//         self.id == other.id
-//     }
-// }
-
-// impl Eq for MyType {}
 
 impl Ord for PostScoreIndexItem {
     fn cmp(&self, other: &Self) -> Ordering {
@@ -106,7 +74,37 @@ pub(crate) mod test {
     use candid::Principal;
 
     use super::PostScoreIndexItem;
+    use super::PostStatus;
     use std::collections::BTreeSet;
+
+    #[test]
+    fn test_cbor_serialization_roundtrip() {
+        use ciborium::{de::from_reader, ser::into_writer};
+
+        let item = PostStatus::ReadyToView;
+        let expected_decoded = PostStatus::ReadyToView;
+
+        let mut buf = Vec::new();
+        into_writer(&item, &mut buf).expect("Failed to serialize PostScoreIndexItem");
+
+        let decoded: PostStatus =
+            from_reader(buf.as_slice()).expect("Failed to deserialize PostScoreIndexItem");
+
+        assert_eq!(decoded, expected_decoded);
+    }
+
+    #[test]
+    fn add_tests_for_candid_serialization() {
+        use candid::{Decode, Encode};
+
+        let item = PostStatus::Uploaded;
+
+        let encoded = Encode!(&item).expect("Failed to encode PostScoreIndexItem");
+        let decoded: PostStatus =
+            Decode!(&encoded, PostStatus).expect("Failed to decode PostScoreIndexItem");
+
+        assert_eq!(item, decoded);
+    }
 
     #[test]
     fn post_score_index_items_with_different_score_treated_as_the_same_item() {

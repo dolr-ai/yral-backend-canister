@@ -10,6 +10,7 @@ use candid::Principal;
 // Types exposed in public Candid interface
 use shared_utils::canister_specific::individual_user_template::types::error::GetPostsOfUserProfileError;
 use shared_utils::canister_specific::user_post_service::types::args::PostDetailsFromFrontend;
+use shared_utils::canister_specific::user_post_service::types::args::PostDetailsFromFrontendV1;
 use shared_utils::canister_specific::user_post_service::types::args::{
     FetchPostsArgs, FetchPostsResult,
 };

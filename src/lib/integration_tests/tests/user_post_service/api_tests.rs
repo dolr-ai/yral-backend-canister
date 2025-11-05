@@ -71,7 +71,7 @@ fn create_test_post_with_timestamp(
         video_uid: video_uid.to_string(),
         description: description.to_string(),
         hashtags: vec!["test".to_string(), "sorting".to_string()],
-        status: PostStatus::ReadyToView,
+        status: PostStatus::Uploaded,
         created_at,
         likes: HashSet::new(),
         share_count: 0,
