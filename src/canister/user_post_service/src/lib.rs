@@ -11,6 +11,9 @@ use candid::Principal;
 use shared_utils::canister_specific::individual_user_template::types::error::GetPostsOfUserProfileError;
 use shared_utils::canister_specific::user_post_service::types::args::PostDetailsFromFrontend;
 use shared_utils::canister_specific::user_post_service::types::args::PostDetailsFromFrontendV1;
+use shared_utils::canister_specific::user_post_service::types::args::{
+    FetchPostsArgs, FetchPostsResult,
+};
 use shared_utils::canister_specific::user_post_service::types::storage::Post;
 use shared_utils::canister_specific::user_post_service::types::storage::PostViewDetailsFromFrontend;
 use shared_utils::canister_specific::user_post_service::types::{

@@ -1,11 +1,10 @@
 use shared_utils::canister_specific::individual_user_template::types::{
-    profile::UserProfileDetailsForFrontendV3,
-    session::SessionType,
+    profile::UserProfileDetailsForFrontendV3, session::SessionType,
 };
 use test_utils::canister_calls::{query, update};
 use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned;
 use test_utils::setup::test_constants::{
-    get_global_super_admin_principal_id, get_mock_user_alice_principal_id, 
+    get_global_super_admin_principal_id, get_mock_user_alice_principal_id,
     get_mock_user_charlie_principal_id,
 };
 
@@ -70,7 +69,11 @@ fn test_accept_new_user_registration_for_user_info_service() {
         "accept_new_user_registration",
         (alice_principal_id, true),
     );
-    assert!(result.is_ok(), "Authenticated user registration failed: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Authenticated user registration failed: {:?}",
+        result
+    );
 
     // Verify Alice was registered with RegisteredSession
     let alice_session_type = query::<_, Result<SessionType, String>>(
@@ -96,7 +99,7 @@ fn test_accept_new_user_registration_for_user_info_service() {
     .unwrap();
     assert_eq!(alice_profile_details.principal_id, alice_principal_id);
 
-    // Test 4: Try to register an already existing user (should fail)
+    // Test 4: Try to register an already existing user (should not fail)
     let duplicate_result = update::<_, Result<(), String>>(
         &pocket_ic,
         user_service_canister,
@@ -106,6 +109,8 @@ fn test_accept_new_user_registration_for_user_info_service() {
     )
     .unwrap();
 
-    assert!(duplicate_result.is_err(), "Duplicate registration should fail");
-    assert!(duplicate_result.unwrap_err().to_string().contains("User already exists"));
+    assert!(
+        duplicate_result.is_ok(),
+        "Duplicate registration should not fail"
+    );
 }

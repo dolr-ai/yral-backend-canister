@@ -10,7 +10,8 @@ pub mod types;
 pub use data_model::CanisterData;
 pub use shared_utils::canister_specific::rate_limits::{
     GlobalRateLimitConfig, PropertyRateLimitConfig, RateLimitConfig, RateLimitResult,
-    RateLimitStatus, RateLimitsInitArgs,
+    RateLimitStatus, RateLimitsInitArgs, VideoGenRequest, VideoGenRequestKey,
+    VideoGenRequestStatus, types::TokenType,
 };
 
 thread_local! {

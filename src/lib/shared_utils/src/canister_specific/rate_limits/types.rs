@@ -28,12 +28,22 @@ pub struct RateLimitConfig {
     pub window_duration_seconds: u64,
 }
 
+#[derive(Default, CandidType, Debug, Deserialize, Clone, Serialize, Copy, PartialEq)]
+pub enum TokenType {
+    Sats,
+    Dolr,
+    #[default]
+    Free,
+}
+
 #[derive(CandidType, Deserialize, Clone, Debug, Serialize)]
 pub struct PropertyRateLimitConfig {
     pub property: String,
     pub max_requests_per_window_registered: u64,
     pub max_requests_per_window_unregistered: u64,
     pub window_duration_seconds: u64,
+    pub max_requests_per_property_all_users: Option<u64>,
+    pub property_rate_limit_window_duration_seconds: Option<u64>,
 }
 
 impl Storable for PropertyRateLimitConfig {
@@ -103,14 +113,12 @@ impl RateLimitKey {
 impl Storable for RateLimitKey {
     fn to_bytes(&self) -> Cow<[u8]> {
         let mut bytes = Vec::new();
-        ciborium::ser::into_writer(self, &mut bytes)
-            .expect("Failed to serialize RateLimitKey");
+        ciborium::ser::into_writer(self, &mut bytes).expect("Failed to serialize RateLimitKey");
         Cow::Owned(bytes)
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        ciborium::de::from_reader(bytes.as_ref())
-            .expect("Failed to deserialize RateLimitKey")
+        ciborium::de::from_reader(bytes.as_ref()).expect("Failed to deserialize RateLimitKey")
     }
 
     const BOUND: Bound = Bound::Unbounded;
@@ -126,14 +134,73 @@ pub struct RateLimitEntry {
 impl Storable for RateLimitEntry {
     fn to_bytes(&self) -> Cow<[u8]> {
         let mut bytes = Vec::new();
-        ciborium::ser::into_writer(self, &mut bytes)
-            .expect("Failed to serialize RateLimitEntry");
+        ciborium::ser::into_writer(self, &mut bytes).expect("Failed to serialize RateLimitEntry");
         Cow::Owned(bytes)
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        ciborium::de::from_reader(bytes.as_ref())
-            .expect("Failed to deserialize RateLimitEntry")
+        ciborium::de::from_reader(bytes.as_ref()).expect("Failed to deserialize RateLimitEntry")
+    }
+
+    const BOUND: Bound = Bound::Unbounded;
+}
+
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct VideoGenRequestKey {
+    pub principal: Principal,
+    pub counter: u64,
+}
+
+impl VideoGenRequestKey {
+    pub fn new(principal: Principal, counter: u64) -> Self {
+        Self { principal, counter }
+    }
+}
+
+impl Storable for VideoGenRequestKey {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        let mut bytes = Vec::new();
+        ciborium::ser::into_writer(self, &mut bytes)
+            .expect("Failed to serialize VideoGenRequestKey");
+        Cow::Owned(bytes)
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        ciborium::de::from_reader(bytes.as_ref()).expect("Failed to deserialize VideoGenRequestKey")
+    }
+
+    const BOUND: Bound = Bound::Unbounded;
+}
+
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
+pub enum VideoGenRequestStatus {
+    Pending,
+    Processing,
+    Complete(String), // Contains result URL
+    Failed(String),   // Contains error message
+}
+
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
+pub struct VideoGenRequest {
+    pub model_name: String,
+    pub prompt: String,
+    pub status: VideoGenRequestStatus,
+    pub created_at: u64,
+    pub updated_at: u64,
+    pub payment_amount: Option<String>,
+    #[serde(default)]
+    pub token_type: Option<TokenType>,
+}
+
+impl Storable for VideoGenRequest {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        let mut bytes = Vec::new();
+        ciborium::ser::into_writer(self, &mut bytes).expect("Failed to serialize VideoGenRequest");
+        Cow::Owned(bytes)
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        ciborium::de::from_reader(bytes.as_ref()).expect("Failed to deserialize VideoGenRequest")
     }
 
     const BOUND: Bound = Bound::Unbounded;

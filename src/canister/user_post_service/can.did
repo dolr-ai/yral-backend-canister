@@ -1,3 +1,8 @@
+type FetchPostsArgs = record { limit : nat64; last_uuid_processed : opt text };
+type FetchPostsResult = record {
+  last_post_id_fetched : opt text;
+  posts : vec Post;
+};
 type GetPostsOfUserProfileError = variant {
   ReachedEndOfItemsList;
   InvalidBoundsPassed;
@@ -52,7 +57,6 @@ type PostStatus = variant {
   ReadyToView;
   Transcoding;
   Deleted;
-  Published;
 };
 type PostStatusFromFrontend = variant { Draft; Published };
 type PostViewDetailsFromFrontend = variant {
@@ -100,6 +104,7 @@ service : (UserPostServiceInitArgs) -> {
   add_post : (PostDetailsFromFrontend) -> (Result);
   add_post_v1 : (PostDetailsFromFrontendV1) -> (Result);
   delete_post : (text) -> (Result);
+  fetch_posts : (FetchPostsArgs) -> (FetchPostsResult) query;
   get_draft_posts_of_this_user_profile_with_pagination : (nat64, nat64) -> (
       Result_1,
     ) query;

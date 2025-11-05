@@ -1,7 +1,7 @@
 use candid::{CandidType, Deserialize, Principal};
 use pocket_ic::PocketIc;
 use shared_utils::canister_specific::individual_user_template::types::session::SessionType;
-use test_utils::canister_calls::{query, update};
+use test_utils::canister_calls::update;
 use test_utils::setup::env::pocket_ic_env::ServiceCanisters;
 use test_utils::setup::test_constants::get_global_super_admin_principal_id;
 
@@ -52,10 +52,10 @@ pub fn register_user_for_testing(
         pocket_ic,
         service_canisters.user_info_service_canister_id,
         global_admin,
-        "register_new_user",
-        (user_principal,),
+        "accept_new_user_registration",
+        (user_principal, false),
     )
-    .expect("Failed to call register_new_user")
+    .expect("Failed to call accept_new_user_registration")
 }
 
 #[derive(CandidType, Deserialize, Debug)]
