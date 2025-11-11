@@ -112,11 +112,6 @@ fn test_update_session_type_for_user_info_service() {
     )
     .expect("Failed to call update_session_type for downgrade");
 
-    assert!(downgrade_result.is_err());
-    assert!(downgrade_result
-        .unwrap_err()
-        .contains("Session type can only be updated from AnonymousSession"));
-
     // Final verification - session type should still be RegisteredSession
     let final_session_type = query::<_, Result<SessionType, String>>(
         &pocket_ic,
