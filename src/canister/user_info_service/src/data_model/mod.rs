@@ -175,7 +175,12 @@ impl CanisterData {
                     self.user_infos.insert(user_principal, user_info);
                     Ok(())
                 }
-                _ => Err("Session type can only be updated from AnonymousSession".to_string()),
+                _ => {
+                    ic_cdk::println!(
+                        "Session type of user {user_principal} can only be updated from AnonymousSession"
+                    );
+                    Ok(())
+                }
             }
         } else {
             Err("User not found".to_string())
