@@ -233,9 +233,7 @@ pub async fn create_video_generation_request_v2(
     if model_name.is_empty() || model_name.len() > 100 {
         return Err("Invalid model name".to_string());
     }
-    if prompt.is_empty() || prompt.len() > 1000 {
-        return Err("Invalid prompt length".to_string());
-    }
+
     if property.is_empty() || property.len() > 50 {
         return Err("Invalid property".to_string());
     }
