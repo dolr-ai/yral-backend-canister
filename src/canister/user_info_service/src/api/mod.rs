@@ -8,6 +8,7 @@ mod get_profile_details;
 mod get_profile_details_v4;
 mod get_session_type;
 mod register_new_user;
+mod subscription_plan;
 mod unfollow_user;
 mod update_last_access_time;
 mod update_profile_details;
