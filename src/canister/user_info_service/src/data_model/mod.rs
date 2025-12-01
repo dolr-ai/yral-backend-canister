@@ -599,9 +599,17 @@ impl CanisterData {
 
         match &mut user_info.profile.subscription_plan {
             SubscriptionPlan::Pro(pro_subscription) => {
-                pro_subscription.free_video_credits_left += credits_to_add;
-                self.user_infos.insert(user_principal, user_info);
-                Ok(())
+                match pro_subscription
+                    .free_video_credits_left
+                    .checked_add(credits_to_add)
+                {
+                    Some(new_credits) => {
+                        pro_subscription.free_video_credits_left = new_credits;
+                        self.user_infos.insert(user_principal, user_info);
+                        Ok(())
+                    }
+                    None => Err("Overflow when adding free credits".to_string()),
+                }
             }
             SubscriptionPlan::Free => Err("User is on Free plan".to_string()),
         }
