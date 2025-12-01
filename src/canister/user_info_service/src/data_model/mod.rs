@@ -10,10 +10,11 @@ use shared_utils::{
         individual_user_template::types::{
             profile::{
                 UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
+                UserProfileDetailsForFrontendV5,
             },
             session::SessionType,
         },
-        user_info_service::types::ProfileUpdateDetails,
+        user_info_service::types::{ProfileUpdateDetails, SubscriptionPlan},
     },
     common::utils::system_time::get_current_system_time,
 };
@@ -42,6 +43,7 @@ impl UserInfo {
                 referrer_details: None,
                 bio: None,
                 website_url: None,
+                subscription_plan: Default::default(),
             },
             session_type: SessionType::AnonymousSession,
             last_access_time: get_current_system_time(),
@@ -59,6 +61,7 @@ impl UserInfo {
                 referrer_details: None,
                 bio: None,
                 website_url: None,
+                subscription_plan: Default::default(),
             },
             session_type: SessionType::RegisteredSession,
             last_access_time: get_current_system_time(),
@@ -143,6 +146,48 @@ impl CanisterData {
             Ok(UserProfileDetailsForFrontendV3 {
                 principal_id: user_principal,
                 profile_stats: user_info.profile.profile_stats,
+                profile_picture_url: user_info.profile.profile_picture_url.clone(),
+            })
+        } else {
+            Err("User not found".to_string())
+        }
+    }
+
+    pub fn get_profile_details_for_user_v5(
+        &self,
+        user_principal: Principal,
+        caller_principal: Principal,
+    ) -> Result<UserProfileDetailsForFrontendV5, String> {
+        if let Some(user_info) = self.user_infos.get(&user_principal) {
+            Ok(UserProfileDetailsForFrontendV5 {
+                principal_id: user_principal,
+                bio: user_info.profile.bio.clone(),
+                website_url: user_info.profile.website_url.clone(),
+                followers_count: user_info.followers.len() as u64,
+                following_count: user_info.following.len() as u64,
+                caller_follows_user: user_info
+                    .followers
+                    .contains(&caller_principal)
+                    .then_some(true)
+                    .or_else(|| {
+                        if caller_principal == user_principal {
+                            None
+                        } else {
+                            Some(false)
+                        }
+                    }),
+                user_follows_caller: user_info
+                    .following
+                    .contains(&caller_principal)
+                    .then_some(true)
+                    .or_else(|| {
+                        if caller_principal == user_principal {
+                            None
+                        } else {
+                            Some(false)
+                        }
+                    }),
+                subscription_plan: user_info.profile.subscription_plan.clone(),
                 profile_picture_url: user_info.profile.profile_picture_url.clone(),
             })
         } else {
@@ -501,6 +546,73 @@ impl CanisterData {
             .collect();
 
         Ok(items)
+    }
+
+    pub fn change_subscription_plan(
+        &mut self,
+        user_principal: Principal,
+        new_plan: SubscriptionPlan,
+    ) -> Result<(), String> {
+        let mut user_info = self
+            .user_infos
+            .get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        user_info.profile.subscription_plan = new_plan;
+
+        self.user_infos.insert(user_principal, user_info);
+        Ok(())
+    }
+
+    pub fn remove_pro_plan_free_video_credits(
+        &mut self,
+        user_principal: Principal,
+        credits_to_remove: u32,
+    ) -> Result<(), String> {
+        let mut user_info = self
+            .user_infos
+            .get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        match &mut user_info.profile.subscription_plan {
+            SubscriptionPlan::Pro(pro_subscription) => {
+                if pro_subscription.free_video_credits_left < credits_to_remove {
+                    return Err("Not enough free video credits".to_string());
+                }
+                pro_subscription.free_video_credits_left -= credits_to_remove;
+                self.user_infos.insert(user_principal, user_info);
+                Ok(())
+            }
+            SubscriptionPlan::Free => Err("User is on Free plan".to_string()),
+        }
+    }
+
+    pub fn add_pro_plan_free_video_credits(
+        &mut self,
+        user_principal: Principal,
+        credits_to_add: u32,
+    ) -> Result<(), String> {
+        let mut user_info = self
+            .user_infos
+            .get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        match &mut user_info.profile.subscription_plan {
+            SubscriptionPlan::Pro(pro_subscription) => {
+                match pro_subscription
+                    .free_video_credits_left
+                    .checked_add(credits_to_add)
+                {
+                    Some(new_credits) => {
+                        pro_subscription.free_video_credits_left = new_credits;
+                        self.user_infos.insert(user_principal, user_info);
+                        Ok(())
+                    }
+                    None => Err("Overflow when adding free credits".to_string()),
+                }
+            }
+            SubscriptionPlan::Free => Err("User is on Free plan".to_string()),
+        }
     }
 }
 
