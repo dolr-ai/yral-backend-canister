@@ -32,9 +32,19 @@ pub struct VideoUploadPayload {
 }
 
 #[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]
+pub struct VideoApprovalPayload {
+    #[serde(deserialize_with = "string_or_number")]
+    pub video_id: String,
+    #[serde(deserialize_with = "string_or_number")]
+    pub post_id: String,
+}
+
+#[derive(Clone, Serialize, Deserialize, CandidType, PartialEq, Debug)]
 pub enum NotificationType {
     Liked(LikedPayload),
     VideoUpload(VideoUploadPayload),
+    VideoApproved(VideoApprovalPayload),
+    VideoDisapproved(VideoApprovalPayload),
 }
 
 fn string_or_number<'de, D>(deserializer: D) -> Result<String, D::Error>
