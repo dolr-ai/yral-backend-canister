@@ -11,6 +11,8 @@ type NotificationStoreError = variant {
 type NotificationStoreInitArgs = record { version : text };
 type NotificationType = variant {
   Liked : LikedPayload;
+  VideoApproved : VideoApprovalPayload;
+  VideoDisapproved : VideoApprovalPayload;
   VideoUpload : VideoUploadPayload;
 };
 type RejectionCode = variant {
@@ -27,6 +29,7 @@ type SystemTime = record {
   nanos_since_epoch : nat32;
   secs_since_epoch : nat64;
 };
+type VideoApprovalPayload = record { post_id : text; video_id : text };
 type VideoUploadPayload = record { video_uid : text };
 service : (NotificationStoreInitArgs) -> {
   add_notification : (principal, NotificationType) -> (Result);
