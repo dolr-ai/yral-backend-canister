@@ -15,8 +15,14 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
+      - name: Cleanup stale GitHub runner temp dirs
+        run: |
+          rm -rf "$RUNNER_TEMP/_runner_file_commands" || true
+          mkdir -p "$RUNNER_TEMP/_runner_file_commands"
+
       - name: Use prebuilt devcontainer image and run canister test suite
-        uses: devcontainers/ci@v0.3.1900000417
+        uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
           push: never
