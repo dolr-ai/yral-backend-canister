@@ -9,20 +9,23 @@ mod test {
     use candid::{Nat, Principal};
     use ic_cdk::api::management_canister::main::CanisterId;
     use shared_utils::{
-        canister_specific::individual_user_template::types::{
-            cdao::{AirdropInfo, ClaimStatus, DeployedCdaoCanisters},
-            cents::CentsToken,
-            follow::FollowEntryDetail,
-            hot_or_not::{
-                BetDetails, BetDirection, BetOutcomeForBetMaker, BetPayout, GlobalBetId,
-                GlobalRoomId, PlacedBetDetail, RoomBetPossibleOutcomes, RoomDetailsV1,
-                SlotDetailsV1, SlotId, StablePrincipal,
+        canister_specific::{
+            individual_user_template::types::{
+                cdao::{AirdropInfo, ClaimStatus, DeployedCdaoCanisters},
+                cents::CentsToken,
+                follow::FollowEntryDetail,
+                hot_or_not::{
+                    BetDetails, BetDirection, BetOutcomeForBetMaker, BetPayout, GlobalBetId,
+                    GlobalRoomId, PlacedBetDetail, RoomBetPossibleOutcomes, RoomDetailsV1,
+                    SlotDetailsV1, SlotId, StablePrincipal,
+                },
+                migration::MigrationInfo,
+                post::PostViewStatistics,
+                profile::{UserProfile, UserProfileGlobalStats},
+                pump_n_dump::{GameDirection, ParticipatedGameInfo},
+                session::SessionType,
             },
-            migration::MigrationInfo,
-            post::PostViewStatistics,
-            profile::{UserProfile, UserProfileGlobalStats},
-            pump_n_dump::{GameDirection, ParticipatedGameInfo},
-            session::SessionType,
+            user_info_service::types::SubscriptionPlan,
         },
         common::types::{
             app_primitive_type::PostId,
@@ -190,6 +193,7 @@ mod test {
                 referrer_details: None,
                 bio: None,
                 website_url: None,
+                subscription_plan: SubscriptionPlan::Free,
             },
             version_details: VersionDetails {
                 version_number: 1,
