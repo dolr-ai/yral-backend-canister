@@ -16,7 +16,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
       - name: Use prebuilt devcontainer image and run canister test suite
-        uses: devcontainers/ci@latest
+        uses: devcontainers/ci@v0.3.1900000417
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
           push: never
