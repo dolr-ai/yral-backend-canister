@@ -29,7 +29,5 @@
     },
     "features": {
         "ghcr.io/devcontainers/features/rust:1": {}
-    },
-    "onCreateCommand": "rustup install;",
-    "postCreateCommand": "bash .devcontainer/setup.sh"
+    }
 }
