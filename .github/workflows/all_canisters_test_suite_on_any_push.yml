@@ -21,7 +21,15 @@ jobs:
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
           push: never
+          cacheFrom: never
           env: |
             POCKET_IC_BIN=/workspaces/hot-or-not-backend-canister/pocket-ic
           runCmd: |
+            echo "=== Environment Check ==="
+            echo "Working directory: $(pwd)"
+            echo "Rust version: $(rustc --version 2>&1 || echo 'Rust not found')"
+            echo "Cargo version: $(cargo --version 2>&1 || echo 'Cargo not found')"
+            echo "POCKET_IC_BIN: $POCKET_IC_BIN"
+            ls -la pocket-ic 2>&1 || echo "pocket-ic not found"
+            echo "=== Running Tests ==="
             cargo test;
