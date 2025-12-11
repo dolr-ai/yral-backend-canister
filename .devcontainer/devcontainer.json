@@ -31,5 +31,5 @@
         "ghcr.io/devcontainers/features/rust:1": {}
     },
     "onCreateCommand": "rustup install;",
-    "postCreateCommand": "bash -i .devcontainer/setup.sh  && echo \"Container Ready\""
+    "postCreateCommand": "bash -i .devcontainer/setup.sh"
 }
