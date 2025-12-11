@@ -3,7 +3,8 @@
         "dockerfile": "Dockerfile"
     },
     "containerEnv": {
-        "POCKET_IC_BIN": "/workspaces/hot-or-not-backend-canister/pocket-ic"
+        "POCKET_IC_BIN": "/workspaces/hot-or-not-backend-canister/pocket-ic",
+        "RUSTUP_TMPDIR": "/tmp/rustup-tmp"
     },
     "customizations": {
         "vscode": {
