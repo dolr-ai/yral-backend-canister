@@ -15,16 +15,13 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
       - name: Use prebuilt devcontainer image and run canister test suite
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
           push: never
-          noCache: true
           env: |
             POCKET_IC_BIN=/workspaces/hot-or-not-backend-canister/pocket-ic
-            RUSTUP_TOOLCHAIN=stable-x86_64-unknown-linux-gnu
           runCmd: |
             dfx identity list;
             dfx start --background;
@@ -53,4 +50,4 @@ jobs:
             gzip -f -1 ./target/wasm32-unknown-unknown/release/user_info_service.wasm;
             dfx build rate_limits;
             gzip -f -1 ./target/wasm32-unknown-unknown/release/rate_limits.wasm;
-            cargo test
+            cargo test;

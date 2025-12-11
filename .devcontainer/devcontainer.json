@@ -30,6 +30,6 @@
     "features": {
         "ghcr.io/devcontainers/features/rust:1": {}
     },
-    "onCreateCommand": "rustup install",
+    "onCreateCommand": "rustup install;",
     "postCreateCommand": "bash -i .devcontainer/setup.sh"
 }
