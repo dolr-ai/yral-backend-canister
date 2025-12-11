@@ -3,8 +3,7 @@
         "dockerfile": "Dockerfile"
     },
     "containerEnv": {
-        "POCKET_IC_BIN": "/workspaces/hot-or-not-backend-canister/pocket-ic",
-        "RUSTUP_TMPDIR": "/tmp/rustup-tmp"
+        "POCKET_IC_BIN": "/workspaces/hot-or-not-backend-canister/pocket-ic"
     },
     "customizations": {
         "vscode": {
@@ -30,5 +29,7 @@
     },
     "features": {
         "ghcr.io/devcontainers/features/rust:1": {}
-    }
+    },
+    "onCreateCommand": "rustup install;",
+    "postCreateCommand": "bash -i .devcontainer/setup.sh"
 }
