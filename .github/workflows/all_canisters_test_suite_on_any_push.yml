@@ -25,20 +25,4 @@ jobs:
           env: |
             POCKET_IC_BIN=/workspaces/hot-or-not-backend-canister/pocket-ic
           runCmd: |
-            echo "=== Filesystem Analysis ==="
-            df -h | head -20
-            echo ""
-            echo "=== Mount points ==="
-            mount | grep -E '(rustup|tmp|local)' || echo "No rustup/tmp/local mounts found"
-            echo ""
-            echo "=== /usr/local/rustup ==="
-            df -h /usr/local/rustup 2>&1 || echo "Directory doesn't exist"
-            echo ""
-            echo "=== /usr/local/rustup/tmp ==="
-            df -h /usr/local/rustup/tmp 2>&1 || echo "Directory doesn't exist"
-            echo ""
-            echo "=== /tmp ==="
-            df -h /tmp
-            echo ""
-            echo "=== Attempting rustup update ==="
-            rustup update 2>&1 || echo "Update failed"
+            cargo test
