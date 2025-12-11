@@ -24,15 +24,21 @@ jobs:
           noCache: true
           env: |
             POCKET_IC_BIN=/workspaces/hot-or-not-backend-canister/pocket-ic
-            RUSTUP_TMPDIR=/usr/local/rustup/tmp
           runCmd: |
-            mkdir -p /usr/local/rustup/tmp
-            export RUSTUP_TMPDIR=/usr/local/rustup/tmp
-            echo "=== Environment Check ==="
-            echo "Working directory: $(pwd)"
-            echo "Rust version: $(rustc --version 2>&1 || echo 'Rust not found')"
-            echo "Cargo version: $(cargo --version 2>&1 || echo 'Cargo not found')"
-            echo "POCKET_IC_BIN: $POCKET_IC_BIN"
-            ls -la pocket-ic 2>&1 || echo "pocket-ic not found"
-            echo "=== Running Tests ==="
-            cargo test;
+            echo "=== Filesystem Analysis ==="
+            df -h | head -20
+            echo ""
+            echo "=== Mount points ==="
+            mount | grep -E '(rustup|tmp|local)' || echo "No rustup/tmp/local mounts found"
+            echo ""
+            echo "=== /usr/local/rustup ==="
+            df -h /usr/local/rustup 2>&1 || echo "Directory doesn't exist"
+            echo ""
+            echo "=== /usr/local/rustup/tmp ==="
+            df -h /usr/local/rustup/tmp 2>&1 || echo "Directory doesn't exist"
+            echo ""
+            echo "=== /tmp ==="
+            df -h /tmp
+            echo ""
+            echo "=== Attempting rustup update ==="
+            rustup update 2>&1 || echo "Update failed"
