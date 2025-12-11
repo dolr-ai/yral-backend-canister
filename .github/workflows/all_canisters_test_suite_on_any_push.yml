@@ -21,7 +21,7 @@ jobs:
         with:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
           push: never
-          cacheFrom: never
+          noCache: true
           env: |
             POCKET_IC_BIN=/workspaces/hot-or-not-backend-canister/pocket-ic
           runCmd: |
