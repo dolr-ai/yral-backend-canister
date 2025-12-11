@@ -24,7 +24,10 @@ jobs:
           noCache: true
           env: |
             POCKET_IC_BIN=/workspaces/hot-or-not-backend-canister/pocket-ic
+            RUSTUP_TMPDIR=/usr/local/rustup/tmp
           runCmd: |
+            mkdir -p /usr/local/rustup/tmp
+            export RUSTUP_TMPDIR=/usr/local/rustup/tmp
             echo "=== Environment Check ==="
             echo "Working directory: $(pwd)"
             echo "Rust version: $(rustc --version 2>&1 || echo 'Rust not found')"
