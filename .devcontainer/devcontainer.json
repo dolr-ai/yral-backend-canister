@@ -29,5 +29,6 @@
     },
     "features": {
         "ghcr.io/devcontainers/features/rust:1": {}
-    }
+    },
+    "postCreateCommand": "bash .devcontainer/setup.sh"
 }
