@@ -10,11 +10,34 @@ pub struct FollowerItem {
     pub profile_picture_url: Option<String>,
 }
 
+/// NSFW information for content moderation
+#[derive(CandidType, Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Default)]
+pub struct NSFWInfo {
+    pub is_nsfw: bool,
+    pub nsfw_ec: String,
+    pub nsfw_gore: String,
+    pub csam_detected: bool,
+}
+
+/// Profile picture data with NSFW info
+#[derive(CandidType, Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Default)]
+pub struct PfpData {
+    pub url: String,
+    pub nsfw_info: NSFWInfo,
+}
+
 #[derive(CandidType, Deserialize)]
 pub struct ProfileUpdateDetails {
     pub bio: Option<String>,
     pub website_url: Option<String>,
     pub profile_picture_url: Option<String>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct ProfileUpdateDetailsV2 {
+    pub bio: Option<String>,
+    pub website_url: Option<String>,
+    pub pfp: Option<PfpData>,
 }
 
 #[derive(candid::CandidType, candid::Deserialize)]

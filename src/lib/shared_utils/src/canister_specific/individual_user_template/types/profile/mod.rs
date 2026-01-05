@@ -1,11 +1,16 @@
 use candid::{CandidType, Deserialize, Principal};
-use serde::Serialize;
+use core::fmt;
+use serde::{
+    de::{self, MapAccess, Visitor},
+    Serialize,
+};
+use std::marker::PhantomData;
 
-use crate::canister_specific::user_info_service::types::SubscriptionPlan;
+use crate::canister_specific::user_info_service::types::{NSFWInfo, PfpData, SubscriptionPlan};
 
 use super::migration::MigrationInfo;
 
-#[derive(Default, Clone, CandidType, Deserialize, Debug, Serialize)]
+#[derive(Default, Clone, CandidType, Debug, Serialize)]
 pub struct UserProfile {
     pub principal_id: Option<Principal>,
     pub profile_picture_url: Option<String>,
@@ -18,6 +23,218 @@ pub struct UserProfile {
     pub website_url: Option<String>,
     #[serde(default)]
     pub subscription_plan: SubscriptionPlan,
+    #[serde(default)]
+    pub pfp: Option<PfpData>,
+}
+
+// Custom deserializer for UserProfile to handle backwards compatibility
+// When deserializing old data that has profile_picture_url but no pfp field,
+// we migrate by creating a PfpData from the profile_picture_url with is_nsfw defaulting to false
+impl<'de> Deserialize<'de> for UserProfile {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        // Define the field names we expect
+        const FIELDS: &[&str] = &[
+            "principal_id",
+            "profile_picture_url",
+            "profile_stats",
+            "referrer_details",
+            "bio",
+            "website_url",
+            "subscription_plan",
+            "pfp",
+        ];
+
+        // Field enum for identifying which field we're deserializing
+        enum Field {
+            PrincipalId,
+            ProfilePictureUrl,
+            ProfileStats,
+            ReferrerDetails,
+            Bio,
+            WebsiteUrl,
+            SubscriptionPlan,
+            Pfp,
+            Unknown,
+        }
+
+        struct FieldVisitor;
+
+        impl<'de> Visitor<'de> for FieldVisitor {
+            type Value = Field;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("field identifier")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                match value {
+                    "principal_id" => Ok(Field::PrincipalId),
+                    "profile_picture_url" => Ok(Field::ProfilePictureUrl),
+                    "profile_stats" => Ok(Field::ProfileStats),
+                    "referrer_details" => Ok(Field::ReferrerDetails),
+                    "bio" => Ok(Field::Bio),
+                    "website_url" => Ok(Field::WebsiteUrl),
+                    "subscription_plan" => Ok(Field::SubscriptionPlan),
+                    "pfp" => Ok(Field::Pfp),
+                    _ => Ok(Field::Unknown),
+                }
+            }
+
+            fn visit_bytes<E>(self, value: &[u8]) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                match value {
+                    b"principal_id" => Ok(Field::PrincipalId),
+                    b"profile_picture_url" => Ok(Field::ProfilePictureUrl),
+                    b"profile_stats" => Ok(Field::ProfileStats),
+                    b"referrer_details" => Ok(Field::ReferrerDetails),
+                    b"bio" => Ok(Field::Bio),
+                    b"website_url" => Ok(Field::WebsiteUrl),
+                    b"subscription_plan" => Ok(Field::SubscriptionPlan),
+                    b"pfp" => Ok(Field::Pfp),
+                    _ => Ok(Field::Unknown),
+                }
+            }
+        }
+
+        impl<'de> Deserialize<'de> for Field {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: de::Deserializer<'de>,
+            {
+                deserializer.deserialize_identifier(FieldVisitor)
+            }
+        }
+
+        struct UserProfileVisitor<'de> {
+            marker: PhantomData<UserProfile>,
+            lifetime: PhantomData<&'de ()>,
+        }
+
+        impl<'de> Visitor<'de> for UserProfileVisitor<'de> {
+            type Value = UserProfile;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct UserProfile")
+            }
+
+            fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
+            where
+                M: MapAccess<'de>,
+            {
+                let mut principal_id: Option<Option<Principal>> = None;
+                let mut profile_picture_url: Option<Option<String>> = None;
+                let mut profile_stats: Option<UserProfileGlobalStats> = None;
+                let mut referrer_details: Option<Option<UserCanisterDetails>> = None;
+                let mut bio: Option<Option<String>> = None;
+                let mut website_url: Option<Option<String>> = None;
+                let mut subscription_plan: Option<SubscriptionPlan> = None;
+                let mut pfp: Option<Option<PfpData>> = None;
+
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::PrincipalId => {
+                            if principal_id.is_some() {
+                                return Err(de::Error::duplicate_field("principal_id"));
+                            }
+                            principal_id = Some(map.next_value()?);
+                        }
+                        Field::ProfilePictureUrl => {
+                            if profile_picture_url.is_some() {
+                                return Err(de::Error::duplicate_field("profile_picture_url"));
+                            }
+                            profile_picture_url = Some(map.next_value()?);
+                        }
+                        Field::ProfileStats => {
+                            if profile_stats.is_some() {
+                                return Err(de::Error::duplicate_field("profile_stats"));
+                            }
+                            profile_stats = Some(map.next_value()?);
+                        }
+                        Field::ReferrerDetails => {
+                            if referrer_details.is_some() {
+                                return Err(de::Error::duplicate_field("referrer_details"));
+                            }
+                            referrer_details = Some(map.next_value()?);
+                        }
+                        Field::Bio => {
+                            if bio.is_some() {
+                                return Err(de::Error::duplicate_field("bio"));
+                            }
+                            bio = Some(map.next_value()?);
+                        }
+                        Field::WebsiteUrl => {
+                            if website_url.is_some() {
+                                return Err(de::Error::duplicate_field("website_url"));
+                            }
+                            website_url = Some(map.next_value()?);
+                        }
+                        Field::SubscriptionPlan => {
+                            if subscription_plan.is_some() {
+                                return Err(de::Error::duplicate_field("subscription_plan"));
+                            }
+                            subscription_plan = Some(map.next_value()?);
+                        }
+                        Field::Pfp => {
+                            if pfp.is_some() {
+                                return Err(de::Error::duplicate_field("pfp"));
+                            }
+                            pfp = Some(map.next_value()?);
+                        }
+                        Field::Unknown => {
+                            // Skip unknown fields for forward compatibility
+                            let _ = map.next_value::<de::IgnoredAny>()?;
+                        }
+                    }
+                }
+
+                let principal_id = principal_id.unwrap_or_default();
+                let profile_picture_url = profile_picture_url.unwrap_or_default();
+                let profile_stats = profile_stats.unwrap_or_default();
+                let referrer_details = referrer_details.unwrap_or_default();
+                let bio = bio.unwrap_or_default();
+                let website_url = website_url.unwrap_or_default();
+                let subscription_plan = subscription_plan.unwrap_or_default();
+                let pfp_value = pfp.unwrap_or_default();
+
+                // Migration logic: if pfp is None but profile_picture_url exists,
+                // create a PfpData from the URL with nsfw_info defaulting to safe values
+                let pfp = pfp_value.or_else(|| {
+                    profile_picture_url.as_ref().map(|url| PfpData {
+                        url: url.clone(),
+                        nsfw_info: NSFWInfo::default(),
+                    })
+                });
+
+                Ok(UserProfile {
+                    principal_id,
+                    profile_picture_url,
+                    profile_stats,
+                    referrer_details,
+                    bio,
+                    website_url,
+                    subscription_plan,
+                    pfp,
+                })
+            }
+        }
+
+        deserializer.deserialize_struct(
+            "UserProfile",
+            FIELDS,
+            UserProfileVisitor {
+                marker: PhantomData::<UserProfile>,
+                lifetime: PhantomData,
+            },
+        )
+    }
 }
 
 #[derive(Clone, CandidType, Deserialize, Debug, Serialize, PartialEq, Eq)]
@@ -92,8 +309,140 @@ pub struct UserProfileDetailsForFrontendV5 {
     pub subscription_plan: SubscriptionPlan,
 }
 
+#[derive(CandidType, Deserialize, Debug, PartialEq, Eq)]
+pub struct UserProfileDetailsForFrontendV6 {
+    pub principal_id: Principal,
+    pub pfp: Option<PfpData>,
+    pub bio: Option<String>,
+    pub website_url: Option<String>,
+    pub followers_count: u64,
+    pub following_count: u64,
+    pub caller_follows_user: Option<bool>,
+    pub user_follows_caller: Option<bool>,
+    pub subscription_plan: SubscriptionPlan,
+}
+
 #[derive(Deserialize, CandidType)]
 pub struct UserProfileUpdateDetailsFromFrontend {
     pub display_name: Option<String>,
     pub profile_picture_url: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ciborium::{de::from_reader, ser::into_writer};
+
+    /// Old version of UserProfile without pfp field (for testing migration)
+    #[derive(Serialize)]
+    struct UserProfileV1 {
+        pub principal_id: Option<Principal>,
+        pub profile_picture_url: Option<String>,
+        pub profile_stats: UserProfileGlobalStats,
+        pub referrer_details: Option<UserCanisterDetails>,
+        pub bio: Option<String>,
+        pub website_url: Option<String>,
+        pub subscription_plan: SubscriptionPlan,
+    }
+
+    #[test]
+    fn test_userprofile_deserialize_migrates_old_format_without_pfp() {
+        // Create old format UserProfile (without pfp field)
+        let old_profile = UserProfileV1 {
+            principal_id: Some(Principal::anonymous()),
+            profile_picture_url: Some("https://example.com/pic.jpg".to_string()),
+            profile_stats: UserProfileGlobalStats::default(),
+            referrer_details: None,
+            bio: Some("Test bio".to_string()),
+            website_url: None,
+            subscription_plan: SubscriptionPlan::Free,
+        };
+
+        // Serialize old format
+        let mut bytes = Vec::new();
+        into_writer(&old_profile, &mut bytes).expect("Failed to serialize old profile");
+
+        // Deserialize as new format
+        let new_profile: UserProfile =
+            from_reader(bytes.as_slice()).expect("Failed to deserialize profile");
+
+        // Verify migration: pfp should be created from profile_picture_url
+        assert!(new_profile.pfp.is_some(), "pfp should be migrated from profile_picture_url");
+        let pfp = new_profile.pfp.unwrap();
+        assert_eq!(pfp.url, "https://example.com/pic.jpg");
+        assert!(!pfp.nsfw_info.is_nsfw, "is_nsfw should default to false");
+        assert_eq!(pfp.nsfw_info.nsfw_ec, "");
+        assert_eq!(pfp.nsfw_info.nsfw_gore, "");
+        assert!(!pfp.nsfw_info.csam_detected, "csam_detected should default to false");
+
+        // Verify other fields are preserved
+        assert_eq!(new_profile.profile_picture_url, Some("https://example.com/pic.jpg".to_string()));
+        assert_eq!(new_profile.bio, Some("Test bio".to_string()));
+    }
+
+    #[test]
+    fn test_userprofile_deserialize_preserves_new_format_with_pfp() {
+        // Create new format UserProfile (with pfp field)
+        let new_profile = UserProfile {
+            principal_id: Some(Principal::anonymous()),
+            profile_picture_url: Some("https://example.com/pic.jpg".to_string()),
+            profile_stats: UserProfileGlobalStats::default(),
+            referrer_details: None,
+            bio: Some("Test bio".to_string()),
+            website_url: Some("https://example.com".to_string()),
+            subscription_plan: SubscriptionPlan::Free,
+            pfp: Some(PfpData {
+                url: "https://example.com/pic.jpg".to_string(),
+                nsfw_info: NSFWInfo {
+                    is_nsfw: true,
+                    nsfw_ec: "explicit".to_string(),
+                    nsfw_gore: "none".to_string(),
+                    csam_detected: false,
+                },
+            }),
+        };
+
+        // Serialize new format
+        let mut bytes = Vec::new();
+        into_writer(&new_profile, &mut bytes).expect("Failed to serialize new profile");
+
+        // Deserialize
+        let deserialized: UserProfile =
+            from_reader(bytes.as_slice()).expect("Failed to deserialize profile");
+
+        // Verify pfp is preserved (not overwritten by migration logic)
+        assert!(deserialized.pfp.is_some());
+        let pfp = deserialized.pfp.unwrap();
+        assert_eq!(pfp.url, "https://example.com/pic.jpg");
+        assert!(pfp.nsfw_info.is_nsfw, "is_nsfw should be preserved as true");
+        assert_eq!(pfp.nsfw_info.nsfw_ec, "explicit");
+        assert_eq!(pfp.nsfw_info.nsfw_gore, "none");
+        assert!(!pfp.nsfw_info.csam_detected);
+    }
+
+    #[test]
+    fn test_userprofile_deserialize_old_format_without_profile_picture() {
+        // Create old format UserProfile without profile_picture_url
+        let old_profile = UserProfileV1 {
+            principal_id: Some(Principal::anonymous()),
+            profile_picture_url: None,
+            profile_stats: UserProfileGlobalStats::default(),
+            referrer_details: None,
+            bio: None,
+            website_url: None,
+            subscription_plan: SubscriptionPlan::Free,
+        };
+
+        // Serialize old format
+        let mut bytes = Vec::new();
+        into_writer(&old_profile, &mut bytes).expect("Failed to serialize old profile");
+
+        // Deserialize as new format
+        let new_profile: UserProfile =
+            from_reader(bytes.as_slice()).expect("Failed to deserialize profile");
+
+        // Verify: pfp should be None since profile_picture_url was None
+        assert!(new_profile.pfp.is_none(), "pfp should be None when profile_picture_url is None");
+        assert!(new_profile.profile_picture_url.is_none());
+    }
 }

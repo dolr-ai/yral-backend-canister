@@ -13,10 +13,25 @@ type FollowingResponse = record {
   following : vec FollowerItem;
   total_count : nat64;
 };
+type NSFWInfo = record {
+  is_nsfw : bool;
+  nsfw_ec : text;
+  nsfw_gore : text;
+  csam_detected : bool;
+};
+type PfpData = record {
+  url : text;
+  nsfw_info : NSFWInfo;
+};
 type ProfileUpdateDetails = record {
   bio : opt text;
   website_url : opt text;
   profile_picture_url : opt text;
+};
+type ProfileUpdateDetailsV2 = record {
+  bio : opt text;
+  website_url : opt text;
+  pfp : opt PfpData;
 };
 type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : FollowersResponse; Err : text };
@@ -25,6 +40,7 @@ type Result_3 = variant { Ok : UserProfileDetailsForFrontendV4; Err : text };
 type Result_4 = variant { Ok : UserProfileDetailsForFrontendV3; Err : text };
 type Result_5 = variant { Ok : UserProfileDetailsForFrontendV5; Err : text };
 type Result_6 = variant { Ok : SessionType; Err : text };
+type Result_7 = variant { Ok : UserProfileDetailsForFrontendV6; Err : text };
 type SessionType = variant { AnonymousSession; RegisteredSession };
 type SubscriptionPlan = variant { Pro : YralProSubscription; Free };
 type UserInfoServiceInitArgs = record { version : text };
@@ -55,6 +71,17 @@ type UserProfileDetailsForFrontendV5 = record {
   followers_count : nat64;
   caller_follows_user : opt bool;
 };
+type UserProfileDetailsForFrontendV6 = record {
+  bio : opt text;
+  website_url : opt text;
+  following_count : nat64;
+  user_follows_caller : opt bool;
+  pfp : opt PfpData;
+  subscription_plan : SubscriptionPlan;
+  principal_id : principal;
+  followers_count : nat64;
+  caller_follows_user : opt bool;
+};
 type UserProfileGlobalStats = record {
   hot_bets_received : nat64;
   not_bets_received : nat64;
@@ -75,12 +102,15 @@ service : (UserInfoServiceInitArgs) -> {
   get_profile_details_v4 : (principal) -> (Result_3) query;
   get_user_profile_details : (principal) -> (Result_4) query;
   get_user_profile_details_v5 : (principal) -> (Result_5) query;
+  get_user_profile_details_v6 : (principal) -> (Result_7) query;
   get_user_session_type : (principal) -> (Result_6) query;
   get_version : () -> (text) query;
   register_new_user : () -> (Result);
   remove_pro_plan_free_video_credits : (principal, nat32) -> (Result);
   unfollow_user : (principal) -> (Result);
   update_profile_details : (ProfileUpdateDetails) -> (Result);
+  update_profile_details_v2 : (ProfileUpdateDetailsV2) -> (Result);
+  update_profile_nsfw_info : (principal, NSFWInfo) -> (Result);
   update_session_type : (principal, SessionType) -> (Result);
   update_user_last_access_time : (principal) -> (Result);
 }

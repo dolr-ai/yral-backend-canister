@@ -10,11 +10,13 @@ use shared_utils::{
         individual_user_template::types::{
             profile::{
                 UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
-                UserProfileDetailsForFrontendV5,
+                UserProfileDetailsForFrontendV5, UserProfileDetailsForFrontendV6,
             },
             session::SessionType,
         },
-        user_info_service::types::{ProfileUpdateDetails, SubscriptionPlan},
+        user_info_service::types::{
+            NSFWInfo, PfpData, ProfileUpdateDetails, ProfileUpdateDetailsV2, SubscriptionPlan,
+        },
     },
     common::utils::system_time::get_current_system_time,
 };
@@ -44,6 +46,7 @@ impl UserInfo {
                 bio: None,
                 website_url: None,
                 subscription_plan: Default::default(),
+                pfp: None,
             },
             session_type: SessionType::AnonymousSession,
             last_access_time: get_current_system_time(),
@@ -62,6 +65,7 @@ impl UserInfo {
                 bio: None,
                 website_url: None,
                 subscription_plan: Default::default(),
+                pfp: None,
             },
             session_type: SessionType::RegisteredSession,
             last_access_time: get_current_system_time(),
@@ -189,6 +193,48 @@ impl CanisterData {
                     }),
                 subscription_plan: user_info.profile.subscription_plan.clone(),
                 profile_picture_url: user_info.profile.profile_picture_url.clone(),
+            })
+        } else {
+            Err("User not found".to_string())
+        }
+    }
+
+    pub fn get_profile_details_for_user_v6(
+        &self,
+        user_principal: Principal,
+        caller_principal: Principal,
+    ) -> Result<UserProfileDetailsForFrontendV6, String> {
+        if let Some(user_info) = self.user_infos.get(&user_principal) {
+            Ok(UserProfileDetailsForFrontendV6 {
+                principal_id: user_principal,
+                pfp: user_info.profile.pfp.clone(),
+                bio: user_info.profile.bio.clone(),
+                website_url: user_info.profile.website_url.clone(),
+                followers_count: user_info.followers.len() as u64,
+                following_count: user_info.following.len() as u64,
+                caller_follows_user: user_info
+                    .followers
+                    .contains(&caller_principal)
+                    .then_some(true)
+                    .or_else(|| {
+                        if caller_principal == user_principal {
+                            None
+                        } else {
+                            Some(false)
+                        }
+                    }),
+                user_follows_caller: user_info
+                    .following
+                    .contains(&caller_principal)
+                    .then_some(true)
+                    .or_else(|| {
+                        if caller_principal == user_principal {
+                            None
+                        } else {
+                            Some(false)
+                        }
+                    }),
+                subscription_plan: user_info.profile.subscription_plan.clone(),
             })
         } else {
             Err("User not found".to_string())
@@ -427,7 +473,68 @@ impl CanisterData {
         }
 
         if let Some(profile_picture_url) = details.profile_picture_url {
-            user_info.profile.profile_picture_url = Some(profile_picture_url);
+            user_info.profile.profile_picture_url = Some(profile_picture_url.clone());
+            // Also update pfp with the new URL, keeping existing nsfw_info or defaulting to safe values
+            let nsfw_info = user_info
+                .profile
+                .pfp
+                .as_ref()
+                .map(|p| p.nsfw_info.clone())
+                .unwrap_or_default();
+            user_info.profile.pfp = Some(PfpData {
+                url: profile_picture_url,
+                nsfw_info,
+            });
+        }
+
+        self.user_infos.insert(user_principal, user_info);
+        Ok(())
+    }
+
+    pub fn update_profile_details_v2(
+        &mut self,
+        user_principal: Principal,
+        details: ProfileUpdateDetailsV2,
+    ) -> Result<(), String> {
+        let mut user_info = self
+            .user_infos
+            .get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        // Only update fields that have Some value
+        if let Some(bio) = details.bio {
+            user_info.profile.bio = Some(bio);
+        }
+
+        if let Some(website_url) = details.website_url {
+            user_info.profile.website_url = Some(website_url);
+        }
+
+        if let Some(pfp) = details.pfp {
+            // Update both pfp and profile_picture_url for backwards compatibility
+            user_info.profile.profile_picture_url = Some(pfp.url.clone());
+            user_info.profile.pfp = Some(pfp);
+        }
+
+        self.user_infos.insert(user_principal, user_info);
+        Ok(())
+    }
+
+    /// Admin-only method to update NSFW info for a user's profile picture
+    pub fn update_profile_nsfw_info(
+        &mut self,
+        user_principal: Principal,
+        nsfw_info: NSFWInfo,
+    ) -> Result<(), String> {
+        let mut user_info = self
+            .user_infos
+            .get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        if let Some(ref mut pfp) = user_info.profile.pfp {
+            pfp.nsfw_info = nsfw_info;
+        } else {
+            return Err("User has no profile picture set".to_string());
         }
 
         self.user_infos.insert(user_principal, user_info);
