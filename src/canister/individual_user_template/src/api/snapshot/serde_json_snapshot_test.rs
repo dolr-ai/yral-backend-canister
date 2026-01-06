@@ -20,7 +20,7 @@ mod test {
             },
             migration::MigrationInfo,
             post::PostViewStatistics,
-            profile::{UserProfile, UserProfileGlobalStats},
+            profile::{NSFWInfo, PfpData, SubscriptionPlan, UserProfile, UserProfileGlobalStats},
             pump_n_dump::{GameDirection, ParticipatedGameInfo},
             session::SessionType,
         },
@@ -190,6 +190,9 @@ mod test {
                 referrer_details: None,
                 bio: None,
                 website_url: None,
+                subscription_plan: SubscriptionPlan::Free,
+                pfp: None,
+                is_ai_influencer: false,
             },
             version_details: VersionDetails {
                 version_number: 1,
