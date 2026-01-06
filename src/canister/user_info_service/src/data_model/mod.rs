@@ -15,7 +15,7 @@ use shared_utils::{
             session::SessionType,
         },
         user_info_service::types::{
-            NSFWInfo, PfpData, ProfileUpdateDetails, ProfileUpdateDetailsV2, SubscriptionPlan,
+            NSFWInfo, ProfilePictureData, ProfileUpdateDetails, ProfileUpdateDetailsV2, SubscriptionPlan,
         },
     },
     common::utils::system_time::get_current_system_time,
@@ -40,13 +40,12 @@ impl UserInfo {
         Self {
             profile: UserProfile {
                 principal_id: Some(user_principal),
-                profile_picture_url: None,
                 profile_stats: Default::default(),
                 referrer_details: None,
                 bio: None,
                 website_url: None,
                 subscription_plan: Default::default(),
-                pfp: None,
+                profile_picture: None,
                 is_ai_influencer: false,
             },
             session_type: SessionType::AnonymousSession,
@@ -60,13 +59,12 @@ impl UserInfo {
         Self {
             profile: UserProfile {
                 principal_id: Some(user_principal),
-                profile_picture_url: None,
                 profile_stats: Default::default(),
                 referrer_details: None,
                 bio: None,
                 website_url: None,
                 subscription_plan: Default::default(),
-                pfp: None,
+                profile_picture: None,
                 is_ai_influencer: false,
             },
             session_type: SessionType::RegisteredSession,
@@ -152,7 +150,7 @@ impl CanisterData {
             Ok(UserProfileDetailsForFrontendV3 {
                 principal_id: user_principal,
                 profile_stats: user_info.profile.profile_stats,
-                profile_picture_url: user_info.profile.profile_picture_url.clone(),
+                profile_picture_url: user_info.profile.profile_picture.as_ref().map(|p| p.url.clone()),
             })
         } else {
             Err("User not found".to_string())
@@ -194,7 +192,7 @@ impl CanisterData {
                         }
                     }),
                 subscription_plan: user_info.profile.subscription_plan.clone(),
-                profile_picture_url: user_info.profile.profile_picture_url.clone(),
+                profile_picture_url: user_info.profile.profile_picture.as_ref().map(|p| p.url.clone()),
             })
         } else {
             Err("User not found".to_string())
@@ -209,7 +207,7 @@ impl CanisterData {
         if let Some(user_info) = self.user_infos.get(&user_principal) {
             Ok(UserProfileDetailsForFrontendV6 {
                 principal_id: user_principal,
-                pfp: user_info.profile.pfp.clone(),
+                profile_picture: user_info.profile.profile_picture.clone(),
                 bio: user_info.profile.bio.clone(),
                 website_url: user_info.profile.website_url.clone(),
                 followers_count: user_info.followers.len() as u64,
@@ -476,15 +474,14 @@ impl CanisterData {
         }
 
         if let Some(profile_picture_url) = details.profile_picture_url {
-            user_info.profile.profile_picture_url = Some(profile_picture_url.clone());
-            // Also update pfp with the new URL, keeping existing nsfw_info or defaulting to safe values
+            // Update profile_picture with the new URL, keeping existing nsfw_info or defaulting to safe values
             let nsfw_info = user_info
                 .profile
-                .pfp
+                .profile_picture
                 .as_ref()
                 .map(|p| p.nsfw_info.clone())
                 .unwrap_or_default();
-            user_info.profile.pfp = Some(PfpData {
+            user_info.profile.profile_picture = Some(ProfilePictureData {
                 url: profile_picture_url,
                 nsfw_info,
             });
@@ -513,10 +510,8 @@ impl CanisterData {
             user_info.profile.website_url = Some(website_url);
         }
 
-        if let Some(pfp) = details.pfp {
-            // Update both pfp and profile_picture_url for backwards compatibility
-            user_info.profile.profile_picture_url = Some(pfp.url.clone());
-            user_info.profile.pfp = Some(pfp);
+        if let Some(profile_picture) = details.profile_picture {
+            user_info.profile.profile_picture = Some(profile_picture);
         }
 
         self.user_infos.insert(user_principal, user_info);
@@ -524,7 +519,7 @@ impl CanisterData {
     }
 
     /// Admin-only method to update NSFW info for a user's profile picture
-    pub fn update_profile_nsfw_info(
+    pub fn update_profile_picture_nsfw_info(
         &mut self,
         user_principal: Principal,
         nsfw_info: NSFWInfo,
@@ -534,8 +529,8 @@ impl CanisterData {
             .get(&user_principal)
             .ok_or("User not found".to_string())?;
 
-        if let Some(ref mut pfp) = user_info.profile.pfp {
-            pfp.nsfw_info = nsfw_info;
+        if let Some(ref mut profile_picture) = user_info.profile.profile_picture {
+            profile_picture.nsfw_info = nsfw_info;
         } else {
             return Err("User has no profile picture set".to_string());
         }
@@ -582,7 +577,7 @@ impl CanisterData {
             Ok(UserProfileDetailsForFrontendV4 {
                 principal_id: user_principal,
                 profile_stats: user_info.profile.profile_stats,
-                profile_picture_url: user_info.profile.profile_picture_url.clone(),
+                profile_picture_url: user_info.profile.profile_picture.as_ref().map(|p| p.url.clone()),
                 bio: user_info.profile.bio.clone(),
                 website_url: user_info.profile.website_url.clone(),
                 followers_count: user_info.followers.len() as u64,
@@ -619,7 +614,7 @@ impl CanisterData {
                 let profile_picture_url = if include_profile_pics {
                     self.user_infos
                         .get(&principal)
-                        .and_then(|info| info.profile.profile_picture_url.clone())
+                        .and_then(|info| info.profile.profile_picture.as_ref().map(|p| p.url.clone()))
                 } else {
                     None
                 };
@@ -659,7 +654,7 @@ impl CanisterData {
                 let profile_picture_url = if include_profile_pics {
                     self.user_infos
                         .get(&principal)
-                        .and_then(|info| info.profile.profile_picture_url.clone())
+                        .and_then(|info| info.profile.profile_picture.as_ref().map(|p| p.url.clone()))
                 } else {
                     None
                 };

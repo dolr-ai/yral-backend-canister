@@ -23,9 +23,10 @@ fn update_profile_details_v2(details: ProfileUpdateDetailsV2) -> Result<(), Stri
 }
 
 #[update(guard = "is_caller_controller_or_global_admin")]
-fn update_profile_nsfw_info(user_id: Principal, nsfw_info: NSFWInfo) -> Result<(), String> {
-    CANISTER_DATA
-        .with_borrow_mut(|canister_data| canister_data.update_profile_nsfw_info(user_id, nsfw_info))
+fn update_profile_picture_nsfw_info(user_id: Principal, nsfw_info: NSFWInfo) -> Result<(), String> {
+    CANISTER_DATA.with_borrow_mut(|canister_data| {
+        canister_data.update_profile_picture_nsfw_info(user_id, nsfw_info)
+    })
 }
 
 /// Admin-only endpoint to update the AI influencer status for a user's profile

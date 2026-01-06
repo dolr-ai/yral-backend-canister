@@ -19,7 +19,7 @@ type NSFWInfo = record {
   nsfw_gore : text;
   csam_detected : bool;
 };
-type PfpData = record {
+type ProfilePictureData = record {
   url : text;
   nsfw_info : NSFWInfo;
 };
@@ -31,7 +31,7 @@ type ProfileUpdateDetails = record {
 type ProfileUpdateDetailsV2 = record {
   bio : opt text;
   website_url : opt text;
-  pfp : opt PfpData;
+  profile_picture : opt ProfilePictureData;
 };
 type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : FollowersResponse; Err : text };
@@ -76,7 +76,7 @@ type UserProfileDetailsForFrontendV6 = record {
   website_url : opt text;
   following_count : nat64;
   user_follows_caller : opt bool;
-  pfp : opt PfpData;
+  profile_picture : opt ProfilePictureData;
   subscription_plan : SubscriptionPlan;
   principal_id : principal;
   followers_count : nat64;
@@ -112,7 +112,7 @@ service : (UserInfoServiceInitArgs) -> {
   update_profile_details : (ProfileUpdateDetails) -> (Result);
   update_profile_details_v2 : (ProfileUpdateDetailsV2) -> (Result);
   update_profile_ai_influencer_status : (principal, bool) -> (Result);
-  update_profile_nsfw_info : (principal, NSFWInfo) -> (Result);
+  update_profile_picture_nsfw_info : (principal, NSFWInfo) -> (Result);
   update_session_type : (principal, SessionType) -> (Result);
   update_user_last_access_time : (principal) -> (Result);
 }

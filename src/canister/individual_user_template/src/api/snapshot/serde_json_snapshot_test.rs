@@ -9,20 +9,23 @@ mod test {
     use candid::{Nat, Principal};
     use ic_cdk::api::management_canister::main::CanisterId;
     use shared_utils::{
-        canister_specific::individual_user_template::types::{
-            cdao::{AirdropInfo, ClaimStatus, DeployedCdaoCanisters},
-            cents::CentsToken,
-            follow::FollowEntryDetail,
-            hot_or_not::{
-                BetDetails, BetDirection, BetOutcomeForBetMaker, BetPayout, GlobalBetId,
-                GlobalRoomId, PlacedBetDetail, RoomBetPossibleOutcomes, RoomDetailsV1,
-                SlotDetailsV1, SlotId, StablePrincipal,
+        canister_specific::{
+            individual_user_template::types::{
+                cdao::{AirdropInfo, ClaimStatus, DeployedCdaoCanisters},
+                cents::CentsToken,
+                follow::FollowEntryDetail,
+                hot_or_not::{
+                    BetDetails, BetDirection, BetOutcomeForBetMaker, BetPayout, GlobalBetId,
+                    GlobalRoomId, PlacedBetDetail, RoomBetPossibleOutcomes, RoomDetailsV1,
+                    SlotDetailsV1, SlotId, StablePrincipal,
+                },
+                migration::MigrationInfo,
+                post::PostViewStatistics,
+                profile::{UserProfile, UserProfileGlobalStats},
+                pump_n_dump::{GameDirection, ParticipatedGameInfo},
+                session::SessionType,
             },
-            migration::MigrationInfo,
-            post::PostViewStatistics,
-            profile::{NSFWInfo, PfpData, SubscriptionPlan, UserProfile, UserProfileGlobalStats},
-            pump_n_dump::{GameDirection, ParticipatedGameInfo},
-            session::SessionType,
+            user_info_service::types::{NSFWInfo, ProfilePictureData, SubscriptionPlan},
         },
         common::types::{
             app_primitive_type::PostId,
@@ -182,7 +185,6 @@ mod test {
             known_principal_ids,
             profile: UserProfile {
                 principal_id: Some(temp_principal),
-                profile_picture_url: Some("dadfk".to_string()),
                 profile_stats: UserProfileGlobalStats {
                     hot_bets_received: 100,
                     not_bets_received: 100,
@@ -191,7 +193,10 @@ mod test {
                 bio: None,
                 website_url: None,
                 subscription_plan: SubscriptionPlan::Free,
-                pfp: None,
+                profile_picture: Some(ProfilePictureData {
+                    url: "dadfk".to_string(),
+                    nsfw_info: NSFWInfo::default(),
+                }),
                 is_ai_influencer: false,
             },
             version_details: VersionDetails {

@@ -21,7 +21,7 @@ pub struct NSFWInfo {
 
 /// Profile picture data with NSFW info
 #[derive(CandidType, Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Default)]
-pub struct PfpData {
+pub struct ProfilePictureData {
     pub url: String,
     pub nsfw_info: NSFWInfo,
 }
@@ -37,7 +37,7 @@ pub struct ProfileUpdateDetails {
 pub struct ProfileUpdateDetailsV2 {
     pub bio: Option<String>,
     pub website_url: Option<String>,
-    pub pfp: Option<PfpData>,
+    pub profile_picture: Option<ProfilePictureData>,
 }
 
 #[derive(candid::CandidType, candid::Deserialize)]

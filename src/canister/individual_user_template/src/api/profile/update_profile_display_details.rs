@@ -1,8 +1,11 @@
 use crate::{util::cycles::notify_to_recharge_canister, CANISTER_DATA};
 use candid::CandidType;
 use ic_cdk_macros::update;
-use shared_utils::canister_specific::individual_user_template::types::profile::{
-    UserProfileDetailsForFrontend, UserProfileUpdateDetailsFromFrontend,
+use shared_utils::canister_specific::{
+    individual_user_template::types::profile::{
+        UserProfileDetailsForFrontend, UserProfileUpdateDetailsFromFrontend,
+    },
+    user_info_service::types::ProfilePictureData,
 };
 
 #[derive(CandidType)]
@@ -30,7 +33,15 @@ fn update_profile_display_details(
     CANISTER_DATA.with(|canister_data_ref_cell| {
         let profile = &mut canister_data_ref_cell.borrow_mut().profile;
 
-        profile.profile_picture_url = user_profile_details.profile_picture_url;
+        if let Some(url) = user_profile_details.profile_picture_url {
+            // Keep existing nsfw_info or default to safe values
+            let nsfw_info = profile
+                .profile_picture
+                .as_ref()
+                .map(|p| p.nsfw_info.clone())
+                .unwrap_or_default();
+            profile.profile_picture = Some(ProfilePictureData { url, nsfw_info });
+        }
     });
 
     Ok(CANISTER_DATA.with(|canister_data_ref_cell| {
@@ -41,7 +52,7 @@ fn update_profile_display_details(
             principal_id: profile.principal_id.unwrap(),
             display_name: None,
             unique_user_name: None,
-            profile_picture_url: profile.profile_picture_url.clone(),
+            profile_picture_url: profile.profile_picture.as_ref().map(|p| p.url.clone()),
             profile_stats: profile.profile_stats,
             followers_count: 0,
             following_count: 0,
