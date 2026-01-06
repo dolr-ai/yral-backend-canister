@@ -387,7 +387,7 @@ fn download_snapshot_test() {
         )
         .map(|reply_payload| {
             match reply_payload {
-                WasmResult::Reply(payload) => candid::decode_one(&payload).unwrap(),
+                WasmResult::Reply(payload) => candid::decode_one::<()>(&payload).unwrap(),
                 _ => panic!("\n🛑 place_bet failed\n"),
             };
         })
