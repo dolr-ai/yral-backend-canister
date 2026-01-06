@@ -23,31 +23,32 @@ jobs:
           env: |
             POCKET_IC_BIN=/workspaces/hot-or-not-backend-canister/pocket-ic
           runCmd: |
-            dfx identity list;
-            dfx start --background;
-            dfx canister create --no-wallet individual_user_template;
-            dfx canister create --no-wallet user_index;
-            dfx canister create --no-wallet platform_orchestrator;
-            dfx canister create --no-wallet notification_store;
-            dfx canister create --no-wallet user_post_service;
-            dfx canister create --no-wallet dedup_index;
-            dfx canister create --no-wallet user_info_service;
-            dfx canister create --no-wallet rate_limits;
-            dfx stop;
-            dfx build platform_orchestrator;
-            gzip -f -1 ./target/wasm32-unknown-unknown/release/platform_orchestrator.wasm;
-            dfx build individual_user_template;
-            gzip -f -1 ./target/wasm32-unknown-unknown/release/individual_user_template.wasm;
-            dfx build user_index;
-            gzip -f -1 ./target/wasm32-unknown-unknown/release/user_index.wasm;
-            dfx build notification_store;
-            gzip -f -1 ./target/wasm32-unknown-unknown/release/notification_store.wasm;
-            dfx build user_post_service;
-            gzip -f -1 ./target/wasm32-unknown-unknown/release/user_post_service.wasm;
-            dfx build dedup_index;
-            gzip -f -1 ./target/wasm32-unknown-unknown/release/dedup_index.wasm;
-            dfx build user_info_service;
-            gzip -f -1 ./target/wasm32-unknown-unknown/release/user_info_service.wasm;
-            dfx build rate_limits;
-            gzip -f -1 ./target/wasm32-unknown-unknown/release/rate_limits.wasm;
-            cargo test;
+            set -e
+            dfx identity list
+            dfx start --background
+            dfx canister create --no-wallet individual_user_template
+            dfx canister create --no-wallet user_index
+            dfx canister create --no-wallet platform_orchestrator
+            dfx canister create --no-wallet notification_store
+            dfx canister create --no-wallet user_post_service
+            dfx canister create --no-wallet dedup_index
+            dfx canister create --no-wallet user_info_service
+            dfx canister create --no-wallet rate_limits
+            dfx stop
+            dfx build platform_orchestrator
+            gzip -f -1 ./target/wasm32-unknown-unknown/release/platform_orchestrator.wasm
+            dfx build individual_user_template
+            gzip -f -1 ./target/wasm32-unknown-unknown/release/individual_user_template.wasm
+            dfx build user_index
+            gzip -f -1 ./target/wasm32-unknown-unknown/release/user_index.wasm
+            dfx build notification_store
+            gzip -f -1 ./target/wasm32-unknown-unknown/release/notification_store.wasm
+            dfx build user_post_service
+            gzip -f -1 ./target/wasm32-unknown-unknown/release/user_post_service.wasm
+            dfx build dedup_index
+            gzip -f -1 ./target/wasm32-unknown-unknown/release/dedup_index.wasm
+            dfx build user_info_service
+            gzip -f -1 ./target/wasm32-unknown-unknown/release/user_info_service.wasm
+            dfx build rate_limits
+            gzip -f -1 ./target/wasm32-unknown-unknown/release/rate_limits.wasm
+            cargo test
