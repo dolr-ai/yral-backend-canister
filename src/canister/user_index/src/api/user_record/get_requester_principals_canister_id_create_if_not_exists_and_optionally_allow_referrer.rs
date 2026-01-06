@@ -128,7 +128,7 @@ async fn new_user_signup(user_id: Principal) -> Result<Principal, String> {
     let response = match canister_id_res {
         Ok(canister_id) => {
             //Set owner of canister as this principal
-            call::call(canister_id, "update_profile_owner", (user_id,))
+            call::call::<_, ()>(canister_id, "update_profile_owner", (user_id,))
                 .await
                 .map_err(|e| e.1)?;
             CANISTER_DATA.with_borrow_mut(|canister_data| {
@@ -138,7 +138,7 @@ async fn new_user_signup(user_id: Principal) -> Result<Principal, String> {
             });
 
             //update session type for the user
-            call::call(
+            call::call::<_, ()>(
                 canister_id,
                 "update_session_type",
                 (SessionType::AnonymousSession,),
