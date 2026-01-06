@@ -416,6 +416,7 @@ mod tests {
                     csam_detected: false,
                 },
             }),
+            is_ai_influencer: false,
         };
 
         // Serialize new format
