@@ -25,6 +25,8 @@ pub struct UserProfile {
     pub subscription_plan: SubscriptionPlan,
     #[serde(default)]
     pub pfp: Option<PfpData>,
+    #[serde(default)]
+    pub is_ai_influencer: bool,
 }
 
 // Custom deserializer for UserProfile to handle backwards compatibility
@@ -45,6 +47,7 @@ impl<'de> Deserialize<'de> for UserProfile {
             "website_url",
             "subscription_plan",
             "pfp",
+            "is_ai_influencer",
         ];
 
         // Field enum for identifying which field we're deserializing
@@ -57,6 +60,7 @@ impl<'de> Deserialize<'de> for UserProfile {
             WebsiteUrl,
             SubscriptionPlan,
             Pfp,
+            IsAiInfluencer,
             Unknown,
         }
 
@@ -82,6 +86,7 @@ impl<'de> Deserialize<'de> for UserProfile {
                     "website_url" => Ok(Field::WebsiteUrl),
                     "subscription_plan" => Ok(Field::SubscriptionPlan),
                     "pfp" => Ok(Field::Pfp),
+                    "is_ai_influencer" => Ok(Field::IsAiInfluencer),
                     _ => Ok(Field::Unknown),
                 }
             }
@@ -99,6 +104,7 @@ impl<'de> Deserialize<'de> for UserProfile {
                     b"website_url" => Ok(Field::WebsiteUrl),
                     b"subscription_plan" => Ok(Field::SubscriptionPlan),
                     b"pfp" => Ok(Field::Pfp),
+                    b"is_ai_influencer" => Ok(Field::IsAiInfluencer),
                     _ => Ok(Field::Unknown),
                 }
             }
@@ -137,6 +143,7 @@ impl<'de> Deserialize<'de> for UserProfile {
                 let mut website_url: Option<Option<String>> = None;
                 let mut subscription_plan: Option<SubscriptionPlan> = None;
                 let mut pfp: Option<Option<PfpData>> = None;
+                let mut is_ai_influencer: Option<bool> = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -188,6 +195,12 @@ impl<'de> Deserialize<'de> for UserProfile {
                             }
                             pfp = Some(map.next_value()?);
                         }
+                        Field::IsAiInfluencer => {
+                            if is_ai_influencer.is_some() {
+                                return Err(de::Error::duplicate_field("is_ai_influencer"));
+                            }
+                            is_ai_influencer = Some(map.next_value()?);
+                        }
                         Field::Unknown => {
                             // Skip unknown fields for forward compatibility
                             let _ = map.next_value::<de::IgnoredAny>()?;
@@ -203,6 +216,7 @@ impl<'de> Deserialize<'de> for UserProfile {
                 let website_url = website_url.unwrap_or_default();
                 let subscription_plan = subscription_plan.unwrap_or_default();
                 let pfp_value = pfp.unwrap_or_default();
+                let is_ai_influencer = is_ai_influencer.unwrap_or_default();
 
                 // Migration logic: if pfp is None but profile_picture_url exists,
                 // create a PfpData from the URL with nsfw_info defaulting to safe values
@@ -222,6 +236,7 @@ impl<'de> Deserialize<'de> for UserProfile {
                     website_url,
                     subscription_plan,
                     pfp,
+                    is_ai_influencer,
                 })
             }
         }
@@ -320,6 +335,7 @@ pub struct UserProfileDetailsForFrontendV6 {
     pub caller_follows_user: Option<bool>,
     pub user_follows_caller: Option<bool>,
     pub subscription_plan: SubscriptionPlan,
+    pub is_ai_influencer: bool,
 }
 
 #[derive(Deserialize, CandidType)]

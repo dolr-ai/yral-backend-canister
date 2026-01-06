@@ -81,6 +81,7 @@ type UserProfileDetailsForFrontendV6 = record {
   principal_id : principal;
   followers_count : nat64;
   caller_follows_user : opt bool;
+  is_ai_influencer : bool;
 };
 type UserProfileGlobalStats = record {
   hot_bets_received : nat64;
@@ -110,6 +111,7 @@ service : (UserInfoServiceInitArgs) -> {
   unfollow_user : (principal) -> (Result);
   update_profile_details : (ProfileUpdateDetails) -> (Result);
   update_profile_details_v2 : (ProfileUpdateDetailsV2) -> (Result);
+  update_profile_ai_influencer_status : (principal, bool) -> (Result);
   update_profile_nsfw_info : (principal, NSFWInfo) -> (Result);
   update_session_type : (principal, SessionType) -> (Result);
   update_user_last_access_time : (principal) -> (Result);

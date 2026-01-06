@@ -47,6 +47,7 @@ impl UserInfo {
                 website_url: None,
                 subscription_plan: Default::default(),
                 pfp: None,
+                is_ai_influencer: false,
             },
             session_type: SessionType::AnonymousSession,
             last_access_time: get_current_system_time(),
@@ -66,6 +67,7 @@ impl UserInfo {
                 website_url: None,
                 subscription_plan: Default::default(),
                 pfp: None,
+                is_ai_influencer: false,
             },
             session_type: SessionType::RegisteredSession,
             last_access_time: get_current_system_time(),
@@ -235,6 +237,7 @@ impl CanisterData {
                         }
                     }),
                 subscription_plan: user_info.profile.subscription_plan.clone(),
+                is_ai_influencer: user_info.profile.is_ai_influencer,
             })
         } else {
             Err("User not found".to_string())
@@ -536,6 +539,23 @@ impl CanisterData {
         } else {
             return Err("User has no profile picture set".to_string());
         }
+
+        self.user_infos.insert(user_principal, user_info);
+        Ok(())
+    }
+
+    /// Admin-only method to update AI influencer status for a user's profile
+    pub fn update_profile_ai_influencer_status(
+        &mut self,
+        user_principal: Principal,
+        is_ai_influencer: bool,
+    ) -> Result<(), String> {
+        let mut user_info = self
+            .user_infos
+            .get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        user_info.profile.is_ai_influencer = is_ai_influencer;
 
         self.user_infos.insert(user_principal, user_info);
         Ok(())
