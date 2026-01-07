@@ -1,0 +1,98 @@
+name: Canister Snapshot
+
+on:
+  # Daily snapshot at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * *'
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      canister_id:
+        description: 'Canister ID to snapshot'
+        required: true
+        type: string
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - take_snapshot
+          - list_snapshots
+          - load_snapshot
+      snapshot_id:
+        description: 'Snapshot ID (only for load_snapshot action)'
+        required: false
+        type: string
+
+env:
+  # Default values for scheduled runs
+  DEFAULT_CANISTER_ID: 'ivkka-7qaaa-aaaas-qbg3q-cai'
+  DEFAULT_ACTION: 'take_snapshot'
+
+jobs:
+  snapshot:
+    name: Canister Snapshot
+    runs-on: ubuntu-latest
+    env:
+      DFX_WARNING: -mainnet_plaintext_identity
+
+    steps:
+      - name: Install dfx
+        run: |
+          DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Setup identity
+        run: |
+          mkdir -p ~/.config/dfx/identity/admin
+          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > ~/.config/dfx/identity/admin/identity.pem
+          chmod 600 ~/.config/dfx/identity/admin/identity.pem
+          $HOME/.local/share/dfx/bin/dfx identity use admin
+          echo "Using principal: $($HOME/.local/share/dfx/bin/dfx identity get-principal)"
+
+      - name: Set variables
+        id: vars
+        run: |
+          CANISTER_ID="${{ inputs.canister_id || env.DEFAULT_CANISTER_ID }}"
+          ACTION="${{ inputs.action || env.DEFAULT_ACTION }}"
+          echo "canister_id=$CANISTER_ID" >> $GITHUB_OUTPUT
+          echo "action=$ACTION" >> $GITHUB_OUTPUT
+          echo "Using canister_id: $CANISTER_ID"
+          echo "Using action: $ACTION"
+
+      - name: List snapshots
+        if: ${{ steps.vars.outputs.action == 'list_snapshots' }}
+        run: |
+          $HOME/.local/share/dfx/bin/dfx canister --network ic snapshot list ${{ steps.vars.outputs.canister_id }}
+
+      - name: Take snapshot
+        if: ${{ steps.vars.outputs.action == 'take_snapshot' }}
+        run: |
+          echo "Stopping canister ${{ steps.vars.outputs.canister_id }}..."
+          $HOME/.local/share/dfx/bin/dfx canister --network ic stop ${{ steps.vars.outputs.canister_id }}
+
+          echo "Taking snapshot..."
+          $HOME/.local/share/dfx/bin/dfx canister --network ic snapshot create ${{ steps.vars.outputs.canister_id }}
+
+          echo "Starting canister..."
+          $HOME/.local/share/dfx/bin/dfx canister --network ic start ${{ steps.vars.outputs.canister_id }}
+
+          echo "Listing snapshots..."
+          $HOME/.local/share/dfx/bin/dfx canister --network ic snapshot list ${{ steps.vars.outputs.canister_id }}
+
+      - name: Load snapshot
+        if: ${{ steps.vars.outputs.action == 'load_snapshot' }}
+        run: |
+          if [ -z "${{ inputs.snapshot_id }}" ]; then
+            echo "Error: snapshot_id is required for load_snapshot action"
+            exit 1
+          fi
+
+          echo "Stopping canister ${{ steps.vars.outputs.canister_id }}..."
+          $HOME/.local/share/dfx/bin/dfx canister --network ic stop ${{ steps.vars.outputs.canister_id }}
+
+          echo "Loading snapshot ${{ inputs.snapshot_id }}..."
+          $HOME/.local/share/dfx/bin/dfx canister --network ic snapshot load ${{ steps.vars.outputs.canister_id }} ${{ inputs.snapshot_id }}
+
+          echo "Starting canister..."
+          $HOME/.local/share/dfx/bin/dfx canister --network ic start ${{ steps.vars.outputs.canister_id }}
