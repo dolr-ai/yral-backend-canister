@@ -24,15 +24,16 @@ on:
         required: false
         type: string
 
-env:
-  # Default values for scheduled runs
-  DEFAULT_CANISTER_ID: 'ivkka-7qaaa-aaaas-qbg3q-cai'
-  DEFAULT_ACTION: 'take_snapshot'
-
 jobs:
   snapshot:
-    name: Canister Snapshot
+    name: Canister Snapshot (${{ matrix.canister_id }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        canister_id:
+          - 'ivkka-7qaaa-aaaas-qbg3q-cai'
+          - 'gxhc3-pqaaa-aaaas-qbh3q-cai'
     env:
       DFX_WARNING: -mainnet_plaintext_identity
 
@@ -53,8 +54,9 @@ jobs:
       - name: Set variables
         id: vars
         run: |
-          CANISTER_ID="${{ inputs.canister_id || env.DEFAULT_CANISTER_ID }}"
-          ACTION="${{ inputs.action || env.DEFAULT_ACTION }}"
+          # For manual triggers, use input; for scheduled runs, use matrix
+          CANISTER_ID="${{ inputs.canister_id || matrix.canister_id }}"
+          ACTION="${{ inputs.action || 'take_snapshot' }}"
           echo "canister_id=$CANISTER_ID" >> $GITHUB_OUTPUT
           echo "action=$ACTION" >> $GITHUB_OUTPUT
           echo "Using canister_id: $CANISTER_ID"
@@ -68,17 +70,38 @@ jobs:
       - name: Take snapshot
         if: ${{ steps.vars.outputs.action == 'take_snapshot' }}
         run: |
-          echo "Stopping canister ${{ steps.vars.outputs.canister_id }}..."
-          $HOME/.local/share/dfx/bin/dfx canister --network ic stop ${{ steps.vars.outputs.canister_id }}
+          CANISTER_ID="${{ steps.vars.outputs.canister_id }}"
+          DFX="$HOME/.local/share/dfx/bin/dfx"
+          MAX_SNAPSHOTS=10
+
+          echo "Checking existing snapshots..."
+          SNAPSHOTS=$($DFX canister --network ic snapshot list $CANISTER_ID 2>/dev/null || echo "")
+
+          # Extract snapshot IDs (format: snapshot_id: <id>)
+          SNAPSHOT_IDS=($(echo "$SNAPSHOTS" | grep -oP '(?<=snapshot_id: )[a-f0-9]+' || true))
+          SNAPSHOT_COUNT=${#SNAPSHOT_IDS[@]}
+
+          echo "Found $SNAPSHOT_COUNT existing snapshots (max: $MAX_SNAPSHOTS)"
+
+          # If at max capacity, delete oldest snapshot(s) to make room
+          if [ "$SNAPSHOT_COUNT" -ge "$MAX_SNAPSHOTS" ]; then
+            # Delete oldest snapshot (first in list)
+            OLDEST_SNAPSHOT="${SNAPSHOT_IDS[0]}"
+            echo "At max capacity. Deleting oldest snapshot: $OLDEST_SNAPSHOT"
+            $DFX canister --network ic snapshot delete $CANISTER_ID $OLDEST_SNAPSHOT
+          fi
+
+          echo "Stopping canister $CANISTER_ID..."
+          $DFX canister --network ic stop $CANISTER_ID
 
           echo "Taking snapshot..."
-          $HOME/.local/share/dfx/bin/dfx canister --network ic snapshot create ${{ steps.vars.outputs.canister_id }}
+          $DFX canister --network ic snapshot create $CANISTER_ID
 
           echo "Starting canister..."
-          $HOME/.local/share/dfx/bin/dfx canister --network ic start ${{ steps.vars.outputs.canister_id }}
+          $DFX canister --network ic start $CANISTER_ID
 
           echo "Listing snapshots..."
-          $HOME/.local/share/dfx/bin/dfx canister --network ic snapshot list ${{ steps.vars.outputs.canister_id }}
+          $DFX canister --network ic snapshot list $CANISTER_ID
 
       - name: Load snapshot
         if: ${{ steps.vars.outputs.action == 'load_snapshot' }}
