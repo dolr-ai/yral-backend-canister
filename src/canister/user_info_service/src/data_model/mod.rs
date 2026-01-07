@@ -10,11 +10,13 @@ use shared_utils::{
         individual_user_template::types::{
             profile::{
                 UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
-                UserProfileDetailsForFrontendV5,
+                UserProfileDetailsForFrontendV5, UserProfileDetailsForFrontendV6,
             },
             session::SessionType,
         },
-        user_info_service::types::{ProfileUpdateDetails, SubscriptionPlan},
+        user_info_service::types::{
+            NSFWInfo, ProfilePictureData, ProfileUpdateDetails, ProfileUpdateDetailsV2, SubscriptionPlan,
+        },
     },
     common::utils::system_time::get_current_system_time,
 };
@@ -38,12 +40,13 @@ impl UserInfo {
         Self {
             profile: UserProfile {
                 principal_id: Some(user_principal),
-                profile_picture_url: None,
                 profile_stats: Default::default(),
                 referrer_details: None,
                 bio: None,
                 website_url: None,
                 subscription_plan: Default::default(),
+                profile_picture: None,
+                is_ai_influencer: false,
             },
             session_type: SessionType::AnonymousSession,
             last_access_time: get_current_system_time(),
@@ -56,12 +59,13 @@ impl UserInfo {
         Self {
             profile: UserProfile {
                 principal_id: Some(user_principal),
-                profile_picture_url: None,
                 profile_stats: Default::default(),
                 referrer_details: None,
                 bio: None,
                 website_url: None,
                 subscription_plan: Default::default(),
+                profile_picture: None,
+                is_ai_influencer: false,
             },
             session_type: SessionType::RegisteredSession,
             last_access_time: get_current_system_time(),
@@ -146,7 +150,7 @@ impl CanisterData {
             Ok(UserProfileDetailsForFrontendV3 {
                 principal_id: user_principal,
                 profile_stats: user_info.profile.profile_stats,
-                profile_picture_url: user_info.profile.profile_picture_url.clone(),
+                profile_picture_url: user_info.profile.profile_picture.as_ref().map(|p| p.url.clone()),
             })
         } else {
             Err("User not found".to_string())
@@ -188,7 +192,50 @@ impl CanisterData {
                         }
                     }),
                 subscription_plan: user_info.profile.subscription_plan.clone(),
-                profile_picture_url: user_info.profile.profile_picture_url.clone(),
+                profile_picture_url: user_info.profile.profile_picture.as_ref().map(|p| p.url.clone()),
+            })
+        } else {
+            Err("User not found".to_string())
+        }
+    }
+
+    pub fn get_profile_details_for_user_v6(
+        &self,
+        user_principal: Principal,
+        caller_principal: Principal,
+    ) -> Result<UserProfileDetailsForFrontendV6, String> {
+        if let Some(user_info) = self.user_infos.get(&user_principal) {
+            Ok(UserProfileDetailsForFrontendV6 {
+                principal_id: user_principal,
+                profile_picture: user_info.profile.profile_picture.clone(),
+                bio: user_info.profile.bio.clone(),
+                website_url: user_info.profile.website_url.clone(),
+                followers_count: user_info.followers.len() as u64,
+                following_count: user_info.following.len() as u64,
+                caller_follows_user: user_info
+                    .followers
+                    .contains(&caller_principal)
+                    .then_some(true)
+                    .or_else(|| {
+                        if caller_principal == user_principal {
+                            None
+                        } else {
+                            Some(false)
+                        }
+                    }),
+                user_follows_caller: user_info
+                    .following
+                    .contains(&caller_principal)
+                    .then_some(true)
+                    .or_else(|| {
+                        if caller_principal == user_principal {
+                            None
+                        } else {
+                            Some(false)
+                        }
+                    }),
+                subscription_plan: user_info.profile.subscription_plan.clone(),
+                is_ai_influencer: user_info.profile.is_ai_influencer,
             })
         } else {
             Err("User not found".to_string())
@@ -427,8 +474,83 @@ impl CanisterData {
         }
 
         if let Some(profile_picture_url) = details.profile_picture_url {
-            user_info.profile.profile_picture_url = Some(profile_picture_url);
+            // Update profile_picture with the new URL, keeping existing nsfw_info or defaulting to safe values
+            let nsfw_info = user_info
+                .profile
+                .profile_picture
+                .as_ref()
+                .map(|p| p.nsfw_info.clone())
+                .unwrap_or_default();
+            user_info.profile.profile_picture = Some(ProfilePictureData {
+                url: profile_picture_url,
+                nsfw_info,
+            });
         }
+
+        self.user_infos.insert(user_principal, user_info);
+        Ok(())
+    }
+
+    pub fn update_profile_details_v2(
+        &mut self,
+        user_principal: Principal,
+        details: ProfileUpdateDetailsV2,
+    ) -> Result<(), String> {
+        let mut user_info = self
+            .user_infos
+            .get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        // Only update fields that have Some value
+        if let Some(bio) = details.bio {
+            user_info.profile.bio = Some(bio);
+        }
+
+        if let Some(website_url) = details.website_url {
+            user_info.profile.website_url = Some(website_url);
+        }
+
+        if let Some(profile_picture) = details.profile_picture {
+            user_info.profile.profile_picture = Some(profile_picture);
+        }
+
+        self.user_infos.insert(user_principal, user_info);
+        Ok(())
+    }
+
+    /// Admin-only method to update NSFW info for a user's profile picture
+    pub fn update_profile_picture_nsfw_info(
+        &mut self,
+        user_principal: Principal,
+        nsfw_info: NSFWInfo,
+    ) -> Result<(), String> {
+        let mut user_info = self
+            .user_infos
+            .get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        if let Some(ref mut profile_picture) = user_info.profile.profile_picture {
+            profile_picture.nsfw_info = nsfw_info;
+        } else {
+            return Err("User has no profile picture set".to_string());
+        }
+
+        self.user_infos.insert(user_principal, user_info);
+        Ok(())
+    }
+
+    /// Admin-only method to update AI influencer status for a user's profile
+    pub fn update_profile_ai_influencer_status(
+        &mut self,
+        user_principal: Principal,
+        is_ai_influencer: bool,
+    ) -> Result<(), String> {
+        let mut user_info = self
+            .user_infos
+            .get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        user_info.profile.is_ai_influencer = is_ai_influencer;
 
         self.user_infos.insert(user_principal, user_info);
         Ok(())
@@ -455,7 +577,7 @@ impl CanisterData {
             Ok(UserProfileDetailsForFrontendV4 {
                 principal_id: user_principal,
                 profile_stats: user_info.profile.profile_stats,
-                profile_picture_url: user_info.profile.profile_picture_url.clone(),
+                profile_picture_url: user_info.profile.profile_picture.as_ref().map(|p| p.url.clone()),
                 bio: user_info.profile.bio.clone(),
                 website_url: user_info.profile.website_url.clone(),
                 followers_count: user_info.followers.len() as u64,
@@ -492,7 +614,7 @@ impl CanisterData {
                 let profile_picture_url = if include_profile_pics {
                     self.user_infos
                         .get(&principal)
-                        .and_then(|info| info.profile.profile_picture_url.clone())
+                        .and_then(|info| info.profile.profile_picture.as_ref().map(|p| p.url.clone()))
                 } else {
                     None
                 };
@@ -532,7 +654,7 @@ impl CanisterData {
                 let profile_picture_url = if include_profile_pics {
                     self.user_infos
                         .get(&principal)
-                        .and_then(|info| info.profile.profile_picture_url.clone())
+                        .and_then(|info| info.profile.profile_picture.as_ref().map(|p| p.url.clone()))
                 } else {
                     None
                 };
