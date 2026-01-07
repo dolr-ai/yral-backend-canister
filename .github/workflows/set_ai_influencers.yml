@@ -1,0 +1,48 @@
+name: Set AI Influencers
+
+on:
+  push:
+    branches:
+      - set-ai-influencers
+  workflow_dispatch:
+
+jobs:
+  set_ai_influencers:
+    name: Set AI Influencer Status
+    runs-on: ubuntu-latest
+    env:
+      DFX_WARNING: -mainnet_plaintext_identity
+      USER_INFO_SERVICE_CANISTER: 'ivkka-7qaaa-aaaas-qbg3q-cai'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        principal:
+          - 'azjhl-m7isb-qfocx-md5sm-z55f2-zm5qf-lss57-5zdns-ljyy4-wfv2x-rae'
+          - 'qg2pi-g3xl4-uprdd-macwr-64q7r-plotv-xm3bg-iayu3-rnpux-7ikkz-hqe'
+
+    steps:
+      - name: Install dfx
+        run: |
+          DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Setup identity
+        run: |
+          mkdir -p ~/.config/dfx/identity/admin
+          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > ~/.config/dfx/identity/admin/identity.pem
+          chmod 600 ~/.config/dfx/identity/admin/identity.pem
+          $HOME/.local/share/dfx/bin/dfx identity use admin
+          echo "Using principal: $($HOME/.local/share/dfx/bin/dfx identity get-principal)"
+
+      - name: Set AI influencer status
+        run: |
+          DFX="$HOME/.local/share/dfx/bin/dfx"
+          PRINCIPAL="${{ matrix.principal }}"
+          CANISTER="${{ env.USER_INFO_SERVICE_CANISTER }}"
+
+          echo "Setting is_ai_influencer=true for principal: $PRINCIPAL"
+
+          $DFX canister --network ic call $CANISTER update_profile_ai_influencer_status "(principal \"$PRINCIPAL\", true)"
+
+          echo "Done setting AI influencer status for $PRINCIPAL"
