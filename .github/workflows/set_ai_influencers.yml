@@ -20,6 +20,8 @@ jobs:
         principal:
           - 'azjhl-m7isb-qfocx-md5sm-z55f2-zm5qf-lss57-5zdns-ljyy4-wfv2x-rae'
           - 'qg2pi-g3xl4-uprdd-macwr-64q7r-plotv-xm3bg-iayu3-rnpux-7ikkz-hqe'
+          - 'zchob-yxzst-hjmrg-um4bk-d5zwx-3s2ft-jedwo-xitfe-sg2ks-6dnxy-sae'
+          - '5pho3-hiuzu-atzdq-mqara-vk3sq-n47qa-ltvvf-rpwd5-3qx7a-ctdks-bqe'
 
     steps:
       - name: Install dfx
