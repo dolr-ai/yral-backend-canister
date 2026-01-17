@@ -1,9 +1,9 @@
 name: Canister Snapshot
 
 on:
-  # Daily snapshot at 2 AM UTC
-  schedule:
-    - cron: '0 2 * * *'
+  # DISABLED: Daily snapshot at 2 AM UTC
+  # schedule:
+  #   - cron: '0 2 * * *'
   # Manual trigger
   workflow_dispatch:
     inputs:
