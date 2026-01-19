@@ -348,7 +348,7 @@ pub struct UserProfileDetailsForFrontendV7 {
     pub user_follows_caller: Option<bool>,
     pub subscription_plan: SubscriptionPlan,
     pub is_ai_influencer: bool,
-    pub owner: Option<Principal>,
+    pub bots: Vec<Principal>,
 }
 
 #[derive(Deserialize, CandidType)]

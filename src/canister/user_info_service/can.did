@@ -92,7 +92,7 @@ type UserProfileDetailsForFrontendV7 = record {
   principal_id : principal;
   followers_count : nat64;
   caller_follows_user : opt bool;
-  owner : opt principal;
+  bots : vec principal;
 };
 type UserProfileGlobalStats = record {
   hot_bets_received : nat64;

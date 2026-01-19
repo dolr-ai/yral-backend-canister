@@ -15,9 +15,9 @@ fn accept_new_user_registration(user_principal: Principal, authenticated: bool) 
 fn accept_new_user_registration_v2(
     user_principal: Principal,
     authenticated: bool,
-    owner: Option<Principal>,
+    bot_principal: Option<Principal>,
 ) -> Result<(), String> {
     CANISTER_DATA.with_borrow_mut(|canister_data| {
-        canister_data.register_authenticated_user_v2(user_principal, authenticated, owner)
+        canister_data.register_authenticated_user_v2(user_principal, authenticated, bot_principal)
     })
 }
