@@ -25,6 +25,18 @@ pub(crate) mod memory;
 
 use crate::data_model::memory::Memory;
 
+#[derive(CandidType, Deserialize, Serialize, Clone)]
+pub(crate) enum UserKind {
+    User { bots: Vec<Principal> },
+    Bot,
+}
+
+impl Default for UserKind {
+    fn default() -> Self {
+        UserKind::User { bots: Vec::new() }
+    }
+}
+
 #[derive(CandidType, Deserialize, Serialize)]
 pub(crate) struct UserInfo {
     profile: UserProfile,
@@ -35,9 +47,7 @@ pub(crate) struct UserInfo {
     #[serde(default)]
     following: BTreeSet<Principal>,
     #[serde(default)]
-    bots: Vec<Principal>,
-    #[serde(default)]
-    is_bot: bool,
+    kind: UserKind,
 }
 
 impl UserInfo {
@@ -57,8 +67,7 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
-            bots: Vec::new(),
-            is_bot: false,
+            kind: UserKind::User { bots: Vec::new() },
         }
     }
 
@@ -78,8 +87,7 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
-            bots: Vec::new(),
-            is_bot: false,
+            kind: UserKind::User { bots: Vec::new() },
         }
     }
 
@@ -99,8 +107,7 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
-            bots: Vec::new(),
-            is_bot: true,
+            kind: UserKind::Bot,
         }
     }
 }
@@ -173,19 +180,23 @@ impl CanisterData {
                 return Ok(());
             }
 
-            let user_info = self
+            let mut user_info = self
                 .user_infos
                 .get(&user_principal)
                 .ok_or("Owner not found")?;
-            if user_info.is_bot {
-                return Err("Bots cannot own other bots".to_string());
+
+            match &mut user_info.kind {
+                UserKind::User { bots } => {
+                    // Register the bot
+                    self.user_infos.insert(bot, UserInfo::bot(bot));
+                    // Add to user's bots list
+                    bots.push(bot);
+                    self.user_infos.insert(user_principal, user_info);
+                }
+                UserKind::Bot => {
+                    return Err("Bots cannot own other bots".to_string());
+                }
             }
-
-            self.user_infos.insert(bot, UserInfo::bot(bot));
-
-            let mut user_info = self.user_infos.get(&user_principal).unwrap();
-            user_info.bots.push(bot);
-            self.user_infos.insert(user_principal, user_info);
         } else {
             if self.user_infos.contains_key(&user_principal) {
                 return Ok(());
@@ -353,12 +364,17 @@ impl CanisterData {
     }
 
     pub fn delete_user_info(&mut self, user_principal: Principal) -> Result<(), String> {
+        // Get bots to delete if this is a user (not a bot)
         let bots_to_delete = self
             .user_infos
             .get(&user_principal)
-            .map(|info| info.bots.clone())
+            .and_then(|info| match &info.kind {
+                UserKind::User { bots } => Some(bots.clone()),
+                UserKind::Bot => None,
+            })
             .unwrap_or_default();
 
+        // Cascade delete all bots
         for bot_principal in bots_to_delete {
             self.user_infos.remove(&bot_principal);
         }
@@ -386,21 +402,27 @@ impl CanisterData {
             .get(&caller)
             .ok_or("Caller not found".to_string())?;
 
-        if !caller_info.bots.contains(&bot_principal) {
-            return Err("Not authorized - only owner can delete bot".to_string());
+        match &mut caller_info.kind {
+            UserKind::User { bots } => {
+                if !bots.contains(&bot_principal) {
+                    return Err("Not authorized - only owner can delete bot".to_string());
+                }
+                bots.retain(|b| *b != bot_principal);
+                self.user_infos.insert(caller, caller_info);
+                self.user_infos.remove(&bot_principal);
+                Ok(())
+            }
+            UserKind::Bot => Err("Bots cannot own other bots".to_string()),
         }
-
-        caller_info.bots.retain(|b| *b != bot_principal);
-        self.user_infos.insert(caller, caller_info);
-
-        self.user_infos.remove(&bot_principal);
-        Ok(())
     }
 
     pub fn get_bots_by_owner(&self, owner: Principal) -> Vec<Principal> {
         self.user_infos
             .get(&owner)
-            .map(|info| info.bots.clone())
+            .and_then(|info| match &info.kind {
+                UserKind::User { bots } => Some(bots.clone()),
+                UserKind::Bot => None,
+            })
             .unwrap_or_default()
     }
 
@@ -709,7 +731,10 @@ impl CanisterData {
                     }),
                 subscription_plan: user_info.profile.subscription_plan.clone(),
                 is_ai_influencer: user_info.profile.is_ai_influencer,
-                bots: user_info.bots.clone(),
+                bots: match &user_info.kind {
+                    UserKind::User { bots } => bots.clone(),
+                    UserKind::Bot => Vec::new(),
+                },
             })
         } else {
             Err("User not found".to_string())
