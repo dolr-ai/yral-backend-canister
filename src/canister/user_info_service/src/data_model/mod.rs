@@ -11,6 +11,7 @@ use shared_utils::{
             profile::{
                 UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
                 UserProfileDetailsForFrontendV5, UserProfileDetailsForFrontendV6,
+                UserProfileDetailsForFrontendV7,
             },
             session::SessionType,
         },
@@ -33,6 +34,8 @@ pub(crate) struct UserInfo {
     followers: BTreeSet<Principal>,
     #[serde(default)]
     following: BTreeSet<Principal>,
+    #[serde(default)]
+    owner: Option<Principal>,
 }
 
 impl UserInfo {
@@ -52,6 +55,7 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
+            owner: None,
         }
     }
 
@@ -71,6 +75,27 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
+            owner: None,
+        }
+    }
+
+    pub fn authenticated_with_owner(user_principal: Principal, owner: Option<Principal>) -> Self {
+        Self {
+            profile: UserProfile {
+                principal_id: Some(user_principal),
+                profile_stats: Default::default(),
+                referrer_details: None,
+                bio: None,
+                website_url: None,
+                subscription_plan: Default::default(),
+                profile_picture: None,
+                is_ai_influencer: false,
+            },
+            session_type: SessionType::RegisteredSession,
+            last_access_time: get_current_system_time(),
+            followers: BTreeSet::new(),
+            following: BTreeSet::new(),
+            owner,
         }
     }
 }
@@ -123,6 +148,29 @@ impl CanisterData {
             user_principal,
             if authenticated {
                 UserInfo::authenticated(user_principal)
+            } else {
+                UserInfo::new(user_principal)
+            },
+        );
+
+        Ok(())
+    }
+
+    pub fn register_authenticated_user_v2(
+        &mut self,
+        user_principal: Principal,
+        authenticated: bool,
+        owner: Option<Principal>,
+    ) -> Result<(), String> {
+        if self.user_infos.contains_key(&user_principal) {
+            println!("User already exists");
+            return Ok(());
+        }
+
+        self.user_infos.insert(
+            user_principal,
+            if authenticated {
+                UserInfo::authenticated_with_owner(user_principal, owner)
             } else {
                 UserInfo::new(user_principal)
             },
@@ -554,6 +602,50 @@ impl CanisterData {
 
         self.user_infos.insert(user_principal, user_info);
         Ok(())
+    }
+
+    pub fn get_profile_details_for_user_v7(
+        &self,
+        user_principal: Principal,
+        caller_principal: Principal,
+    ) -> Result<UserProfileDetailsForFrontendV7, String> {
+        if let Some(user_info) = self.user_infos.get(&user_principal) {
+            Ok(UserProfileDetailsForFrontendV7 {
+                principal_id: user_principal,
+                profile_picture: user_info.profile.profile_picture.clone(),
+                bio: user_info.profile.bio.clone(),
+                website_url: user_info.profile.website_url.clone(),
+                followers_count: user_info.followers.len() as u64,
+                following_count: user_info.following.len() as u64,
+                caller_follows_user: user_info
+                    .followers
+                    .contains(&caller_principal)
+                    .then_some(true)
+                    .or_else(|| {
+                        if caller_principal == user_principal {
+                            None
+                        } else {
+                            Some(false)
+                        }
+                    }),
+                user_follows_caller: user_info
+                    .following
+                    .contains(&caller_principal)
+                    .then_some(true)
+                    .or_else(|| {
+                        if caller_principal == user_principal {
+                            None
+                        } else {
+                            Some(false)
+                        }
+                    }),
+                subscription_plan: user_info.profile.subscription_plan.clone(),
+                is_ai_influencer: user_info.profile.is_ai_influencer,
+                owner: user_info.owner,
+            })
+        } else {
+            Err("User not found".to_string())
+        }
     }
 
     pub fn get_profile_details_v4(
