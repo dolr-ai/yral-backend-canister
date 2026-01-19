@@ -104,6 +104,7 @@ service : (UserInfoServiceInitArgs) -> {
   accept_new_user_registration_v2 : (principal, bool, opt principal) -> (Result);
   add_pro_plan_free_video_credits : (principal, nat32) -> (Result);
   change_subscription_plan : (principal, SubscriptionPlan) -> (Result);
+  delete_bot_account : (principal) -> (Result);
   delete_user_info : (principal) -> (Result);
   follow_user : (principal) -> (Result);
   get_followers : (principal, opt principal, nat64, opt bool) -> (

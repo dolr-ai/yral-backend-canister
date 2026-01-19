@@ -9,6 +9,8 @@ const UPGRADES: MemoryId = MemoryId::new(0);
 
 const USER_INFO_MEMORY: MemoryId = MemoryId::new(1);
 
+const OWNER_BOTS_INDEX_MEMORY: MemoryId = MemoryId::new(2);
+
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
@@ -24,6 +26,10 @@ pub fn get_upgrades_memory() -> Memory {
 
 pub fn get_user_info_memory() -> Memory {
     MEMORY_MANAGER.with_borrow_mut(|m| m.get(USER_INFO_MEMORY))
+}
+
+pub fn get_owner_bots_index_memory() -> Memory {
+    MEMORY_MANAGER.with_borrow_mut(|m| m.get(OWNER_BOTS_INDEX_MEMORY))
 }
 
 pub fn init_memory_manager() {

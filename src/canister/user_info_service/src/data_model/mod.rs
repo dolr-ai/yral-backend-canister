@@ -114,11 +114,46 @@ impl Storable for UserInfo {
     const BOUND: Bound = Bound::Unbounded;
 }
 
+/// Composite key for owner->bot index: (owner, bot)
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct OwnerBotKey {
+    pub owner: Principal,
+    pub bot: Principal,
+}
+
+impl Storable for OwnerBotKey {
+    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+        let mut bytes = Vec::with_capacity(58); // 29 bytes per principal max
+        let owner_bytes = self.owner.as_slice();
+        let bot_bytes = self.bot.as_slice();
+        bytes.push(owner_bytes.len() as u8);
+        bytes.extend_from_slice(owner_bytes);
+        bytes.push(bot_bytes.len() as u8);
+        bytes.extend_from_slice(bot_bytes);
+        Cow::Owned(bytes)
+    }
+
+    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+        let owner_len = bytes[0] as usize;
+        let owner = Principal::from_slice(&bytes[1..1 + owner_len]);
+        let bot_len = bytes[1 + owner_len] as usize;
+        let bot = Principal::from_slice(&bytes[2 + owner_len..2 + owner_len + bot_len]);
+        Self { owner, bot }
+    }
+
+    const BOUND: Bound = Bound::Bounded {
+        max_size: 60,
+        is_fixed_size: false,
+    };
+}
+
 #[derive(Serialize, Deserialize)]
 pub(crate) struct CanisterData {
     pub version: String, //semver version
     #[serde(skip, default = "_init_user_infos")]
     user_infos: StableBTreeMap<Principal, UserInfo, Memory>,
+    #[serde(skip, default = "_init_owner_bots_index")]
+    owner_bots_index: StableBTreeMap<OwnerBotKey, (), Memory>,
 }
 
 impl CanisterData {
@@ -175,6 +210,16 @@ impl CanisterData {
                 UserInfo::new(user_principal)
             },
         );
+
+        if let Some(owner_principal) = owner {
+            self.owner_bots_index.insert(
+                OwnerBotKey {
+                    owner: owner_principal,
+                    bot: user_principal,
+                },
+                (),
+            );
+        }
 
         Ok(())
     }
@@ -328,12 +373,61 @@ impl CanisterData {
     }
 
     pub fn delete_user_info(&mut self, user_principal: Principal) -> Result<(), String> {
+        // First, find and delete all bots owned by this user using the index (O(k) where k = num bots)
+        let bots_to_delete: Vec<Principal> = self.get_bots_by_owner(user_principal);
+
+        for bot_principal in bots_to_delete {
+            self.user_infos.remove(&bot_principal);
+            self.owner_bots_index.remove(&OwnerBotKey {
+                owner: user_principal,
+                bot: bot_principal,
+            });
+        }
+
+        // Then delete the user
         let removed_user = self.user_infos.remove(&user_principal);
         if removed_user.is_some() {
             Ok(())
         } else {
             Err("User not found".to_string())
         }
+    }
+
+    pub fn delete_bot_account(
+        &mut self,
+        bot_principal: Principal,
+        caller: Principal,
+    ) -> Result<(), String> {
+        let bot_info = self
+            .user_infos
+            .get(&bot_principal)
+            .ok_or("Bot not found".to_string())?;
+
+        if bot_info.owner != Some(caller) {
+            return Err("Not authorized - only owner can delete bot".to_string());
+        }
+
+        // Remove from index
+        self.owner_bots_index.remove(&OwnerBotKey {
+            owner: caller,
+            bot: bot_principal,
+        });
+
+        self.user_infos.remove(&bot_principal);
+        Ok(())
+    }
+
+    pub fn get_bots_by_owner(&self, owner: Principal) -> Vec<Principal> {
+        let start = OwnerBotKey {
+            owner,
+            bot: Principal::from_slice(&[]),
+        };
+
+        self.owner_bots_index
+            .range(start..)
+            .take_while(|(key, _)| key.owner == owner)
+            .map(|(key, _)| key.bot)
+            .collect()
     }
 
     pub fn follow_user(&mut self, follower: Principal, target: Principal) -> Result<(), String> {
@@ -835,10 +929,15 @@ impl Default for CanisterData {
         Self {
             version: String::from("v1.0.0"),
             user_infos: _init_user_infos(),
+            owner_bots_index: _init_owner_bots_index(),
         }
     }
 }
 
 fn _init_user_infos() -> StableBTreeMap<Principal, UserInfo, Memory> {
     StableBTreeMap::init(memory::get_user_info_memory())
+}
+
+fn _init_owner_bots_index() -> StableBTreeMap<OwnerBotKey, (), Memory> {
+    StableBTreeMap::init(memory::get_owner_bots_index_memory())
 }
