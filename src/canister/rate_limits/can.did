@@ -26,7 +26,7 @@ type RateLimitsInitArgs = record { version : text };
 type Result = variant { Ok : VideoGenRequestKey; Err : text };
 type Result_1 = variant { Ok; Err : text };
 type Result_2 = variant { Ok : VideoGenRequestStatus; Err : text };
-type TokenType = variant { Dolr; Free; Sats };
+type TokenType = variant { YralProSubscription; Dolr; Free; Sats };
 type VideoGenRequest = record {
   status : VideoGenRequestStatus;
   updated_at : nat64;
