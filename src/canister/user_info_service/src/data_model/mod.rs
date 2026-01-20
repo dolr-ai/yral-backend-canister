@@ -27,13 +27,13 @@ use crate::data_model::memory::Memory;
 
 #[derive(CandidType, Deserialize, Serialize, Clone)]
 pub(crate) enum UserKind {
-    User { bots: Vec<Principal> },
-    Bot,
+    MainAccount { bots: Vec<Principal> },
+    BotAccount { owner: Principal },
 }
 
 impl Default for UserKind {
     fn default() -> Self {
-        UserKind::User { bots: Vec::new() }
+        UserKind::MainAccount { bots: Vec::new() }
     }
 }
 
@@ -67,7 +67,7 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
-            kind: UserKind::User { bots: Vec::new() },
+            kind: UserKind::MainAccount { bots: Vec::new() },
         }
     }
 
@@ -87,11 +87,11 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
-            kind: UserKind::User { bots: Vec::new() },
+            kind: UserKind::MainAccount { bots: Vec::new() },
         }
     }
 
-    pub fn bot(bot_principal: Principal) -> Self {
+    pub fn bot(bot_principal: Principal, owner: Principal) -> Self {
         Self {
             profile: UserProfile {
                 principal_id: Some(bot_principal),
@@ -107,7 +107,7 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
-            kind: UserKind::Bot,
+            kind: UserKind::BotAccount { owner },
         }
     }
 }
@@ -186,14 +186,14 @@ impl CanisterData {
                 .ok_or("Owner not found")?;
 
             match &mut user_info.kind {
-                UserKind::User { bots } => {
-                    // Register the bot
-                    self.user_infos.insert(bot, UserInfo::bot(bot));
+                UserKind::MainAccount { bots } => {
+                    // Register the bot with owner reference
+                    self.user_infos.insert(bot, UserInfo::bot(bot, user_principal));
                     // Add to user's bots list
                     bots.push(bot);
                     self.user_infos.insert(user_principal, user_info);
                 }
-                UserKind::Bot => {
+                UserKind::BotAccount { .. } => {
                     return Err("Bots cannot own other bots".to_string());
                 }
             }
@@ -369,8 +369,8 @@ impl CanisterData {
             .user_infos
             .get(&user_principal)
             .and_then(|info| match &info.kind {
-                UserKind::User { bots } => Some(bots.clone()),
-                UserKind::Bot => None,
+                UserKind::MainAccount { bots } => Some(bots.clone()),
+                UserKind::BotAccount { .. } => None,
             })
             .unwrap_or_default();
 
@@ -403,7 +403,7 @@ impl CanisterData {
             .ok_or("Caller not found".to_string())?;
 
         match &mut caller_info.kind {
-            UserKind::User { bots } => {
+            UserKind::MainAccount { bots } => {
                 if !bots.contains(&bot_principal) {
                     return Err("Not authorized - only owner can delete bot".to_string());
                 }
@@ -412,7 +412,7 @@ impl CanisterData {
                 self.user_infos.remove(&bot_principal);
                 Ok(())
             }
-            UserKind::Bot => Err("Bots cannot own other bots".to_string()),
+            UserKind::BotAccount { .. } => Err("Bots cannot own other bots".to_string()),
         }
     }
 
@@ -420,8 +420,8 @@ impl CanisterData {
         self.user_infos
             .get(&owner)
             .and_then(|info| match &info.kind {
-                UserKind::User { bots } => Some(bots.clone()),
-                UserKind::Bot => None,
+                UserKind::MainAccount { bots } => Some(bots.clone()),
+                UserKind::BotAccount { .. } => None,
             })
             .unwrap_or_default()
     }
@@ -732,8 +732,8 @@ impl CanisterData {
                 subscription_plan: user_info.profile.subscription_plan.clone(),
                 is_ai_influencer: user_info.profile.is_ai_influencer,
                 bots: match &user_info.kind {
-                    UserKind::User { bots } => bots.clone(),
-                    UserKind::Bot => Vec::new(),
+                    UserKind::MainAccount { bots } => bots.clone(),
+                    UserKind::BotAccount { .. } => Vec::new(),
                 },
             })
         } else {
