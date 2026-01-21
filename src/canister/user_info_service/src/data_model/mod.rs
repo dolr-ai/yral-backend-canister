@@ -351,6 +351,7 @@ impl CanisterData {
         &mut self,
         principal_to_delete: Principal,
         caller: Principal,
+        is_admin: bool,
     ) -> Result<(), String> {
         let user_info = self
             .user_infos
@@ -359,8 +360,9 @@ impl CanisterData {
 
         match &user_info.account_type {
             UserAccountType::MainAccount { bots } => {
-                if principal_to_delete != caller {
-                    return Err("Can only delete your own account".to_string());
+                // Admin or self can delete main account
+                if !is_admin && principal_to_delete != caller {
+                    return Err("Unauthorized".to_string());
                 }
                 // Cascade delete all bots
                 let bots_to_delete = bots.clone();
@@ -371,9 +373,11 @@ impl CanisterData {
                 Ok(())
             }
             UserAccountType::BotAccount { owner } => {
-                if *owner != caller {
-                    return Err("Not authorized - only owner can delete bot".to_string());
+                // Admin or owner can delete bot account
+                if !is_admin && *owner != caller {
+                    return Err("Unauthorized".to_string());
                 }
+                // Remove from owner's bots list
                 if let Some(mut owner_info) = self.user_infos.get(owner) {
                     if let UserAccountType::MainAccount { bots } = &mut owner_info.account_type {
                         bots.retain(|b| *b != principal_to_delete);
