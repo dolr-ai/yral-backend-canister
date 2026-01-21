@@ -9,7 +9,7 @@ use shared_utils::{
     canister_specific::{
         individual_user_template::types::{
             profile::{
-                UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
+                UserKind, UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
                 UserProfileDetailsForFrontendV5, UserProfileDetailsForFrontendV6,
                 UserProfileDetailsForFrontendV7,
             },
@@ -24,18 +24,6 @@ use shared_utils::{
 pub(crate) mod memory;
 
 use crate::data_model::memory::Memory;
-
-#[derive(CandidType, Deserialize, Serialize, Clone)]
-pub(crate) enum UserKind {
-    MainAccount { bots: Vec<Principal> },
-    BotAccount { owner: Principal },
-}
-
-impl Default for UserKind {
-    fn default() -> Self {
-        UserKind::MainAccount { bots: Vec::new() }
-    }
-}
 
 #[derive(CandidType, Deserialize, Serialize)]
 pub(crate) struct UserInfo {
@@ -731,10 +719,7 @@ impl CanisterData {
                     }),
                 subscription_plan: user_info.profile.subscription_plan.clone(),
                 is_ai_influencer: user_info.profile.is_ai_influencer,
-                bots: match &user_info.kind {
-                    UserKind::MainAccount { bots } => bots.clone(),
-                    UserKind::BotAccount { .. } => Vec::new(),
-                },
+                kind: user_info.kind.clone(),
             })
         } else {
             Err("User not found".to_string())

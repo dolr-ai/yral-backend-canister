@@ -7,8 +7,21 @@ use serde::{
 use std::marker::PhantomData;
 
 use crate::canister_specific::user_info_service::types::{NSFWInfo, ProfilePictureData, SubscriptionPlan};
+use serde::Deserializer;
 
 use super::migration::MigrationInfo;
+
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
+pub enum UserKind {
+    MainAccount { bots: Vec<Principal> },
+    BotAccount { owner: Principal },
+}
+
+impl Default for UserKind {
+    fn default() -> Self {
+        UserKind::MainAccount { bots: Vec::new() }
+    }
+}
 
 #[derive(Default, Clone, CandidType, Debug, Serialize)]
 pub struct UserProfile {
@@ -348,7 +361,7 @@ pub struct UserProfileDetailsForFrontendV7 {
     pub user_follows_caller: Option<bool>,
     pub subscription_plan: SubscriptionPlan,
     pub is_ai_influencer: bool,
-    pub bots: Vec<Principal>,
+    pub kind: UserKind,
 }
 
 #[derive(Deserialize, CandidType)]

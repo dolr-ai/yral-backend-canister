@@ -81,6 +81,10 @@ type UserProfileDetailsForFrontendV6 = record {
   followers_count : nat64;
   caller_follows_user : opt bool;
 };
+type UserKind = variant {
+  MainAccount : record { bots : vec principal };
+  BotAccount : record { owner : principal };
+};
 type UserProfileDetailsForFrontendV7 = record {
   bio : opt text;
   website_url : opt text;
@@ -92,7 +96,7 @@ type UserProfileDetailsForFrontendV7 = record {
   principal_id : principal;
   followers_count : nat64;
   caller_follows_user : opt bool;
-  bots : vec principal;
+  kind : UserKind;
 };
 type UserProfileGlobalStats = record {
   hot_bets_received : nat64;
