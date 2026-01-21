@@ -12,14 +12,14 @@ use serde::Deserializer;
 use super::migration::MigrationInfo;
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
-pub enum UserKind {
+pub enum UserAccountType {
     MainAccount { bots: Vec<Principal> },
     BotAccount { owner: Principal },
 }
 
-impl Default for UserKind {
+impl Default for UserAccountType {
     fn default() -> Self {
-        UserKind::MainAccount { bots: Vec::new() }
+        UserAccountType::MainAccount { bots: Vec::new() }
     }
 }
 
@@ -361,7 +361,7 @@ pub struct UserProfileDetailsForFrontendV7 {
     pub user_follows_caller: Option<bool>,
     pub subscription_plan: SubscriptionPlan,
     pub is_ai_influencer: bool,
-    pub kind: UserKind,
+    pub account_type: UserAccountType,
 }
 
 #[derive(Deserialize, CandidType)]

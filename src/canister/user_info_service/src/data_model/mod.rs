@@ -9,7 +9,7 @@ use shared_utils::{
     canister_specific::{
         individual_user_template::types::{
             profile::{
-                UserKind, UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
+                UserAccountType, UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
                 UserProfileDetailsForFrontendV5, UserProfileDetailsForFrontendV6,
                 UserProfileDetailsForFrontendV7,
             },
@@ -35,7 +35,7 @@ pub(crate) struct UserInfo {
     #[serde(default)]
     following: BTreeSet<Principal>,
     #[serde(default)]
-    kind: UserKind,
+    account_type: UserAccountType,
 }
 
 impl UserInfo {
@@ -55,7 +55,7 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
-            kind: UserKind::MainAccount { bots: Vec::new() },
+            account_type: UserAccountType::MainAccount { bots: Vec::new() },
         }
     }
 
@@ -75,7 +75,7 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
-            kind: UserKind::MainAccount { bots: Vec::new() },
+            account_type: UserAccountType::MainAccount { bots: Vec::new() },
         }
     }
 
@@ -95,7 +95,7 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
-            kind: UserKind::BotAccount { owner },
+            account_type: UserAccountType::BotAccount { owner },
         }
     }
 }
@@ -158,44 +158,40 @@ impl CanisterData {
 
     pub fn register_authenticated_user_v2(
         &mut self,
-        user_principal: Principal,
+        new_principal: Principal,
         authenticated: bool,
-        bot_principal: Option<Principal>,
+        main_account: Option<Principal>,
     ) -> Result<(), String> {
-        if let Some(bot) = bot_principal {
-            if self.user_infos.contains_key(&bot) {
-                println!("Bot already exists");
-                return Ok(());
-            }
+        if self.user_infos.contains_key(&new_principal) {
+            println!("User already exists");
+            return Ok(());
+        }
 
-            let mut user_info = self
+        if let Some(owner) = main_account {
+            let mut owner_info = self
                 .user_infos
-                .get(&user_principal)
+                .get(&owner)
                 .ok_or("Owner not found")?;
 
-            match &mut user_info.kind {
-                UserKind::MainAccount { bots } => {
+            match &mut owner_info.account_type {
+                UserAccountType::MainAccount { bots } => {
                     // Register the bot with owner reference
-                    self.user_infos.insert(bot, UserInfo::bot(bot, user_principal));
-                    // Add to user's bots list
-                    bots.push(bot);
-                    self.user_infos.insert(user_principal, user_info);
+                    self.user_infos.insert(new_principal, UserInfo::bot(new_principal, owner));
+                    // Add to owner's bots list
+                    bots.push(new_principal);
+                    self.user_infos.insert(owner, owner_info);
                 }
-                UserKind::BotAccount { .. } => {
+                UserAccountType::BotAccount { .. } => {
                     return Err("Bots cannot own other bots".to_string());
                 }
             }
         } else {
-            if self.user_infos.contains_key(&user_principal) {
-                return Ok(());
-            }
-
             self.user_infos.insert(
-                user_principal,
+                new_principal,
                 if authenticated {
-                    UserInfo::authenticated(user_principal)
+                    UserInfo::authenticated(new_principal)
                 } else {
-                    UserInfo::new(user_principal)
+                    UserInfo::new(new_principal)
                 },
             );
         }
@@ -351,65 +347,51 @@ impl CanisterData {
         }
     }
 
-    pub fn delete_user_info(&mut self, user_principal: Principal) -> Result<(), String> {
-        // Get bots to delete if this is a user (not a bot)
-        let bots_to_delete = self
-            .user_infos
-            .get(&user_principal)
-            .and_then(|info| match &info.kind {
-                UserKind::MainAccount { bots } => Some(bots.clone()),
-                UserKind::BotAccount { .. } => None,
-            })
-            .unwrap_or_default();
-
-        // Cascade delete all bots
-        for bot_principal in bots_to_delete {
-            self.user_infos.remove(&bot_principal);
-        }
-
-        // Then delete the user
-        let removed_user = self.user_infos.remove(&user_principal);
-        if removed_user.is_some() {
-            Ok(())
-        } else {
-            Err("User not found".to_string())
-        }
-    }
-
-    pub fn delete_bot_account(
+    pub fn delete_user_info(
         &mut self,
-        bot_principal: Principal,
+        principal_to_delete: Principal,
         caller: Principal,
     ) -> Result<(), String> {
-        if !self.user_infos.contains_key(&bot_principal) {
-            return Err("Bot not found".to_string());
-        }
-
-        let mut caller_info = self
+        let user_info = self
             .user_infos
-            .get(&caller)
-            .ok_or("Caller not found".to_string())?;
+            .get(&principal_to_delete)
+            .ok_or("User not found")?;
 
-        match &mut caller_info.kind {
-            UserKind::MainAccount { bots } => {
-                if !bots.contains(&bot_principal) {
-                    return Err("Not authorized - only owner can delete bot".to_string());
+        match &user_info.account_type {
+            UserAccountType::MainAccount { bots } => {
+                if principal_to_delete != caller {
+                    return Err("Can only delete your own account".to_string());
                 }
-                bots.retain(|b| *b != bot_principal);
-                self.user_infos.insert(caller, caller_info);
-                self.user_infos.remove(&bot_principal);
+                // Cascade delete all bots
+                let bots_to_delete = bots.clone();
+                for bot_principal in bots_to_delete {
+                    self.user_infos.remove(&bot_principal);
+                }
+                self.user_infos.remove(&principal_to_delete);
                 Ok(())
             }
-            UserKind::BotAccount { .. } => Err("Bots cannot own other bots".to_string()),
+            UserAccountType::BotAccount { owner } => {
+                if *owner != caller {
+                    return Err("Not authorized - only owner can delete bot".to_string());
+                }
+                if let Some(mut owner_info) = self.user_infos.get(owner) {
+                    if let UserAccountType::MainAccount { bots } = &mut owner_info.account_type {
+                        bots.retain(|b| *b != principal_to_delete);
+                        self.user_infos.insert(*owner, owner_info);
+                    }
+                }
+                self.user_infos.remove(&principal_to_delete);
+                Ok(())
+            }
         }
     }
 
     pub fn get_bots_by_owner(&self, owner: Principal) -> Vec<Principal> {
         self.user_infos
             .get(&owner)
-            .and_then(|info| match &info.kind {
-                UserKind::MainAccount { bots } => Some(bots.clone()),
-                UserKind::BotAccount { .. } => None,
+            .and_then(|info| match &info.account_type {
+                UserAccountType::MainAccount { bots } => Some(bots.clone()),
+                UserAccountType::BotAccount { .. } => None,
             })
             .unwrap_or_default()
     }
@@ -719,7 +701,7 @@ impl CanisterData {
                     }),
                 subscription_plan: user_info.profile.subscription_plan.clone(),
                 is_ai_influencer: user_info.profile.is_ai_influencer,
-                kind: user_info.kind.clone(),
+                account_type: user_info.account_type.clone(),
             })
         } else {
             Err("User not found".to_string())

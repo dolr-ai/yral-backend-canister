@@ -13,11 +13,11 @@ fn accept_new_user_registration(user_principal: Principal, authenticated: bool) 
 
 #[update(guard = "is_caller_global_admin")]
 fn accept_new_user_registration_v2(
-    user_principal: Principal,
+    new_principal: Principal,
     authenticated: bool,
-    bot_principal: Option<Principal>,
+    main_account: Option<Principal>,
 ) -> Result<(), String> {
     CANISTER_DATA.with_borrow_mut(|canister_data| {
-        canister_data.register_authenticated_user_v2(user_principal, authenticated, bot_principal)
+        canister_data.register_authenticated_user_v2(new_principal, authenticated, main_account)
     })
 }
