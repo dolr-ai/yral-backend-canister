@@ -9,8 +9,9 @@ use shared_utils::{
     canister_specific::{
         individual_user_template::types::{
             profile::{
-                UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
+                UserAccountType, UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
                 UserProfileDetailsForFrontendV5, UserProfileDetailsForFrontendV6,
+                UserProfileDetailsForFrontendV7,
             },
             session::SessionType,
         },
@@ -33,6 +34,8 @@ pub(crate) struct UserInfo {
     followers: BTreeSet<Principal>,
     #[serde(default)]
     following: BTreeSet<Principal>,
+    #[serde(default)]
+    account_type: UserAccountType,
 }
 
 impl UserInfo {
@@ -52,6 +55,7 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
+            account_type: UserAccountType::MainAccount { bots: Vec::new() },
         }
     }
 
@@ -71,6 +75,27 @@ impl UserInfo {
             last_access_time: get_current_system_time(),
             followers: BTreeSet::new(),
             following: BTreeSet::new(),
+            account_type: UserAccountType::MainAccount { bots: Vec::new() },
+        }
+    }
+
+    pub fn bot(bot_principal: Principal, owner: Principal) -> Self {
+        Self {
+            profile: UserProfile {
+                principal_id: Some(bot_principal),
+                profile_stats: Default::default(),
+                referrer_details: None,
+                bio: None,
+                website_url: None,
+                subscription_plan: Default::default(),
+                profile_picture: None,
+                is_ai_influencer: false,
+            },
+            session_type: SessionType::RegisteredSession,
+            last_access_time: get_current_system_time(),
+            followers: BTreeSet::new(),
+            following: BTreeSet::new(),
+            account_type: UserAccountType::BotAccount { owner },
         }
     }
 }
@@ -127,6 +152,49 @@ impl CanisterData {
                 UserInfo::new(user_principal)
             },
         );
+
+        Ok(())
+    }
+
+    pub fn register_authenticated_user_v2(
+        &mut self,
+        new_principal: Principal,
+        authenticated: bool,
+        main_account: Option<Principal>,
+    ) -> Result<(), String> {
+        if self.user_infos.contains_key(&new_principal) {
+            println!("User already exists");
+            return Ok(());
+        }
+
+        if let Some(owner) = main_account {
+            let mut owner_info = self
+                .user_infos
+                .get(&owner)
+                .ok_or("Owner not found")?;
+
+            match &mut owner_info.account_type {
+                UserAccountType::MainAccount { bots } => {
+                    // Register the bot with owner reference
+                    self.user_infos.insert(new_principal, UserInfo::bot(new_principal, owner));
+                    // Add to owner's bots list
+                    bots.push(new_principal);
+                    self.user_infos.insert(owner, owner_info);
+                }
+                UserAccountType::BotAccount { .. } => {
+                    return Err("Bots cannot own other bots".to_string());
+                }
+            }
+        } else {
+            self.user_infos.insert(
+                new_principal,
+                if authenticated {
+                    UserInfo::authenticated(new_principal)
+                } else {
+                    UserInfo::new(new_principal)
+                },
+            );
+        }
 
         Ok(())
     }
@@ -279,13 +347,57 @@ impl CanisterData {
         }
     }
 
-    pub fn delete_user_info(&mut self, user_principal: Principal) -> Result<(), String> {
-        let removed_user = self.user_infos.remove(&user_principal);
-        if removed_user.is_some() {
-            Ok(())
-        } else {
-            Err("User not found".to_string())
+    pub fn delete_user_info(
+        &mut self,
+        principal_to_delete: Principal,
+        caller: Principal,
+        is_admin: bool,
+    ) -> Result<(), String> {
+        let user_info = self
+            .user_infos
+            .get(&principal_to_delete)
+            .ok_or("User not found")?;
+
+        match &user_info.account_type {
+            UserAccountType::MainAccount { bots } => {
+                // Admin or self can delete main account
+                if !is_admin && principal_to_delete != caller {
+                    return Err("Unauthorized".to_string());
+                }
+                // Cascade delete all bots
+                let bots_to_delete = bots.clone();
+                for bot_principal in bots_to_delete {
+                    self.user_infos.remove(&bot_principal);
+                }
+                self.user_infos.remove(&principal_to_delete);
+                Ok(())
+            }
+            UserAccountType::BotAccount { owner } => {
+                // Admin or owner can delete bot account
+                if !is_admin && *owner != caller {
+                    return Err("Unauthorized".to_string());
+                }
+                // Remove from owner's bots list
+                if let Some(mut owner_info) = self.user_infos.get(owner) {
+                    if let UserAccountType::MainAccount { bots } = &mut owner_info.account_type {
+                        bots.retain(|b| *b != principal_to_delete);
+                        self.user_infos.insert(*owner, owner_info);
+                    }
+                }
+                self.user_infos.remove(&principal_to_delete);
+                Ok(())
+            }
         }
+    }
+
+    pub fn get_bots_by_owner(&self, owner: Principal) -> Vec<Principal> {
+        self.user_infos
+            .get(&owner)
+            .and_then(|info| match &info.account_type {
+                UserAccountType::MainAccount { bots } => Some(bots.clone()),
+                UserAccountType::BotAccount { .. } => None,
+            })
+            .unwrap_or_default()
     }
 
     pub fn follow_user(&mut self, follower: Principal, target: Principal) -> Result<(), String> {
@@ -554,6 +666,50 @@ impl CanisterData {
 
         self.user_infos.insert(user_principal, user_info);
         Ok(())
+    }
+
+    pub fn get_profile_details_for_user_v7(
+        &self,
+        user_principal: Principal,
+        caller_principal: Principal,
+    ) -> Result<UserProfileDetailsForFrontendV7, String> {
+        if let Some(user_info) = self.user_infos.get(&user_principal) {
+            Ok(UserProfileDetailsForFrontendV7 {
+                principal_id: user_principal,
+                profile_picture: user_info.profile.profile_picture.clone(),
+                bio: user_info.profile.bio.clone(),
+                website_url: user_info.profile.website_url.clone(),
+                followers_count: user_info.followers.len() as u64,
+                following_count: user_info.following.len() as u64,
+                caller_follows_user: user_info
+                    .followers
+                    .contains(&caller_principal)
+                    .then_some(true)
+                    .or_else(|| {
+                        if caller_principal == user_principal {
+                            None
+                        } else {
+                            Some(false)
+                        }
+                    }),
+                user_follows_caller: user_info
+                    .following
+                    .contains(&caller_principal)
+                    .then_some(true)
+                    .or_else(|| {
+                        if caller_principal == user_principal {
+                            None
+                        } else {
+                            Some(false)
+                        }
+                    }),
+                subscription_plan: user_info.profile.subscription_plan.clone(),
+                is_ai_influencer: user_info.profile.is_ai_influencer,
+                account_type: user_info.account_type.clone(),
+            })
+        } else {
+            Err("User not found".to_string())
+        }
     }
 
     pub fn get_profile_details_v4(
