@@ -57,12 +57,19 @@ pub struct FollowingResponse {
 #[derive(CandidType, Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct YralProSubscription {
     pub free_video_credits_left: u32,
+    #[serde(default = "default_value_for_total_video_credits_alloted")]
+    pub total_video_credits_alloted: u32,
+}
+
+fn default_value_for_total_video_credits_alloted() -> u32 {
+    30
 }
 
 impl Default for YralProSubscription {
     fn default() -> Self {
         YralProSubscription {
             free_video_credits_left: 30,
+            total_video_credits_alloted: 30,
         }
     }
 }
