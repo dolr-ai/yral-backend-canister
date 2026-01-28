@@ -68,6 +68,7 @@ fn test_change_subscription_plan_from_free_to_pro() {
     // Change to Pro plan
     let new_pro_plan = SubscriptionPlan::Pro(YralProSubscription {
         free_video_credits_left: 50,
+        total_video_credits_alloted: 50,
     });
 
     let result = update::<_, Result<(), String>>(
@@ -95,6 +96,7 @@ fn test_change_subscription_plan_from_free_to_pro() {
     match updated_plan {
         SubscriptionPlan::Pro(pro_sub) => {
             assert_eq!(pro_sub.free_video_credits_left, 50);
+            assert_eq!(pro_sub.total_video_credits_alloted, 50);
         }
         _ => panic!("Expected Pro plan, got: {:?}", updated_plan),
     }
@@ -112,6 +114,7 @@ fn test_change_subscription_plan_from_pro_to_free() {
 
     let pro_plan = SubscriptionPlan::Pro(YralProSubscription {
         free_video_credits_left: 30,
+        total_video_credits_alloted: 30,
     });
 
     let _ = update::<_, Result<(), String>>(
@@ -158,6 +161,7 @@ fn test_change_subscription_plan_for_non_existent_user() {
 
     let new_pro_plan = SubscriptionPlan::Pro(YralProSubscription {
         free_video_credits_left: 50,
+        total_video_credits_alloted: 50,
     });
 
     let result = update::<_, Result<(), String>>(
@@ -185,6 +189,7 @@ fn test_add_pro_plan_free_video_credits_success() {
 
     let pro_plan = SubscriptionPlan::Pro(YralProSubscription {
         free_video_credits_left: 10,
+        total_video_credits_alloted: 30,
     });
 
     let _ = update::<_, Result<(), String>>(
@@ -218,6 +223,7 @@ fn test_add_pro_plan_free_video_credits_success() {
     match updated_plan {
         SubscriptionPlan::Pro(pro_sub) => {
             assert_eq!(pro_sub.free_video_credits_left, 30);
+            assert_eq!(pro_sub.total_video_credits_alloted, 30);
         }
         _ => panic!("Expected Pro plan, got: {:?}", updated_plan),
     }
@@ -279,6 +285,7 @@ fn test_remove_pro_plan_free_video_credits_success() {
 
     let pro_plan = SubscriptionPlan::Pro(YralProSubscription {
         free_video_credits_left: 50,
+        total_video_credits_alloted: 50,
     });
 
     let _ = update::<_, Result<(), String>>(
@@ -316,6 +323,7 @@ fn test_remove_pro_plan_free_video_credits_success() {
     match updated_plan {
         SubscriptionPlan::Pro(pro_sub) => {
             assert_eq!(pro_sub.free_video_credits_left, 30);
+            assert_eq!(pro_sub.total_video_credits_alloted, 50);
         }
         _ => panic!("Expected Pro plan, got: {:?}", updated_plan),
     }
@@ -333,6 +341,7 @@ fn test_remove_pro_plan_free_video_credits_insufficient_credits() {
 
     let pro_plan = SubscriptionPlan::Pro(YralProSubscription {
         free_video_credits_left: 5,
+        total_video_credits_alloted: 5,
     });
 
     let _ = update::<_, Result<(), String>>(
@@ -367,6 +376,7 @@ fn test_remove_pro_plan_free_video_credits_insufficient_credits() {
     match updated_plan {
         SubscriptionPlan::Pro(pro_sub) => {
             assert_eq!(pro_sub.free_video_credits_left, 5);
+            assert_eq!(pro_sub.total_video_credits_alloted, 5);
         }
         _ => panic!("Expected Pro plan, got: {:?}", updated_plan),
     }
@@ -428,6 +438,7 @@ fn test_remove_all_pro_plan_free_video_credits() {
 
     let pro_plan = SubscriptionPlan::Pro(YralProSubscription {
         free_video_credits_left: 25,
+        total_video_credits_alloted: 25,
     });
 
     let _ = update::<_, Result<(), String>>(
@@ -465,7 +476,114 @@ fn test_remove_all_pro_plan_free_video_credits() {
     match updated_plan {
         SubscriptionPlan::Pro(pro_sub) => {
             assert_eq!(pro_sub.free_video_credits_left, 0);
+            assert_eq!(pro_sub.total_video_credits_alloted, 25);
         }
         _ => panic!("Expected Pro plan, got: {:?}", updated_plan),
+    }
+}
+
+#[test]
+fn test_video_credits_never_exceed_allotted_limit() {
+    let (pocket_ic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_service_canister = service_canisters.user_info_service_canister_id;
+    let admin_principal = get_global_super_admin_principal_id();
+    let user_principal = get_mock_user_alice_principal_id();
+
+    // Setup user and change to Pro plan with a specific allotment
+    setup_test_user(&pocket_ic, user_service_canister, user_principal);
+
+    let pro_plan = SubscriptionPlan::Pro(YralProSubscription {
+        free_video_credits_left: 20,
+        total_video_credits_alloted: 50,
+    });
+
+    let _ = update::<_, Result<(), String>>(
+        &pocket_ic,
+        user_service_canister,
+        admin_principal,
+        "change_subscription_plan",
+        (user_principal, pro_plan),
+    )
+    .expect("Failed to set Pro plan");
+
+    // Verify initial state
+    let plan = get_user_subscription_plan(
+        &pocket_ic,
+        user_service_canister,
+        user_principal,
+        user_principal,
+    );
+    match plan {
+        SubscriptionPlan::Pro(pro_sub) => {
+            assert_eq!(pro_sub.free_video_credits_left, 20);
+            assert_eq!(pro_sub.total_video_credits_alloted, 50);
+            assert!(pro_sub.free_video_credits_left <= pro_sub.total_video_credits_alloted);
+        }
+        _ => panic!("Expected Pro plan"),
+    }
+
+    // Add credits that would reach the limit exactly
+    let result = update::<_, Result<(), String>>(
+        &pocket_ic,
+        user_service_canister,
+        admin_principal,
+        "add_pro_plan_free_video_credits",
+        (user_principal, 30u32),
+    )
+    .expect("Failed to add video credits");
+
+    assert!(result.is_ok(), "Adding video credits failed: {:?}", result);
+
+    // Verify credits are now at limit
+    let updated_plan = get_user_subscription_plan(
+        &pocket_ic,
+        user_service_canister,
+        user_principal,
+        user_principal,
+    );
+    match updated_plan {
+        SubscriptionPlan::Pro(pro_sub) => {
+            assert_eq!(pro_sub.free_video_credits_left, 50);
+            assert_eq!(pro_sub.total_video_credits_alloted, 50);
+            assert!(pro_sub.free_video_credits_left <= pro_sub.total_video_credits_alloted);
+        }
+        _ => panic!("Expected Pro plan"),
+    }
+
+    // Try to add more credits beyond the limit - this should fail
+    let result_overflow = update::<_, Result<(), String>>(
+        &pocket_ic,
+        user_service_canister,
+        admin_principal,
+        "add_pro_plan_free_video_credits",
+        (user_principal, 10u32),
+    )
+    .expect("Failed to call add_pro_plan_free_video_credits");
+
+    assert!(result_overflow.is_err());
+    assert!(result_overflow
+        .unwrap_err()
+        .contains("would exceed allotted limit"));
+
+    // Verify that credits remain at the limit and weren't changed
+    let final_plan = get_user_subscription_plan(
+        &pocket_ic,
+        user_service_canister,
+        user_principal,
+        user_principal,
+    );
+    match final_plan {
+        SubscriptionPlan::Pro(pro_sub) => {
+            // Credits should remain at the allotted limit
+            assert_eq!(pro_sub.free_video_credits_left, 50);
+            assert_eq!(pro_sub.total_video_credits_alloted, 50);
+            assert!(
+                pro_sub.free_video_credits_left <= pro_sub.total_video_credits_alloted,
+                "Credits {} should never exceed allotted limit {}",
+                pro_sub.free_video_credits_left,
+                pro_sub.total_video_credits_alloted
+            );
+        }
+        _ => panic!("Expected Pro plan"),
     }
 }
