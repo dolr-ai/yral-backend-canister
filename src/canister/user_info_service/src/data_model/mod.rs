@@ -882,6 +882,12 @@ impl CanisterData {
                     .checked_add(credits_to_add)
                 {
                     Some(new_credits) => {
+                        if new_credits > pro_subscription.total_video_credits_alloted {
+                            return Err(format!(
+                                "Cannot add {} credits: would exceed allotted limit of {}",
+                                credits_to_add, pro_subscription.total_video_credits_alloted
+                            ));
+                        }
                         pro_subscription.free_video_credits_left = new_credits;
                         self.user_infos.insert(user_principal, user_info);
                         Ok(())
