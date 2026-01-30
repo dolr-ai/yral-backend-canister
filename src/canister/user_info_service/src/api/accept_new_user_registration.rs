@@ -1,6 +1,6 @@
 use candid::Principal;
 use ic_cdk::update;
-use shared_utils::common::utils::permissions::is_caller_global_admin;
+use shared_utils::common::utils::permissions::{is_caller_global_admin, is_not_anonymous};
 
 use crate::CANISTER_DATA;
 
@@ -11,7 +11,7 @@ fn accept_new_user_registration(user_principal: Principal, authenticated: bool) 
     })
 }
 
-#[update(guard = "is_caller_global_admin")]
+#[update(guard = "is_not_anonymous")]
 fn accept_new_user_registration_v2(
     new_principal: Principal,
     authenticated: bool,
