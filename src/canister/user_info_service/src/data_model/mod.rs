@@ -134,6 +134,45 @@ impl CanisterData {
         Ok(())
     }
 
+    pub fn register_new_user_v2(
+        &mut self,
+        bot_account_principal: Option<Principal>,
+    ) -> Result<(), String> {
+        let user_principal = ic_cdk::caller();
+
+        if let Some(bot_principal) = bot_account_principal {
+            if self.user_infos.contains_key(&bot_principal) {
+                return Err("Bot account principal already exists".to_string());
+            }
+
+            let mut user_info = self
+                .user_infos
+                .get(&user_principal)
+                .ok_or("Main account must be registered before adding bot accounts".to_string())?;
+
+            match &mut user_info.account_type {
+                UserAccountType::MainAccount { bots } => {
+                    self.user_infos
+                        .insert(bot_principal, UserInfo::bot(bot_principal, user_principal));
+                    bots.push(bot_principal);
+                    self.user_infos.insert(user_principal, user_info);
+                }
+                UserAccountType::BotAccount { .. } => {
+                    return Err("Bot accounts cannot own other bots".to_string());
+                }
+            }
+        } else {
+            if self.user_infos.contains_key(&user_principal) {
+                return Ok(());
+            }
+
+            self.user_infos
+                .insert(user_principal, UserInfo::new(user_principal));
+        }
+
+        Ok(())
+    }
+
     pub fn register_authenticated_user(
         &mut self,
         user_principal: Principal,
