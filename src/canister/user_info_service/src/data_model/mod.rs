@@ -9,14 +9,15 @@ use shared_utils::{
     canister_specific::{
         individual_user_template::types::{
             profile::{
-                UserAccountType, UserProfile, UserProfileDetailsForFrontendV3, UserProfileDetailsForFrontendV4,
-                UserProfileDetailsForFrontendV5, UserProfileDetailsForFrontendV6,
-                UserProfileDetailsForFrontendV7,
+                UserAccountType, UserProfile, UserProfileDetailsForFrontendV3,
+                UserProfileDetailsForFrontendV4, UserProfileDetailsForFrontendV5,
+                UserProfileDetailsForFrontendV6, UserProfileDetailsForFrontendV7,
             },
             session::SessionType,
         },
         user_info_service::types::{
-            NSFWInfo, ProfilePictureData, ProfileUpdateDetails, ProfileUpdateDetailsV2, SubscriptionPlan,
+            NSFWInfo, ProfilePictureData, ProfileUpdateDetails, ProfileUpdateDetailsV2,
+            SubscriptionPlan,
         },
     },
     common::utils::system_time::get_current_system_time,
@@ -168,15 +169,13 @@ impl CanisterData {
         }
 
         if let Some(owner) = main_account {
-            let mut owner_info = self
-                .user_infos
-                .get(&owner)
-                .ok_or("Owner not found")?;
+            let mut owner_info = self.user_infos.get(&owner).ok_or("Owner not found")?;
 
             match &mut owner_info.account_type {
                 UserAccountType::MainAccount { bots } => {
                     // Register the bot with owner reference
-                    self.user_infos.insert(new_principal, UserInfo::bot(new_principal, owner));
+                    self.user_infos
+                        .insert(new_principal, UserInfo::bot(new_principal, owner));
                     // Add to owner's bots list
                     bots.push(new_principal);
                     self.user_infos.insert(owner, owner_info);
@@ -218,7 +217,11 @@ impl CanisterData {
             Ok(UserProfileDetailsForFrontendV3 {
                 principal_id: user_principal,
                 profile_stats: user_info.profile.profile_stats,
-                profile_picture_url: user_info.profile.profile_picture.as_ref().map(|p| p.url.clone()),
+                profile_picture_url: user_info
+                    .profile
+                    .profile_picture
+                    .as_ref()
+                    .map(|p| p.url.clone()),
             })
         } else {
             Err("User not found".to_string())
@@ -260,7 +263,11 @@ impl CanisterData {
                         }
                     }),
                 subscription_plan: user_info.profile.subscription_plan.clone(),
-                profile_picture_url: user_info.profile.profile_picture.as_ref().map(|p| p.url.clone()),
+                profile_picture_url: user_info
+                    .profile
+                    .profile_picture
+                    .as_ref()
+                    .map(|p| p.url.clone()),
             })
         } else {
             Err("User not found".to_string())
@@ -712,6 +719,21 @@ impl CanisterData {
         }
     }
 
+    pub fn get_users_profile_details(
+        &self,
+        users: Vec<Principal>,
+        caller_principal: Principal,
+    ) -> Result<Vec<UserProfileDetailsForFrontendV7>, String> {
+        let mut profiles = Vec::new();
+        for user in users {
+            match self.get_profile_details_for_user_v7(user, caller_principal) {
+                Ok(profile) => profiles.push(profile),
+                Err(e) => {}
+            }
+        }
+        Ok(profiles)
+    }
+
     pub fn get_profile_details_v4(
         &self,
         caller_principal: Principal,
@@ -733,7 +755,11 @@ impl CanisterData {
             Ok(UserProfileDetailsForFrontendV4 {
                 principal_id: user_principal,
                 profile_stats: user_info.profile.profile_stats,
-                profile_picture_url: user_info.profile.profile_picture.as_ref().map(|p| p.url.clone()),
+                profile_picture_url: user_info
+                    .profile
+                    .profile_picture
+                    .as_ref()
+                    .map(|p| p.url.clone()),
                 bio: user_info.profile.bio.clone(),
                 website_url: user_info.profile.website_url.clone(),
                 followers_count: user_info.followers.len() as u64,
@@ -768,9 +794,9 @@ impl CanisterData {
 
                 // Get profile picture if requested
                 let profile_picture_url = if include_profile_pics {
-                    self.user_infos
-                        .get(&principal)
-                        .and_then(|info| info.profile.profile_picture.as_ref().map(|p| p.url.clone()))
+                    self.user_infos.get(&principal).and_then(|info| {
+                        info.profile.profile_picture.as_ref().map(|p| p.url.clone())
+                    })
                 } else {
                     None
                 };
@@ -808,9 +834,9 @@ impl CanisterData {
 
                 // Get profile picture if requested
                 let profile_picture_url = if include_profile_pics {
-                    self.user_infos
-                        .get(&principal)
-                        .and_then(|info| info.profile.profile_picture.as_ref().map(|p| p.url.clone()))
+                    self.user_infos.get(&principal).and_then(|info| {
+                        info.profile.profile_picture.as_ref().map(|p| p.url.clone())
+                    })
                 } else {
                     None
                 };

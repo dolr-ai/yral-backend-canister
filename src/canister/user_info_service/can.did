@@ -39,6 +39,10 @@ type Result_5 = variant { Ok : UserProfileDetailsForFrontendV5; Err : text };
 type Result_6 = variant { Ok : UserProfileDetailsForFrontendV6; Err : text };
 type Result_7 = variant { Ok : UserProfileDetailsForFrontendV7; Err : text };
 type Result_8 = variant { Ok : SessionType; Err : text };
+type Result_9 = variant {
+  Ok : vec UserProfileDetailsForFrontendV7;
+  Err : text;
+};
 type SessionType = variant { AnonymousSession; RegisteredSession };
 type SubscriptionPlan = variant { Pro : YralProSubscription; Free };
 type UserAccountType = variant {
@@ -127,6 +131,7 @@ service : (UserInfoServiceInitArgs) -> {
   get_user_profile_details_v6 : (principal) -> (Result_6) query;
   get_user_profile_details_v7 : (principal) -> (Result_7) query;
   get_user_session_type : (principal) -> (Result_8) query;
+  get_users_profile_details : (vec principal) -> (Result_9) query;
   get_version : () -> (text) query;
   register_new_user : () -> (Result);
   remove_pro_plan_free_video_credits : (principal, nat32) -> (Result);
