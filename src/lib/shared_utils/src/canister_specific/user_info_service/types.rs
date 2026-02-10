@@ -54,7 +54,7 @@ pub struct FollowingResponse {
     pub next_cursor: Option<Principal>,
 }
 
-#[derive(CandidType, Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(CandidType, Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Copy)]
 pub struct YralProSubscription {
     pub free_video_credits_left: u32,
     #[serde(default = "default_value_for_total_video_credits_alloted")]
@@ -74,7 +74,7 @@ impl Default for YralProSubscription {
     }
 }
 
-#[derive(CandidType, Deserialize, Serialize, Debug, Default, Clone, PartialEq, Eq)]
+#[derive(CandidType, Deserialize, Serialize, Debug, Default, Clone, PartialEq, Eq, Copy)]
 pub enum SubscriptionPlan {
     #[default]
     Free,
