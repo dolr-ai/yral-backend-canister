@@ -234,7 +234,7 @@ impl CanisterData {
         caller_principal: Principal,
     ) -> Result<UserProfileDetailsForFrontendV5, String> {
         if let Some(user_info) = self.user_infos.get(&user_principal) {
-            let subscription_info = self.get_user_pro_subscription_plan(user_principal)?;
+            let subscription_info = self.get_effective_subscription_plan(user_principal)?;
             Ok(UserProfileDetailsForFrontendV5 {
                 principal_id: user_principal,
                 bio: user_info.profile.bio.clone(),
@@ -281,7 +281,7 @@ impl CanisterData {
         caller_principal: Principal,
     ) -> Result<UserProfileDetailsForFrontendV6, String> {
         if let Some(user_info) = self.user_infos.get(&user_principal) {
-            let subscription_info = self.get_user_pro_subscription_plan(user_principal)?;
+            let subscription_info = self.get_effective_subscription_plan(user_principal)?;
             Ok(UserProfileDetailsForFrontendV6 {
                 principal_id: user_principal,
                 profile_picture: user_info.profile.profile_picture.clone(),
@@ -683,7 +683,7 @@ impl CanisterData {
         caller_principal: Principal,
     ) -> Result<UserProfileDetailsForFrontendV7, String> {
         if let Some(user_info) = self.user_infos.get(&user_principal) {
-            let subscription_info = self.get_user_pro_subscription_plan(user_principal)?;
+            let subscription_info = self.get_effective_subscription_plan(user_principal)?;
             Ok(UserProfileDetailsForFrontendV7 {
                 principal_id: user_principal,
                 profile_picture: user_info.profile.profile_picture.clone(),
@@ -865,7 +865,7 @@ impl CanisterData {
             .get(&user_principal)
             .ok_or("User not found".to_string())?;
 
-        match user_info.account_type {
+        match &user_info.account_type {
             UserAccountType::BotAccount { owner } => {
                 let mut main_account_user_info = self
                     .user_infos
@@ -874,7 +874,7 @@ impl CanisterData {
 
                 main_account_user_info.profile.subscription_plan = new_plan;
 
-                self.user_infos.insert(owner, main_account_user_info);
+                self.user_infos.insert(*owner, main_account_user_info);
             }
             _ => {
                 user_info.profile.subscription_plan = new_plan;
@@ -890,7 +890,7 @@ impl CanisterData {
         user_principal: Principal,
         credits_to_remove: u32,
     ) -> Result<(), String> {
-        let mut subscription_info = self.get_user_pro_subscription_plan(user_principal)?;
+        let mut subscription_info = self.get_effective_subscription_plan(user_principal)?;
 
         match &mut subscription_info {
             SubscriptionPlan::Pro(pro_subscription) => {
@@ -905,7 +905,7 @@ impl CanisterData {
         }
     }
 
-    pub fn get_user_pro_subscription_plan(
+    pub fn get_effective_subscription_plan(
         &self,
         user_principal: Principal,
     ) -> Result<SubscriptionPlan, String> {
@@ -914,11 +914,11 @@ impl CanisterData {
             .get(&user_principal)
             .ok_or("User not found".to_string())?;
 
-        match user_info.account_type {
+        match &user_info.account_type {
             UserAccountType::BotAccount { owner } => {
                 // For bot accounts, return the owner's subscription plan if available
                 self.user_infos
-                    .get(&owner)
+                    .get(owner)
                     .map(|owner_account_info| owner_account_info.profile.subscription_plan)
                     .ok_or("Owner not found".to_string())
             }
@@ -931,7 +931,7 @@ impl CanisterData {
         user_principal: Principal,
         credits_to_add: u32,
     ) -> Result<(), String> {
-        let mut subscription_info = self.get_user_pro_subscription_plan(user_principal)?;
+        let mut subscription_info = self.get_effective_subscription_plan(user_principal)?;
 
         match &mut subscription_info {
             SubscriptionPlan::Pro(pro_subscription) => {
