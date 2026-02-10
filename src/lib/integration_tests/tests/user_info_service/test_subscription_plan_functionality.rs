@@ -3,6 +3,7 @@ use shared_utils::canister_specific::individual_user_template::types::profile::U
 use shared_utils::canister_specific::user_info_service::types::{
     SubscriptionPlan, YralProSubscription,
 };
+use shared_utils::service;
 use test_utils::canister_calls::{query, update};
 use test_utils::setup::env::pocket_ic_env::get_new_pocket_ic_env_with_service_canisters_provisioned;
 use test_utils::setup::test_constants::{
@@ -150,6 +151,60 @@ fn test_change_subscription_plan_from_pro_to_free() {
         user_principal,
     );
     assert!(matches!(updated_plan, SubscriptionPlan::Free));
+}
+
+#[test]
+fn test_change_subscripton_for_bot_account() {
+    let (pocket_ic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+
+    let user_service_canister = service_canisters.user_info_service_canister_id;
+
+    let admin_principal = get_global_super_admin_principal_id();
+    let parent_account = get_mock_user_charlie_principal_id(); // Don't register this user
+    let bot_account = get_mock_user_bob_principal_id();
+
+    setup_bot_with_parent(
+        &pocket_ic,
+        user_service_canister,
+        parent_account,
+        bot_account,
+        admin_principal,
+    );
+
+    let new_pro_plan = SubscriptionPlan::Pro(YralProSubscription {
+        free_video_credits_left: 50,
+        total_video_credits_alloted: 50,
+    });
+
+    let result = update::<_, Result<(), String>>(
+        &pocket_ic,
+        user_service_canister,
+        admin_principal,
+        "change_subscription_plan",
+        (bot_account, new_pro_plan),
+    )
+    .expect("Failed to call change_subscription_plan");
+
+    assert!(
+        result.is_ok(),
+        "Subscription plan change failed: {:?}",
+        result
+    );
+
+    // Verify credits were added (10 + 20 = 30)
+    let updated_plan = get_user_subscription_plan(
+        &pocket_ic,
+        user_service_canister,
+        parent_account,
+        parent_account,
+    );
+    match updated_plan {
+        SubscriptionPlan::Pro(pro_sub) => {
+            assert_eq!(pro_sub.free_video_credits_left, 50);
+            assert_eq!(pro_sub.total_video_credits_alloted, 50);
+        }
+        _ => panic!("Expected Pro plan, got: {:?}", updated_plan),
+    }
 }
 
 #[test]
