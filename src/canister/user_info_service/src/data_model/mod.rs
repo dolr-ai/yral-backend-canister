@@ -234,6 +234,7 @@ impl CanisterData {
         caller_principal: Principal,
     ) -> Result<UserProfileDetailsForFrontendV5, String> {
         if let Some(user_info) = self.user_infos.get(&user_principal) {
+            let subscription_info = self.get_effective_subscription_plan(user_principal)?;
             Ok(UserProfileDetailsForFrontendV5 {
                 principal_id: user_principal,
                 bio: user_info.profile.bio.clone(),
@@ -262,7 +263,7 @@ impl CanisterData {
                             Some(false)
                         }
                     }),
-                subscription_plan: user_info.profile.subscription_plan.clone(),
+                subscription_plan: subscription_info,
                 profile_picture_url: user_info
                     .profile
                     .profile_picture
@@ -280,6 +281,7 @@ impl CanisterData {
         caller_principal: Principal,
     ) -> Result<UserProfileDetailsForFrontendV6, String> {
         if let Some(user_info) = self.user_infos.get(&user_principal) {
+            let subscription_info = self.get_effective_subscription_plan(user_principal)?;
             Ok(UserProfileDetailsForFrontendV6 {
                 principal_id: user_principal,
                 profile_picture: user_info.profile.profile_picture.clone(),
@@ -309,7 +311,7 @@ impl CanisterData {
                             Some(false)
                         }
                     }),
-                subscription_plan: user_info.profile.subscription_plan.clone(),
+                subscription_plan: subscription_info,
                 is_ai_influencer: user_info.profile.is_ai_influencer,
             })
         } else {
@@ -681,6 +683,7 @@ impl CanisterData {
         caller_principal: Principal,
     ) -> Result<UserProfileDetailsForFrontendV7, String> {
         if let Some(user_info) = self.user_infos.get(&user_principal) {
+            let subscription_info = self.get_effective_subscription_plan(user_principal)?;
             Ok(UserProfileDetailsForFrontendV7 {
                 principal_id: user_principal,
                 profile_picture: user_info.profile.profile_picture.clone(),
@@ -710,7 +713,7 @@ impl CanisterData {
                             Some(false)
                         }
                     }),
-                subscription_plan: user_info.profile.subscription_plan.clone(),
+                subscription_plan: subscription_info,
                 is_ai_influencer: user_info.profile.is_ai_influencer,
                 account_type: user_info.account_type.clone(),
             })
@@ -862,9 +865,23 @@ impl CanisterData {
             .get(&user_principal)
             .ok_or("User not found".to_string())?;
 
-        user_info.profile.subscription_plan = new_plan;
+        match &user_info.account_type {
+            UserAccountType::BotAccount { owner } => {
+                let mut main_account_user_info = self
+                    .user_infos
+                    .get(&owner)
+                    .ok_or("Main account not found for bot".to_string())?;
 
-        self.user_infos.insert(user_principal, user_info);
+                main_account_user_info.profile.subscription_plan = new_plan;
+
+                self.user_infos.insert(*owner, main_account_user_info);
+            }
+            _ => {
+                user_info.profile.subscription_plan = new_plan;
+                self.user_infos.insert(user_principal, user_info);
+            }
+        }
+
         Ok(())
     }
 
@@ -873,21 +890,39 @@ impl CanisterData {
         user_principal: Principal,
         credits_to_remove: u32,
     ) -> Result<(), String> {
-        let mut user_info = self
-            .user_infos
-            .get(&user_principal)
-            .ok_or("User not found".to_string())?;
+        let mut subscription_info = self.get_effective_subscription_plan(user_principal)?;
 
-        match &mut user_info.profile.subscription_plan {
+        match &mut subscription_info {
             SubscriptionPlan::Pro(pro_subscription) => {
                 if pro_subscription.free_video_credits_left < credits_to_remove {
                     return Err("Not enough free video credits".to_string());
                 }
                 pro_subscription.free_video_credits_left -= credits_to_remove;
-                self.user_infos.insert(user_principal, user_info);
+                self.change_subscription_plan(user_principal, subscription_info)?;
                 Ok(())
             }
             SubscriptionPlan::Free => Err("User is on Free plan".to_string()),
+        }
+    }
+
+    pub fn get_effective_subscription_plan(
+        &self,
+        user_principal: Principal,
+    ) -> Result<SubscriptionPlan, String> {
+        let user_info = self
+            .user_infos
+            .get(&user_principal)
+            .ok_or("User not found".to_string())?;
+
+        match &user_info.account_type {
+            UserAccountType::BotAccount { owner } => {
+                // For bot accounts, return the owner's subscription plan if available
+                self.user_infos
+                    .get(owner)
+                    .map(|owner_account_info| owner_account_info.profile.subscription_plan)
+                    .ok_or("Owner not found".to_string())
+            }
+            _ => Ok(user_info.profile.subscription_plan),
         }
     }
 
@@ -896,12 +931,9 @@ impl CanisterData {
         user_principal: Principal,
         credits_to_add: u32,
     ) -> Result<(), String> {
-        let mut user_info = self
-            .user_infos
-            .get(&user_principal)
-            .ok_or("User not found".to_string())?;
+        let mut subscription_info = self.get_effective_subscription_plan(user_principal)?;
 
-        match &mut user_info.profile.subscription_plan {
+        match &mut subscription_info {
             SubscriptionPlan::Pro(pro_subscription) => {
                 match pro_subscription
                     .free_video_credits_left
@@ -915,7 +947,7 @@ impl CanisterData {
                             ));
                         }
                         pro_subscription.free_video_credits_left = new_credits;
-                        self.user_infos.insert(user_principal, user_info);
+                        self.change_subscription_plan(user_principal, subscription_info)?;
                         Ok(())
                     }
                     None => Err("Overflow when adding free credits".to_string()),
