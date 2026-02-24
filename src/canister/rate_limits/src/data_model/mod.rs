@@ -87,7 +87,7 @@ impl CanisterData {
         }
 
         // Check property-wide daily rate limit first
-        if self.is_property_daily_rate_limited(property) {
+        if self.is_property_daily_rate_limited(property).is_limited {
             return true;
         }
 
@@ -230,11 +230,22 @@ impl CanisterData {
                 request_count: 1, // Any value >= 0 will exceed max_requests of 0
                 window_start: current_time,
                 is_limited: true, // Always limited when blacklisted
+                window_duration_seconds: 0,
+                max_requests_per_window_per_user: 0,
             });
         }
 
         // Check property-wide daily rate limit
-        if self.is_property_daily_rate_limited(property) {
+
+        let property_wide_limit_status = self.is_property_daily_rate_limited(property);
+
+        let user_rate_limit_entry = self.rate_limits.get(&key).unwrap_or(RateLimitEntry {
+            request_count: 0,
+            window_start: current_time,
+            config: None,
+        });
+
+        if property_wide_limit_status.is_limited {
             // Get the principal's current count for the status
             let entry = self.rate_limits.get(&key).unwrap_or(RateLimitEntry {
                 request_count: 0,
@@ -246,6 +257,9 @@ impl CanisterData {
                 principal: *principal,
                 request_count: entry.request_count,
                 window_start: entry.window_start,
+                window_duration_seconds: property_wide_limit_status.window_duration_seconds,
+                max_requests_per_window_per_user: property_wide_limit_status
+                    .max_requests_per_window_per_user,
                 is_limited: true, // Limited due to property-wide limit
             });
         }
@@ -295,6 +309,8 @@ impl CanisterData {
             request_count: entry.request_count,
             window_start: entry.window_start,
             is_limited,
+            window_duration_seconds: window_duration,
+            max_requests_per_window_per_user: max_requests,
         })
     }
 
@@ -397,7 +413,7 @@ impl CanisterData {
         self.blacklist.contains(property) || self.blacklist.contains("all")
     }
 
-    fn is_property_daily_rate_limited(&self, property: &str) -> bool {
+    fn is_property_daily_rate_limited(&self, property: &str) -> RateLimitStatus {
         // First check if property has a property-wide limit configured
         if let Some(prop_config) = self.property_configs.get(&property.to_string()) {
             if let Some(property_limit) = prop_config.max_requests_per_property_all_users {
@@ -412,12 +428,26 @@ impl CanisterData {
                     // Check if we're still within the same window
                     if current_time < entry.window_start + window_duration {
                         // Within same window, check if limit exceeded
-                        return entry.request_count >= property_limit;
+                        return RateLimitStatus {
+                            principal: Principal::anonymous(),
+                            request_count: entry.request_count,
+                            window_start: entry.window_start,
+                            window_duration_seconds: window_duration,
+                            max_requests_per_window_per_user: 0,
+                            is_limited: entry.request_count >= property_limit,
+                        };
                     }
                 }
             }
         }
-        false
+        RateLimitStatus {
+            principal: Principal::anonymous(),
+            request_count: 0,
+            window_start: 0,
+            window_duration_seconds: 0,
+            max_requests_per_window_per_user: 0,
+            is_limited: false,
+        }
     }
 
     pub fn get_property_daily_usage(&self, property: &str) -> u64 {
@@ -448,7 +478,7 @@ impl CanisterData {
 
     // Check only property-wide limit for paid requests
     pub fn is_property_daily_rate_limited_for_paid(&self, property: &str) -> bool {
-        self.is_property_daily_rate_limited(property)
+        self.is_property_daily_rate_limited(property).is_limited
     }
 
     // Increment only property counter for paid requests
