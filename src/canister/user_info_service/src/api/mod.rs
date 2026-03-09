@@ -1,5 +1,6 @@
 mod accept_new_user_registration;
 mod canister_lifecycle;
+mod convert_to_bot_account;
 mod delete_user_info;
 mod follow_user;
 pub mod get_followers;

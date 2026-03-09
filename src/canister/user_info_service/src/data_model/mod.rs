@@ -660,6 +660,57 @@ impl CanisterData {
         Ok(())
     }
 
+    /// Admin-only method to convert an existing MainAccount into a BotAccount under an owner.
+    /// If the bot account has a Pro subscription, it is transferred to the owner and the bot's
+    /// subscription is reset to Free.
+    pub fn convert_to_bot_account(
+        &mut self,
+        bot_principal: Principal,
+        owner: Principal,
+    ) -> Result<(), String> {
+        if bot_principal == owner {
+            return Err("Cannot convert owner to its own bot".to_string());
+        }
+
+        let mut bot_info = self
+            .user_infos
+            .get(&bot_principal)
+            .ok_or("Bot principal not found")?;
+
+        let mut owner_info = self
+            .user_infos
+            .get(&owner)
+            .ok_or("Owner not found")?;
+
+        match &mut owner_info.account_type {
+            UserAccountType::MainAccount { bots } => {
+                if bots.contains(&bot_principal) {
+                    return Err("Already a bot of this owner".to_string());
+                }
+                bots.push(bot_principal);
+            }
+            UserAccountType::BotAccount { .. } => {
+                return Err("Owner is a bot account, cannot own other bots".to_string());
+            }
+        }
+
+        // Transfer Pro subscription from bot to owner if bot has one
+        if let SubscriptionPlan::Pro(_) = bot_info.profile.subscription_plan {
+            // Only transfer if owner is on Free plan
+            if matches!(owner_info.profile.subscription_plan, SubscriptionPlan::Free) {
+                owner_info.profile.subscription_plan = bot_info.profile.subscription_plan;
+            }
+            bot_info.profile.subscription_plan = SubscriptionPlan::Free;
+        }
+
+        bot_info.account_type = UserAccountType::BotAccount { owner };
+
+        self.user_infos.insert(owner, owner_info);
+        self.user_infos.insert(bot_principal, bot_info);
+
+        Ok(())
+    }
+
     /// Admin-only method to update AI influencer status for a user's profile
     pub fn update_profile_ai_influencer_status(
         &mut self,
