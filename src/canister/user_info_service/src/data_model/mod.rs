@@ -660,7 +660,9 @@ impl CanisterData {
         Ok(())
     }
 
-    /// Admin-only method to convert an existing MainAccount into a BotAccount under an owner
+    /// Admin-only method to convert an existing MainAccount into a BotAccount under an owner.
+    /// If the bot account has a Pro subscription, it is transferred to the owner and the bot's
+    /// subscription is reset to Free.
     pub fn convert_to_bot_account(
         &mut self,
         bot_principal: Principal,
@@ -690,6 +692,15 @@ impl CanisterData {
             UserAccountType::BotAccount { .. } => {
                 return Err("Owner is a bot account, cannot own other bots".to_string());
             }
+        }
+
+        // Transfer Pro subscription from bot to owner if bot has one
+        if let SubscriptionPlan::Pro(_) = bot_info.profile.subscription_plan {
+            // Only transfer if owner is on Free plan
+            if matches!(owner_info.profile.subscription_plan, SubscriptionPlan::Free) {
+                owner_info.profile.subscription_plan = bot_info.profile.subscription_plan;
+            }
+            bot_info.profile.subscription_plan = SubscriptionPlan::Free;
         }
 
         bot_info.account_type = UserAccountType::BotAccount { owner };
