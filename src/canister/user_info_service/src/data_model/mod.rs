@@ -660,6 +660,46 @@ impl CanisterData {
         Ok(())
     }
 
+    /// Admin-only method to convert an existing MainAccount into a BotAccount under an owner
+    pub fn convert_to_bot_account(
+        &mut self,
+        bot_principal: Principal,
+        owner: Principal,
+    ) -> Result<(), String> {
+        if bot_principal == owner {
+            return Err("Cannot convert owner to its own bot".to_string());
+        }
+
+        let mut bot_info = self
+            .user_infos
+            .get(&bot_principal)
+            .ok_or("Bot principal not found")?;
+
+        let mut owner_info = self
+            .user_infos
+            .get(&owner)
+            .ok_or("Owner not found")?;
+
+        match &mut owner_info.account_type {
+            UserAccountType::MainAccount { bots } => {
+                if bots.contains(&bot_principal) {
+                    return Err("Already a bot of this owner".to_string());
+                }
+                bots.push(bot_principal);
+            }
+            UserAccountType::BotAccount { .. } => {
+                return Err("Owner is a bot account, cannot own other bots".to_string());
+            }
+        }
+
+        bot_info.account_type = UserAccountType::BotAccount { owner };
+
+        self.user_infos.insert(owner, owner_info);
+        self.user_infos.insert(bot_principal, bot_info);
+
+        Ok(())
+    }
+
     /// Admin-only method to update AI influencer status for a user's profile
     pub fn update_profile_ai_influencer_status(
         &mut self,
