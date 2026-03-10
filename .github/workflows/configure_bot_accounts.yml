@@ -1,0 +1,100 @@
+name: Configure bot accounts on user_info_service
+
+on:
+  push:
+    branches:
+      - ci/configure-bot-accounts
+  workflow_dispatch:
+
+jobs:
+  configure:
+    name: Convert AI influencer accounts to bot accounts
+    runs-on: ubuntu-latest
+    env:
+      CANISTER_ID: ivkka-7qaaa-aaaas-qbg3q-cai
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dfx
+        uses: dfinity/setup-dfx@main
+        with:
+          dfx-version: "0.24.3"
+
+      - name: Import admin identity
+        run: |
+          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > admin_identity.pem
+          dfx identity import --storage-mode=plaintext admin admin_identity.pem
+          dfx identity use admin
+          rm admin_identity.pem
+
+      - name: Convert bot accounts under parent 1 (rpjg4)
+        run: |
+          PARENT1="rpjg4-6u2ia-ng6y3-ktyrm-mnlfv-6bppr-jihbh-dnkw5-loonk-57c44-5ae"
+
+          # Ahaan Sharma (fitness)
+          dfx canister call $CANISTER_ID convert_to_bot_account \
+            "(principal \"qg2pi-g3xl4-uprdd-macwr-64q7r-plotv-xm3bg-iayu3-rnpux-7ikkz-hqe\", principal \"$PARENT1\")" \
+            --network ic
+
+          # Kshitij Khanna (dating)
+          dfx canister call $CANISTER_ID convert_to_bot_account \
+            "(principal \"zchob-yxzst-hjmrg-um4bk-d5zwx-3s2ft-jedwo-xitfe-sg2ks-6dnxy-sae\", principal \"$PARENT1\")" \
+            --network ic
+
+          # Dr. Tanya Kapoor (health)
+          dfx canister call $CANISTER_ID convert_to_bot_account \
+            "(principal \"5pho3-hiuzu-atzdq-mqara-vk3sq-n47qa-ltvvf-rpwd5-3qx7a-ctdks-bqe\", principal \"$PARENT1\")" \
+            --network ic
+
+      - name: Convert bot accounts under parent 2 (nrwrl)
+        run: |
+          PARENT2="nrwrl-zbmlu-gfpuk-qjmof-2abrs-gjqzh-f7i4y-acmzs-yr2w7-vxr44-xae"
+
+          # Arun Pandit (astrology)
+          dfx canister call $CANISTER_ID convert_to_bot_account \
+            "(principal \"azjhl-m7isb-qfocx-md5sm-z55f2-zm5qf-lss57-5zdns-ljyy4-wfv2x-rae\", principal \"$PARENT2\")" \
+            --network ic
+
+          # Tara (companion)
+          dfx canister call $CANISTER_ID convert_to_bot_account \
+            "(principal \"qi6gd-esmrx-v2oyd-7fwhm-ibfs5-trflm-xm3iy-xq6d3-3hmwu-jb7tk-5qe\", principal \"$PARENT2\")" \
+            --network ic
+
+      - name: Verify bot account configurations
+        run: |
+          echo "=== Parent 1 (rpjg4) ==="
+          dfx canister call $CANISTER_ID get_user_profile_details_v7 \
+            "(principal \"rpjg4-6u2ia-ng6y3-ktyrm-mnlfv-6bppr-jihbh-dnkw5-loonk-57c44-5ae\")" \
+            --network ic
+
+          echo "=== Parent 2 (nrwrl) ==="
+          dfx canister call $CANISTER_ID get_user_profile_details_v7 \
+            "(principal \"nrwrl-zbmlu-gfpuk-qjmof-2abrs-gjqzh-f7i4y-acmzs-yr2w7-vxr44-xae\")" \
+            --network ic
+
+          echo "=== Ahaan (bot) ==="
+          dfx canister call $CANISTER_ID get_user_profile_details_v7 \
+            "(principal \"qg2pi-g3xl4-uprdd-macwr-64q7r-plotv-xm3bg-iayu3-rnpux-7ikkz-hqe\")" \
+            --network ic
+
+          echo "=== Kshitij (bot) ==="
+          dfx canister call $CANISTER_ID get_user_profile_details_v7 \
+            "(principal \"zchob-yxzst-hjmrg-um4bk-d5zwx-3s2ft-jedwo-xitfe-sg2ks-6dnxy-sae\")" \
+            --network ic
+
+          echo "=== DrTanya (bot) ==="
+          dfx canister call $CANISTER_ID get_user_profile_details_v7 \
+            "(principal \"5pho3-hiuzu-atzdq-mqara-vk3sq-n47qa-ltvvf-rpwd5-3qx7a-ctdks-bqe\")" \
+            --network ic
+
+          echo "=== Arun (bot) ==="
+          dfx canister call $CANISTER_ID get_user_profile_details_v7 \
+            "(principal \"azjhl-m7isb-qfocx-md5sm-z55f2-zm5qf-lss57-5zdns-ljyy4-wfv2x-rae\")" \
+            --network ic
+
+          echo "=== Tara (bot) ==="
+          dfx canister call $CANISTER_ID get_user_profile_details_v7 \
+            "(principal \"qi6gd-esmrx-v2oyd-7fwhm-ibfs5-trflm-xm3iy-xq6d3-3hmwu-jb7tk-5qe\")" \
+            --network ic
