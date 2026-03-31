@@ -8,7 +8,10 @@ use std::{collections::HashSet, time::SystemTime};
 
 use crate::{
     canister_specific::user_post_service::types::args::PostDetailsForFrontend,
-    common::types::top_posts::post_score_index_item::PostStatus,
+    common::{
+        types::top_posts::post_score_index_item::PostStatus,
+        utils::system_time::get_current_system_time,
+    },
 };
 
 //TODO: Create new struct for PostForFrontend
@@ -120,6 +123,12 @@ impl Post {
     }
 
     pub fn update_status(&mut self, status: PostStatus) {
+        match (status, self.status) {
+            (PostStatus::Uploaded, PostStatus::Draft) => {
+                self.created_at = get_current_system_time();
+            }
+            _ => {}
+        }
         self.status = status;
     }
 }
