@@ -1,11 +1,14 @@
 use shared_utils::canister_specific::individual_user_template::types::error::GetPostsOfUserProfileError;
 use shared_utils::canister_specific::user_post_service::types::{
-    args::{PostDetailsForFrontend, PostDetailsFromFrontend},
+    args::{
+        PostDetailsForFrontend, PostDetailsFromFrontend, PostDetailsFromFrontendV1,
+        PostStatusFromFrontend,
+    },
     error::UserPostServiceError,
     storage::{Post, PostViewDetailsFromFrontend, PostViewStatistics},
 };
 use shared_utils::common::types::top_posts::post_score_index_item::PostStatus;
-use std::{collections::HashSet, time::SystemTime};
+use std::{collections::HashSet, time::{Duration, SystemTime}};
 use test_utils::{
     canister_calls::{query, update},
     setup::{
@@ -1161,4 +1164,88 @@ fn test_posts_pagination_preserves_sorting() {
     assert_eq!(page2_posts[0].id, "sorted_post_2");
     assert_eq!(page2_posts[1].id, "sorted_post_1");
     assert_eq!(page2_posts[2].id, "sorted_post_0"); // Oldest
+}
+
+#[test]
+fn test_published_posts_ordered_by_publish_time_not_creation_time() {
+    // Verifies that when draft posts are published in a different order than they were
+    // created, the feed reflects the publish order (newest publish first).
+    let (pic, service_canisters) = get_new_pocket_ic_env_with_service_canisters_provisioned();
+    let user_post_service_canister_id = service_canisters.user_post_service_canister_id;
+    let admin_principal = get_global_super_admin_principal_id();
+    let alice_principal = get_mock_user_alice_principal_id();
+
+    // Add three posts as drafts (creation order: A, B, C)
+    for id in ["draft_post_a", "draft_post_b", "draft_post_c"] {
+        let result: Result<Result<(), UserPostServiceError>, Box<dyn std::error::Error>> = update(
+            &pic,
+            user_post_service_canister_id,
+            admin_principal,
+            "add_post_v1",
+            (PostDetailsFromFrontendV1 {
+                id: id.to_string(),
+                description: format!("Draft post {}", id),
+                hashtags: vec![],
+                video_uid: format!("video_{}", id),
+                creator_principal: alice_principal,
+                status: PostStatusFromFrontend::Draft,
+            },),
+        );
+        assert!(result.is_ok(), "Failed to add draft post {}", id);
+    }
+
+    // Confirm none appear in the published feed yet
+    let feed_before: Vec<Post> = query::<_, Result<Vec<Post>, GetPostsOfUserProfileError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_posts_of_this_user_profile_with_pagination",
+        (alice_principal, 0usize, 10usize),
+    )
+    .unwrap()
+    .unwrap_or_default();
+    assert_eq!(feed_before.len(), 0, "Draft posts must not appear in feed");
+
+    // Publish in order: C → A → B, each 1 hour apart
+    // Expected feed order (newest publish first): B, A, C
+    for id in ["draft_post_c", "draft_post_a", "draft_post_b"] {
+        pic.advance_time(Duration::from_secs(3600));
+        pic.tick();
+        let result = update::<_, ()>(
+            &pic,
+            user_post_service_canister_id,
+            admin_principal,
+            "update_post_status",
+            (id.to_string(), PostStatus::Uploaded),
+        );
+        assert!(result.is_ok(), "Failed to publish {}", id);
+    }
+
+    // Fetch the published feed
+    let feed: Vec<Post> = query::<_, Result<Vec<Post>, GetPostsOfUserProfileError>>(
+        &pic,
+        user_post_service_canister_id,
+        alice_principal,
+        "get_posts_of_this_user_profile_with_pagination",
+        (alice_principal, 0usize, 10usize),
+    )
+    .unwrap()
+    .unwrap();
+
+    assert_eq!(feed.len(), 3);
+
+    // Most recently published should come first
+    assert_eq!(feed[0].id, "draft_post_b"); // published last
+    assert_eq!(feed[1].id, "draft_post_a"); // published second
+    assert_eq!(feed[2].id, "draft_post_c"); // published first
+
+    // created_at timestamps must be strictly decreasing (newest first)
+    assert!(
+        feed[0].created_at > feed[1].created_at,
+        "draft_post_b should have a later created_at than draft_post_a"
+    );
+    assert!(
+        feed[1].created_at > feed[2].created_at,
+        "draft_post_a should have a later created_at than draft_post_c"
+    );
 }
