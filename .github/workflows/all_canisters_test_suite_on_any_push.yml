@@ -1,8 +1,6 @@
-name: Canisters test suite run on any push except main
+name: Canisters test suite run on any push
 on:
-  pull_request:
-    branches:
-      - main
+  push:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

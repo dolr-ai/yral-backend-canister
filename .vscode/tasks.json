@@ -50,24 +50,6 @@
       ],
       "problemMatcher": []
     },
-    {
-      "label": "CI: Add PR to project",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "scripts/add_pr_to_project.sh"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "CI: Publish image",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "scripts/publish_image.sh"
-      ],
-      "problemMatcher": []
-    }
   ],
   "inputs": [
     {
