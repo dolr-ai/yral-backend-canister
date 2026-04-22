@@ -21,102 +21,15 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-      - name: Cache install Nix packages
-        uses: rikhuijzer/cache-install@v1.1.4
-        with:
-          key: nix-${{ hashFiles('default.nix') }}
-      - name: Cache rust dependencies, build output and DFX build cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            .dfx/
-          key: rust-test-${{ hashFiles('**/Cargo.lock') }}
-      - name: Import DFX identity
-        run: |
-          touch actions_identity.pem
-          echo "${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}" > actions_identity.pem
-          nix-shell --run "dfx identity import --storage-mode=plaintext actions actions_identity.pem"
-          nix-shell --run "dfx identity use actions"
-      - name: Build platform_orchestrator canister
-        run: |
-          nix-shell --run "dfx build platform_orchestrator --network=ic"
-          hash=$(sha256sum < .dfx/ic/canisters/platform_orchestrator/platform_orchestrator.wasm.gz)
-          echo "Module Hash: ${hash}"
-      - name: Build individual_user_template canister
-        run: |
-          nix-shell --run "dfx build individual_user_template --network=ic"
-          hash=$(sha256sum < .dfx/ic/canisters/individual_user_template/individual_user_template.wasm.gz)
-          echo "Module Hash: ${hash}"
-      - name: Build user_index canister
-        run: |
-          nix-shell --run "dfx build user_index --network=ic"
-          hash=$(sha256sum < .dfx/ic/canisters/user_index/user_index.wasm.gz)
-          echo "Module Hash: ${hash}"
-      - name: Copy candid files for release
-        run: |
-          cp .dfx/ic/canisters/platform_orchestrator/service.did platform_orchestrator.did
-          cp .dfx/ic/canisters/individual_user_template/service.did individual_user_template.did
-          cp .dfx/ic/canisters/user_index/service.did user_index.did
-      - name: 'Create Release'
-        uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-            repo_token: "${{ secrets.GITHUB_TOKEN }}"
-            prerelease: false
-            files: |
-                ./.dfx/ic/canisters/*/*.wasm.gz
-                ./*.did
-      - name: Get commits since last release
-        uses: loopwerk/tag-changelog@v1
-        id: changelog
-        with:
-          token: ${{secrets.GITHUB_TOKEN}}
-      - name: Install quill from GitHub Releases
-        run: |
-          curl -LJO https://github.com/dfinity/quill/releases/download/v0.4.2/quill-linux-x86_64-musl
-          mv quill-linux-x86_64-musl quill
-          chmod +x quill
-      - name: Submit upgrade proposal for platform_orchestrator canister
-        run: |
-          CANISTER_NAME=platform_orchestrator
-          export CANISTER_ID=$(nix-shell --run "dfx canister id ${CANISTER_NAME} --network=ic")
-          mkdir -p "proposals/${CANISTER_NAME}"
-          touch "proposals/${CANISTER_NAME}/upgrade.json"
-          ./quill sns \
-            --canister-ids-file ./sns_canister_ids.json \
-            --pem-file actions_identity.pem \
-            make-upgrade-canister-proposal \
-            --title "Upgrade ${CANISTER_NAME} Canisters" \
-            --summary "
-            # Upgrade ${CANISTER_NAME}
 
-            ${{ steps.changelog.outputs.changes }}
-            " \
-            --url 'https://yral.com' \
-            --target-canister-id $CANISTER_ID \
-            --wasm-path .dfx/ic/canisters/${CANISTER_NAME}/${CANISTER_NAME}.wasm.gz \
-            --canister-upgrade-arg "(record {version=\"${{ github.ref_name }}\"})" \
-            $NEURON_ID > "proposals/${CANISTER_NAME}/upgrade.json"
-          ./quill send proposals/${CANISTER_NAME}/upgrade.json --yes
-      - name: Upgrade subnet_orchestrator using platform_orchestrator
-        run: |
-          ./ic-repl-linux64 ic-repl-upgrades-proposal/upgrade_ic_repl.sh -r ic
-        env:
-          CANISTER_NAME: user_index
-          CHANGE_SUMMARY: ${{ steps.changelog.outputs.changes}}
-          VERSION: ${{ github.ref_name }} 
-      - name: Upgrade individual_user_template using platform_orchestrator
-        run: |
-          ./ic-repl-linux64 ic-repl-upgrades-proposal/upgrade_ic_repl.sh -r ic
-        env:
-          CANISTER_NAME: individual_user_template
-          CHANGE_SUMMARY: ${{ steps.changelog.outputs.changes}}
-          VERSION: ${{ github.ref_name }} 
-      
-          
-      - name: Remove messages
-        run: rm -r proposals
+      - name: Run release workflow in devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          runCmd: bash scripts/ci/release_and_submit_proposals.sh
+          env: |
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+            HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY=${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}
+            VERSION=${{ github.ref_name }}
+            NEURON_ID=${{ env.NEURON_ID }}
+            GITHUB_REPOSITORY=${{ github.repository }}

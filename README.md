@@ -1,37 +1,35 @@
 # HotOrNot Backend Canisters
 
-## Deploying Canisters locally
+## Reproducible local runs (same as CI)
 
-To deploy canisters locally using dfx follow these steps.
+The repository uses scripts in `scripts/ci` as the source of truth for both GitHub Actions and local runs.
 
-### Step 1
-Start dfx server 
-```sh 
-dfx start --background
-```
+Run these from the devcontainer:
 
-### Step 2
-Run the install script to build and deploy canisters. you can skip the test run by passing `-s` flag
-```sh 
-scripts/canisters/local_deploy/install_all_canisters.sh [-s]
-```
-
-**NOTE: This will only deploy one subnet-orchestrator (also called user-index in codebase) and will not deploy platform-orchestrator. Platform-orchestrator needs to be deployed and tested separately** 
-
-## Upgrading locally deployed canisters
-To upgrade locally deployed canisters. Run the following commands
-
-### Step 1
-Run the candid generator script to auto generate the candid files for the canisters.
 ```sh
-scripts/candid_generator.sh
+bash scripts/ci/run_canister_test_suite.sh
 ```
 
-### Step 2
-Build and upgrade the canisters deployed. You can pass `-s` flag to skip the tests
 ```sh
-scripts/canisters/local_deploy/upgrade_all_canisters.sh [-s]
+ACTION=take_snapshot CANISTER_ID=<canister-id> bash scripts/ci/canister_snapshot.sh
 ```
+
+```sh
+ACTION=list_snapshots CANISTER_ID=<canister-id> bash scripts/ci/canister_snapshot.sh
+```
+
+```sh
+ACTION=load_snapshot CANISTER_ID=<canister-id> SNAPSHOT_ID=<snapshot-id> bash scripts/ci/canister_snapshot.sh
+```
+
+You can also run the same commands from the VS Code Task UI via:
+- `CI: Run canister test suite`
+- `CI: Snapshot take`
+- `CI: Snapshot list`
+- `CI: Snapshot load`
+- `CI: Release and submit proposals`
+- `CI: Add PR to project`
+- `CI: Publish image`
 
 
 ## Testing Upgrades Locally
@@ -51,9 +49,9 @@ git checkout vx.y.z
 ```
 
 ### Step 2
-Run install script to install last upgrade that ran successfully on mainnet
+Run the CI-equivalent test suite script on the old tag
 ```sh
-scripts/canisters/local_deploy/install_all_canisters.sh [-s]
+bash scripts/ci/run_canister_test_suite.sh
 ```
 
 ### Step 3
@@ -63,9 +61,9 @@ git checkout main
 ```
 
 ### Step 4
-Run upgrade script to upgrade canisters locally
+Run the same CI-equivalent suite on `main`
 ```sh
-scripts/canisters/local_deploy/upgrade_all_canisters.sh [-s]
+bash scripts/ci/run_canister_test_suite.sh
 ```
 
 ### Step 5

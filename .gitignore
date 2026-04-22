@@ -11,7 +11,5 @@ msg.json
 ic-test-state-machine
 argument
 .history
-!scripts/canisters/docker/local-admin.pem
-!scripts/canisters/docker/minter.pem
 icp_index.wasm.gz
 icp_ledger.wasm.gz

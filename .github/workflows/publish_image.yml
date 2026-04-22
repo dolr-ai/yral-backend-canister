@@ -15,9 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and publish docker image
-        uses: macbre/push-to-ghcr@master
+      - name: Build and publish docker image in devcontainer
+        uses: devcontainers/ci@v0.3
         with:
-          image_name: yral-dapp/yral-backend-dev
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          image_tag: ${{ github.sha }}
+          runCmd: bash scripts/ci/publish_image.sh
+          env: |
+            IMAGE_NAME=ghcr.io/yral-dapp/yral-backend-dev
+            IMAGE_TAG=${{ github.sha }}
+            GITHUB_ACTOR=${{ github.actor }}
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}

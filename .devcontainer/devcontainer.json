@@ -3,7 +3,7 @@
         "dockerfile": "Dockerfile"
     },
     "containerEnv": {
-        "POCKET_IC_BIN": "/workspaces/hot-or-not-backend-canister/pocket-ic"
+        "POCKET_IC_BIN": "/workspaces/yral-backend-canister/pocket-ic"
     },
     "customizations": {
         "vscode": {
@@ -28,12 +28,18 @@
         }
     },
     "features": {
-        "ghcr.io/devcontainers/features/rust:1": {}
+        "ghcr.io/devcontainers/features/rust:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers-extra/features/ripgrep:1": {}
     },
     "mounts": [
+        "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock",
+        "type=bind,source=/run/host-services/ssh-auth.sock,target=/ssh-agent",
+        "type=bind,source=${env:HOME}/.config/gh,target=/home/vscode/.config/gh,consistency=cached",
         "type=bind,source=${localWorkspaceFolder}/../../.git/modules/apps/yral-backend-canister,target=/.git/modules/apps/yral-backend-canister,consistency=cached"
     ],
     "remoteEnv": {
+        "SSH_AUTH_SOCK": "/ssh-agent",
         "GIT_WORK_TREE": "/workspaces/yral-backend-canister"
     },
     "onCreateCommand": "rustup install;",

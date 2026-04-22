@@ -16,53 +16,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Run suite in devcontainer
+        uses: devcontainers/ci@v0.3
         with:
-          targets: wasm32-unknown-unknown
-
-      - name: Install dfx
-        uses: dfinity/setup-dfx@main
-        with:
-          dfx-version: "0.24.3"
-
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-
-      - name: Create canisters and build
-        run: |
-          dfx identity list
-          dfx start --background
-          dfx canister create --no-wallet individual_user_template
-          dfx canister create --no-wallet user_index
-          dfx canister create --no-wallet platform_orchestrator
-          dfx canister create --no-wallet notification_store
-          dfx canister create --no-wallet user_post_service
-          dfx canister create --no-wallet dedup_index
-          dfx canister create --no-wallet user_info_service
-          dfx canister create --no-wallet rate_limits
-          dfx stop
-
-      - name: Build canisters
-        run: |
-          dfx build platform_orchestrator
-          gzip -f -1 ./target/wasm32-unknown-unknown/release/platform_orchestrator.wasm
-          dfx build individual_user_template
-          gzip -f -1 ./target/wasm32-unknown-unknown/release/individual_user_template.wasm
-          dfx build user_index
-          gzip -f -1 ./target/wasm32-unknown-unknown/release/user_index.wasm
-          dfx build notification_store
-          gzip -f -1 ./target/wasm32-unknown-unknown/release/notification_store.wasm
-          dfx build user_post_service
-          gzip -f -1 ./target/wasm32-unknown-unknown/release/user_post_service.wasm
-          dfx build dedup_index
-          gzip -f -1 ./target/wasm32-unknown-unknown/release/dedup_index.wasm
-          dfx build user_info_service
-          gzip -f -1 ./target/wasm32-unknown-unknown/release/user_info_service.wasm
-          dfx build rate_limits
-          gzip -f -1 ./target/wasm32-unknown-unknown/release/rate_limits.wasm
-
-      - name: Run tests
-        run: cargo test
-        env:
-          POCKET_IC_BIN: ${{ github.workspace }}/pocket-ic
+          runCmd: bash scripts/ci/run_canister_test_suite.sh
+          env: |
+            POCKET_IC_BIN=/workspaces/yral-backend-canister/pocket-ic

@@ -26,4 +26,4 @@ jobs:
           imageName: ghcr.io/${{ github.repository }}-devcontainer
           push: always
           env: |
-            POCKET_IC_BIN=/workspaces/hot-or-not-backend-canister/pocket-ic
+            POCKET_IC_BIN=/workspaces/yral-backend-canister/pocket-ic

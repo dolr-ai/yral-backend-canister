@@ -1,0 +1,85 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CI: Run canister test suite",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "scripts/ci/run_canister_test_suite.sh"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "CI: Release and submit proposals",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "scripts/ci/release_and_submit_proposals.sh"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "CI: Snapshot take",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "ACTION=take_snapshot CANISTER_ID=${input:canisterId} SNAPSHOT_ID=${input:snapshotId} bash scripts/ci/canister_snapshot.sh"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "CI: Snapshot list",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "ACTION=list_snapshots CANISTER_ID=${input:canisterId} bash scripts/ci/canister_snapshot.sh"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "CI: Snapshot load",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "ACTION=load_snapshot CANISTER_ID=${input:canisterId} SNAPSHOT_ID=${input:snapshotId} bash scripts/ci/canister_snapshot.sh"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "CI: Add PR to project",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "scripts/ci/add_pr_to_project.sh"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "CI: Publish image",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "scripts/ci/publish_image.sh"
+      ],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "canisterId",
+      "type": "promptString",
+      "description": "Canister ID for snapshot task"
+    },
+    {
+      "id": "snapshotId",
+      "type": "promptString",
+      "description": "Snapshot ID (required for load, optional otherwise)",
+      "default": ""
+    }
+  ]
+}
