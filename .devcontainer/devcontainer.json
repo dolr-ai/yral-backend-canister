@@ -30,6 +30,12 @@
     "features": {
         "ghcr.io/devcontainers/features/rust:1": {}
     },
+    "mounts": [
+        "type=bind,source=${localWorkspaceFolder}/../../.git/modules/apps/yral-backend-canister,target=/.git/modules/apps/yral-backend-canister,consistency=cached"
+    ],
+    "remoteEnv": {
+        "GIT_WORK_TREE": "/workspaces/yral-backend-canister"
+    },
     "onCreateCommand": "rustup install;",
     "postCreateCommand": "bash -i .devcontainer/setup.sh"
 }
