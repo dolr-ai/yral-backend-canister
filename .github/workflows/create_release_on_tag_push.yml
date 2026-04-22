@@ -25,7 +25,7 @@ jobs:
       - name: Run release workflow in devcontainer
         uses: devcontainers/ci@v0.3
         with:
-          runCmd: bash scripts/ci/release_and_submit_proposals.sh
+          runCmd: bash scripts/release_and_submit_proposals.sh
           env: |
             GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
             GH_TOKEN=${{ secrets.GITHUB_TOKEN }}

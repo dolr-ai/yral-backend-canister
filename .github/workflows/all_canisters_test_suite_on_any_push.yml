@@ -19,6 +19,6 @@ jobs:
       - name: Run suite in devcontainer
         uses: devcontainers/ci@v0.3
         with:
-          runCmd: bash scripts/ci/run_canister_test_suite.sh
+          runCmd: bash scripts/run_canister_test_suite.sh
           env: |
             POCKET_IC_BIN=/workspaces/yral-backend-canister/pocket-ic

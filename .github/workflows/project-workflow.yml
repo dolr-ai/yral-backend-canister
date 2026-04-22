@@ -25,7 +25,7 @@ jobs:
       - name: Add PR to project in devcontainer
         uses: devcontainers/ci@v0.3
         with:
-          runCmd: bash scripts/ci/add_pr_to_project.sh
+          runCmd: bash scripts/add_pr_to_project.sh
           env: |
             GH_TOKEN=${{ steps.generate-token.outputs.token }}
             ORGANIZATION=${{ github.repository_owner }}

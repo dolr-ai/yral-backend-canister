@@ -7,19 +7,19 @@ The repository uses scripts in `scripts/ci` as the source of truth for both GitH
 Run these from the devcontainer:
 
 ```sh
-bash scripts/ci/run_canister_test_suite.sh
+bash scripts/run_canister_test_suite.sh
 ```
 
 ```sh
-ACTION=take_snapshot CANISTER_ID=<canister-id> bash scripts/ci/canister_snapshot.sh
+ACTION=take_snapshot CANISTER_ID=<canister-id> bash scripts/canister_snapshot.sh
 ```
 
 ```sh
-ACTION=list_snapshots CANISTER_ID=<canister-id> bash scripts/ci/canister_snapshot.sh
+ACTION=list_snapshots CANISTER_ID=<canister-id> bash scripts/canister_snapshot.sh
 ```
 
 ```sh
-ACTION=load_snapshot CANISTER_ID=<canister-id> SNAPSHOT_ID=<snapshot-id> bash scripts/ci/canister_snapshot.sh
+ACTION=load_snapshot CANISTER_ID=<canister-id> SNAPSHOT_ID=<snapshot-id> bash scripts/canister_snapshot.sh
 ```
 
 You can also run the same commands from the VS Code Task UI via:
@@ -51,7 +51,7 @@ git checkout vx.y.z
 ### Step 2
 Run the CI-equivalent test suite script on the old tag
 ```sh
-bash scripts/ci/run_canister_test_suite.sh
+bash scripts/run_canister_test_suite.sh
 ```
 
 ### Step 3
@@ -63,7 +63,7 @@ git checkout main
 ### Step 4
 Run the same CI-equivalent suite on `main`
 ```sh
-bash scripts/ci/run_canister_test_suite.sh
+bash scripts/run_canister_test_suite.sh
 ```
 
 ### Step 5

@@ -6,7 +6,7 @@
       "type": "shell",
       "command": "bash",
       "args": [
-        "scripts/ci/run_canister_test_suite.sh"
+        "scripts/run_canister_test_suite.sh"
       ],
       "group": "test",
       "problemMatcher": []
@@ -16,7 +16,7 @@
       "type": "shell",
       "command": "bash",
       "args": [
-        "scripts/ci/release_and_submit_proposals.sh"
+        "scripts/release_and_submit_proposals.sh"
       ],
       "problemMatcher": []
     },
@@ -26,7 +26,7 @@
       "command": "bash",
       "args": [
         "-lc",
-        "ACTION=take_snapshot CANISTER_ID=${input:canisterId} SNAPSHOT_ID=${input:snapshotId} bash scripts/ci/canister_snapshot.sh"
+        "ACTION=take_snapshot CANISTER_ID=${input:canisterId} SNAPSHOT_ID=${input:snapshotId} bash scripts/canister_snapshot.sh"
       ],
       "problemMatcher": []
     },
@@ -36,7 +36,7 @@
       "command": "bash",
       "args": [
         "-lc",
-        "ACTION=list_snapshots CANISTER_ID=${input:canisterId} bash scripts/ci/canister_snapshot.sh"
+        "ACTION=list_snapshots CANISTER_ID=${input:canisterId} bash scripts/canister_snapshot.sh"
       ],
       "problemMatcher": []
     },
@@ -46,7 +46,7 @@
       "command": "bash",
       "args": [
         "-lc",
-        "ACTION=load_snapshot CANISTER_ID=${input:canisterId} SNAPSHOT_ID=${input:snapshotId} bash scripts/ci/canister_snapshot.sh"
+        "ACTION=load_snapshot CANISTER_ID=${input:canisterId} SNAPSHOT_ID=${input:snapshotId} bash scripts/canister_snapshot.sh"
       ],
       "problemMatcher": []
     },
@@ -55,7 +55,7 @@
       "type": "shell",
       "command": "bash",
       "args": [
-        "scripts/ci/add_pr_to_project.sh"
+        "scripts/add_pr_to_project.sh"
       ],
       "problemMatcher": []
     },
@@ -64,7 +64,7 @@
       "type": "shell",
       "command": "bash",
       "args": [
-        "scripts/ci/publish_image.sh"
+        "scripts/publish_image.sh"
       ],
       "problemMatcher": []
     }
