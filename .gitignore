@@ -3,6 +3,7 @@
 .env
 target
 internet_identity.did
+/*.did
 quill
 .direnv/
 **/*.pem

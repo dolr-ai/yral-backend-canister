@@ -1,25 +1,5 @@
 {
   "canisters": {
-    "icp_ledger": {
-      "type": "custom",
-      "candid": "candid/ledger.did",
-      "wasm": "./icp_ledger.wasm.gz",
-      "remote": {
-        "id": {
-          "ic": "ryjl3-tyaaa-aaaaa-aaaba-cai"
-        }
-      }
-    },
-    "icp_index": {
-      "type": "custom",
-      "candid": "candid/index.did",
-      "wasm": "./icp_index.wasm.gz",
-      "remote": {
-        "id": {
-          "ic": "qhbym-qaaaa-aaaaa-aaafq-cai"
-        }
-      }
-    },
     "dollr_mock_ledger": {
       "type": "custom",
       "candid": "./src/lib/integration_tests/tests/pump_n_dump/mock_ledger/ledger.did",
@@ -123,42 +103,6 @@
       "optimize": "size",
       "package": "rate_limits",
       "type": "rust"
-    },
-    "sns_governance": {
-      "build": "",
-      "candid": "candid/sns_governance.did",
-      "type": "custom",
-      "wasm": ""
-    },
-    "sns_index": {
-      "build": "",
-      "candid": "candid/sns_index.did",
-      "type": "custom",
-      "wasm": ""
-    },
-    "sns_ledger": {
-      "build": "",
-      "candid": "candid/sns_ledger.did",
-      "type": "custom",
-      "wasm": ""
-    },
-    "sns_root": {
-      "build": "",
-      "candid": "candid/sns_root.did",
-      "type": "custom",
-      "wasm": ""
-    },
-    "sns_swap": {
-      "build": "",
-      "candid": "candid/sns_swap.did",
-      "type": "custom",
-      "wasm": ""
-    },
-    "sns_wasm": {
-      "build": "",
-      "candid": "candid/sns_wasm.did",
-      "type": "custom",
-      "wasm": ""
     },
     "user_index": {
       "candid": "./src/canister/user_index/can.did",
