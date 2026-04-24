@@ -8,29 +8,26 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                // copilot
                 "GitHub.copilot",
                 "GitHub.copilot-chat",
-                // docker
                 "ms-azuretools.vscode-containers",
-                // editor
                 "albert.TabOut",
-                // github
                 "mhutchie.git-graph",
                 "github.vscode-github-actions",
                 "GitHub.vscode-pull-request-github",
-                // rust
                 "fill-labs.dependi",
                 "tamasfe.even-better-toml",
                 "rust-lang.rust-analyzer",
-                "vadimcn.vscode-lldb"
+                "vadimcn.vscode-lldb",
+                "Anthropic.claude-code"
             ]
         }
     },
     "features": {
         "ghcr.io/devcontainers/features/rust:1": {},
         "ghcr.io/devcontainers/features/github-cli:1": {},
-        "ghcr.io/devcontainers-extra/features/ripgrep:1": {}
+        "ghcr.io/devcontainers-extra/features/ripgrep:1": {},
+        "ghcr.io/warrenbuckley/codespace-features/sqlite:1": {}
     },
     "mounts": [
         "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock",

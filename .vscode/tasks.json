@@ -50,6 +50,87 @@
       ],
       "problemMatcher": []
     },
+    {
+      "label": "IC Dashboard: Populate database",
+      "detail": "Fetch all ~1.2M canisters from the IC dashboard API into ic_canisters.db. Resumes automatically if interrupted.",
+      "type": "shell",
+      "command": "cargo",
+      "args": [
+        "test",
+        "-p",
+        "ic_canister_snapshot",
+        "test_populate_ic_canister_db",
+        "--",
+        "--ignored",
+        "--nocapture"
+      ],
+      "group": "test",
+      "isBackground": false,
+      "problemMatcher": []
+    },
+    {
+      "label": "IC Dashboard: Populate database (custom path)",
+      "detail": "Same as above but prompts for a custom database file path.",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "IC_CANISTER_DB_PATH=${input:dbPath} cargo test -p ic_canister_snapshot test_populate_ic_canister_db -- --ignored --nocapture"
+      ],
+      "group": "test",
+      "isBackground": false,
+      "problemMatcher": []
+    },
+    {
+      "label": "IC Dashboard: Query canisters by controller",
+      "detail": "List all canisters controlled by the NNS governance canister (example). Requires a populated database.",
+      "type": "shell",
+      "command": "cargo",
+      "args": [
+        "test",
+        "-p",
+        "ic_canister_snapshot",
+        "test_find_canisters_by_controller",
+        "--",
+        "--ignored",
+        "--nocapture"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "IC Dashboard: Show controllers of a canister",
+      "detail": "Show all controllers of the NNS ICP ledger canister (example). Requires a populated database.",
+      "type": "shell",
+      "command": "cargo",
+      "args": [
+        "test",
+        "-p",
+        "ic_canister_snapshot",
+        "test_get_controllers_for_canister",
+        "--",
+        "--ignored",
+        "--nocapture"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "IC Dashboard: Run all snapshot queries",
+      "detail": "Run all ic_canister_snapshot query tests. Requires a populated database.",
+      "type": "shell",
+      "command": "cargo",
+      "args": [
+        "test",
+        "-p",
+        "ic_canister_snapshot",
+        "--",
+        "--ignored",
+        "--nocapture"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    }
   ],
   "inputs": [
     {
@@ -62,6 +143,12 @@
       "type": "promptString",
       "description": "Snapshot ID (required for load, optional otherwise)",
       "default": ""
+    },
+    {
+      "id": "dbPath",
+      "type": "promptString",
+      "description": "Path for the IC canister snapshot database",
+      "default": "./ic_canisters.db"
     }
   ]
 }

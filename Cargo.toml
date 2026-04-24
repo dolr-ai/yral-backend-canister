@@ -13,6 +13,7 @@ members = [
     "src/lib/test_utils",
     "src/canister/dedup_index",
     "src/canister/rate_limits",
+    "src/lib/ic_canister_snapshot",
 ]
 
 [workspace.dependencies]

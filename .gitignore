@@ -14,3 +14,6 @@ argument
 .history
 icp_index.wasm.gz
 icp_ledger.wasm.gz
+**/*.db
+**/*.db-shm
+**/*.db-wal
