@@ -2,153 +2,17 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "CI: Run canister test suite",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "scripts/run_canister_test_suite.sh"
-      ],
-      "group": "test",
-      "problemMatcher": []
-    },
-    {
-      "label": "CI: Release and submit proposals",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "scripts/release_and_submit_proposals.sh"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "CI: Snapshot take",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "-lc",
-        "ACTION=take_snapshot CANISTER_ID=${input:canisterId} SNAPSHOT_ID=${input:snapshotId} bash scripts/canister_snapshot.sh"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "CI: Snapshot list",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "-lc",
-        "ACTION=list_snapshots CANISTER_ID=${input:canisterId} bash scripts/canister_snapshot.sh"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "CI: Snapshot load",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "-lc",
-        "ACTION=load_snapshot CANISTER_ID=${input:canisterId} SNAPSHOT_ID=${input:snapshotId} bash scripts/canister_snapshot.sh"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "IC Dashboard: Populate database",
-      "detail": "Fetch all ~1.2M canisters from the IC dashboard API into ic_canisters.db. Resumes automatically if interrupted.",
-      "type": "shell",
-      "command": "cargo",
-      "args": [
-        "test",
-        "-p",
-        "ic_canister_snapshot",
-        "test_populate_ic_canister_db",
-        "--",
-        "--ignored",
-        "--nocapture"
-      ],
-      "group": "test",
-      "isBackground": false,
-      "problemMatcher": []
-    },
-    {
-      "label": "IC Dashboard: Populate database (custom path)",
-      "detail": "Same as above but prompts for a custom database file path.",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "-lc",
-        "IC_CANISTER_DB_PATH=${input:dbPath} cargo test -p ic_canister_snapshot test_populate_ic_canister_db -- --ignored --nocapture"
-      ],
-      "group": "test",
-      "isBackground": false,
-      "problemMatcher": []
-    },
-    {
-      "label": "IC Dashboard: Query canisters by controller",
-      "detail": "List all canisters controlled by the NNS governance canister (example). Requires a populated database.",
-      "type": "shell",
-      "command": "cargo",
-      "args": [
-        "test",
-        "-p",
-        "ic_canister_snapshot",
-        "test_find_canisters_by_controller",
-        "--",
-        "--ignored",
-        "--nocapture"
-      ],
-      "group": "test",
-      "problemMatcher": []
-    },
-    {
-      "label": "IC Dashboard: Show controllers of a canister",
-      "detail": "Show all controllers of the NNS ICP ledger canister (example). Requires a populated database.",
-      "type": "shell",
-      "command": "cargo",
-      "args": [
-        "test",
-        "-p",
-        "ic_canister_snapshot",
-        "test_get_controllers_for_canister",
-        "--",
-        "--ignored",
-        "--nocapture"
-      ],
-      "group": "test",
-      "problemMatcher": []
-    },
-    {
       "label": "IC Dashboard: Run all snapshot queries",
-      "detail": "Run all ic_canister_snapshot query tests. Requires a populated database.",
+      "detail": "Execute all SQL queries in queries.sql against ic_canisters.db",
       "type": "shell",
-      "command": "cargo",
+      "command": "sqlite3",
       "args": [
-        "test",
-        "-p",
-        "ic_canister_snapshot",
-        "--",
-        "--ignored",
-        "--nocapture"
+        "src/lib/ic_canister_snapshot/ic_canisters.db",
+        "<",
+        "src/lib/ic_canister_snapshot/queries.sql"
       ],
       "group": "test",
       "problemMatcher": []
-    }
-  ],
-  "inputs": [
-    {
-      "id": "canisterId",
-      "type": "promptString",
-      "description": "Canister ID for snapshot task"
-    },
-    {
-      "id": "snapshotId",
-      "type": "promptString",
-      "description": "Snapshot ID (required for load, optional otherwise)",
-      "default": ""
-    },
-    {
-      "id": "dbPath",
-      "type": "promptString",
-      "description": "Path for the IC canister snapshot database",
-      "default": "./ic_canisters.db"
     }
   ]
 }
