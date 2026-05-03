@@ -5,17 +5,14 @@ if ! command -v dfx &>/dev/null; then
 fi
 
 # Install pocket-ic server (idempotent)
-POCKET_IC_VERSION="13.0.0"
+POCKET_IC_VERSION="7.0.0"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 POCKET_IC_BIN="$REPO_ROOT/pocket-ic"
 
 if [ ! -f "$POCKET_IC_BIN" ]; then
-  ARCH="$(uname -m)"
-  case "$ARCH" in
-    arm64) ARCH_TAG="arm64"  ;;
-    *)     ARCH_TAG="x86_64" ;;
-  esac
-  curl -fsSL "https://github.com/dfinity/pocketic/releases/download/${POCKET_IC_VERSION}/pocket-ic-${ARCH_TAG}-darwin.gz" \
-    | gunzip -c > "$POCKET_IC_BIN"
+  TMP="$(mktemp)"
+  curl -fsSL "https://github.com/dfinity/pocketic/releases/download/${POCKET_IC_VERSION}/pocket-ic-x86_64-darwin.gz" -o "$TMP"
+  gunzip -c "$TMP" > "$POCKET_IC_BIN"
+  rm "$TMP"
   chmod +x "$POCKET_IC_BIN"
 fi
