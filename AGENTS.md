@@ -13,37 +13,73 @@ This file is not a changelog. It should describe the active way this repository 
 - Local development and CI are driven from repository scripts, not ad hoc commands.
 - `canister_ids.json` and `sns_canister_ids.json` are authoritative canister ID manifests for this repo.
 
-## Key Patterns
+## Canonical Scripts
 
-- Prefer the repository's canonical scripts for commands instead of inventing new tooling.
-  - `bash scripts/run_canister_test_suite.sh` is the canonical local/CI test entrypoint.
-  - `bash scripts/canister_snapshot.sh` is used for snapshot actions: `ACTION=take_snapshot`, `ACTION=list_snapshots`, and `ACTION=load_snapshot`.
-  - `bash scripts/release_and_submit_proposals.sh` is the canonical release/proposal entrypoint.
+All scripts live under `scripts/`. Use these — do not invent alternatives.
 
-- Use the root `README.md` as the primary source of human-facing repository workflow documentation.
-- For canister compile/runtime details, rely on `dfx.json` plus the code in `src/canister/*`.
-- Do not edit or rely on build artifacts under `target/` or `wasms/` as source files.
+| Script | Purpose |
+|--------|---------|
+| `scripts/install-dependencies.sh` | Install dfx and pocket-ic (idempotent — safe to re-run) |
+| `scripts/run-canister-test-suite.sh` | Full local/CI test suite |
+| `scripts/canister_snapshot.sh` | Canister snapshot operations (take / list / load) |
+| `scripts/release-and-submit-proposals.sh` | Build release artifacts and submit SNS upgrade proposals |
 
-## Testing and Upgrade Workflow
+### Running the test suite
 
-- The repo emphasizes reproducible local runs that match CI.
-- The `scripts/ci` scripts are source-of-truth for CI and local execution.
-- `ic_repl_tests/` contains local upgrade and integration-style test scenarios.
-- Upgrade testing is currently manual: start `dfx`, check out previous tag, run the suite, switch to `main`, run the suite again, and verify canister version values.
+```sh
+bash scripts/install-dependencies.sh
+bash scripts/run-canister-test-suite.sh
+```
 
-## Deployment Pattern
+### Snapshot operations
 
-- Mainnet deployment is handled via GitHub Actions and proposal submission.
-- The sequence is:
-  1. Merge PR to `main`.
-  2. Tag a semver release.
-  3. Push the tag.
-  4. Let GitHub Actions trigger the upgrade proposal flow.
-- Validate module hashes using `dfx canister info <canister-id> --network=ic` and cross-check GH action deployment output.
+```sh
+ACTION=take_snapshot CANISTER_ID=<canister-id> bash scripts/canister_snapshot.sh
+ACTION=list_snapshots CANISTER_ID=<canister-id> bash scripts/canister_snapshot.sh
+ACTION=load_snapshot  CANISTER_ID=<canister-id> SNAPSHOT_ID=<snapshot-id> bash scripts/canister_snapshot.sh
+```
+
+## Testing Upgrades Locally
+
+Before pushing canister changes to mainnet, verify the upgrade path:
+
+1. `dfx start --clean --background`
+2. `git checkout vx.y.z` — check out the last tag
+3. `bash scripts/run-canister-test-suite.sh` — run suite on old tag
+4. `git checkout main`
+5. `bash scripts/run-canister-test-suite.sh` — run suite on new code
+6. `dfx canister call <individual-canister-id> get_version` — confirm version is greater than `v1.0.0`
+
+Also run `ic_repl_tests/all_tests.sh` to create test users and posts, then verify they are retained after upgrade.
+
+## Mainnet Deployment
+
+Pre-PR checklist:
+- Run the full upgrade test above.
+- Confirm all user canisters upgrade successfully and repl-test posts are retained.
+
+Deployment sequence:
+1. Merge PR to `main`.
+2. Create and push a semver tag.
+3. GitHub Actions triggers `create-release-on-tag-push.yml`, which builds artifacts and submits SNS upgrade proposals via `scripts/release-and-submit-proposals.sh`.
+
+Verify after deployment:
+- `dfx canister info <canister-id> --network=ic` — `Module hash` must match the hash printed during the Actions run.
+- Canister IDs: `canister_ids.json`.
+
+## CI Workflows
+
+| Workflow | Trigger | Script |
+|----------|---------|--------|
+| `all-canisters-test-suite-on-any-push.yml` | Every push | `run-canister-test-suite.sh` |
+| `create-release-on-tag-push.yml` | Tag push (`v*`) | `release-and-submit-proposals.sh` |
+| `canister-snapshot.yml` | Manual dispatch | `canister_snapshot.sh` |
+
+All workflows run on `macos-latest` and install dependencies via `scripts/install-dependencies.sh`.
 
 ## Agent Behavior Rules
 
-- Always check `README.md` and `scripts/*` first for the current workflow.
+- Always check `AGENTS.md` and `scripts/*` first for the current workflow.
 - Avoid making arbitrary changes to canister deployment or upgrade behavior without explicit evidence from repo docs or tests.
 - If a new process is introduced, document it here and keep the language prescriptive.
 - Keep agent edits minimal when updating workflows: update the official script or docs, then update `AGENTS.md`.
@@ -52,7 +88,7 @@ This file is not a changelog. It should describe the active way this repository 
 
 Update `AGENTS.md` whenever any of the following change:
 
-- The canonical test or deployment script changes.
+- The canonical test or deployment script changes (name or behavior).
 - The repository adds or removes a major canister or canister manifest file.
 - The release/tagging/proposal process changes.
 - The local reproducibility workflow changes.
@@ -64,7 +100,7 @@ When updating, keep it terse and current. Remove obsolete patterns immediately.
 
 This file is the authoritative agent reference for this repository. If you are an agent making changes to repo-wide conventions:
 
-- Change `AGENTS.md` as part of the same PR.
+- Change `AGENTS.md` as part of the same commit.
 - Summarize the changed convention in a short new paragraph or bullet.
 - Keep the content focused on the active repository state.
 - Do not preserve old workflows as permanent content.
