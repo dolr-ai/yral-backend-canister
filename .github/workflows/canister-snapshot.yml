@@ -41,8 +41,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install dfx
-        run: bash scripts/install-dfx.sh
+      - name: Install dependencies
+        run: bash scripts/install-dependencies.sh
 
       - name: Run snapshot action
         run: bash scripts/canister_snapshot.sh

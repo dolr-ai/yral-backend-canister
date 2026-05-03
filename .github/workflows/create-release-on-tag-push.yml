@@ -22,8 +22,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install dfx
-        run: bash scripts/install-dfx.sh
+      - name: Install dependencies
+        run: bash scripts/install-dependencies.sh
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -43,7 +43,7 @@ jobs:
           chmod +x ic-repl-linux64
 
       - name: Run release workflow
-        run: bash scripts/release_and_submit_proposals.sh
+        run: bash scripts/release-and-submit-proposals.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

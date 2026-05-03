@@ -2,6 +2,18 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "CI: Run canister test suite",
+      "detail": "Install dependencies and run the full canister test suite",
+      "type": "shell",
+      "command": "bash scripts/install-dependencies.sh && bash scripts/run-canister-test-suite.sh",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "IC Dashboard: Run all snapshot queries",
       "detail": "Execute all SQL queries in queries.sql against ic_canisters.db",
       "type": "shell",

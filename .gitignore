@@ -17,3 +17,4 @@ icp_ledger.wasm.gz
 **/*.db
 **/*.db-shm
 **/*.db-wal
+pocket-ic

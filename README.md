@@ -7,7 +7,7 @@ The repository uses scripts in `scripts/ci` as the source of truth for both GitH
 Run these locally (requires dfx and Rust toolchain):
 
 ```sh
-bash scripts/run_canister_test_suite.sh
+bash scripts/run-canister-test-suite.sh
 ```
 
 ```sh
@@ -51,7 +51,7 @@ git checkout vx.y.z
 ### Step 2
 Run the CI-equivalent test suite script on the old tag
 ```sh
-bash scripts/run_canister_test_suite.sh
+bash scripts/run-canister-test-suite.sh
 ```
 
 ### Step 3
@@ -63,7 +63,7 @@ git checkout main
 ### Step 4
 Run the same CI-equivalent suite on `main`
 ```sh
-bash scripts/run_canister_test_suite.sh
+bash scripts/run-canister-test-suite.sh
 ```
 
 ### Step 5

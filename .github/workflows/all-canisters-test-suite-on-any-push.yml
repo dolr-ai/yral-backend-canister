@@ -14,14 +14,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install dfx
-        run: bash scripts/install-dfx.sh
+      - name: Install dependencies
+        run: bash scripts/install-dependencies.sh
 
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Resolve pocket-ic path
-        run: echo "POCKET_IC_BIN=$(dfx cache show)/pocket-ic" >> $GITHUB_ENV
-
       - name: Run canister test suite
-        run: bash scripts/run_canister_test_suite.sh
+        run: bash scripts/run-canister-test-suite.sh
