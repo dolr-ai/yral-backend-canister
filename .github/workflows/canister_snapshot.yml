@@ -27,7 +27,7 @@ on:
 jobs:
   snapshot:
     name: Canister Snapshot (${{ matrix.canister_id }})
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
@@ -41,12 +41,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Run snapshot action in devcontainer
-        uses: devcontainers/ci@v0.3
-        with:
-          runCmd: bash scripts/canister_snapshot.sh
-          env: |
-            HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY=${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}
-            CANISTER_ID=${{ inputs.canister_id || matrix.canister_id }}
-            ACTION=${{ inputs.action || 'take_snapshot' }}
-            SNAPSHOT_ID=${{ inputs.snapshot_id }}
+      - name: Install dfx
+        run: bash scripts/install-dfx.sh
+
+      - name: Run snapshot action
+        run: bash scripts/canister_snapshot.sh
+        env:
+          HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY: ${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}
+          CANISTER_ID: ${{ inputs.canister_id || matrix.canister_id }}
+          ACTION: ${{ inputs.action || 'take_snapshot' }}
+          SNAPSHOT_ID: ${{ inputs.snapshot_id }}

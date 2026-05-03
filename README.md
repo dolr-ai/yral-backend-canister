@@ -4,7 +4,7 @@
 
 The repository uses scripts in `scripts/ci` as the source of truth for both GitHub Actions and local runs.
 
-Run these from the devcontainer:
+Run these locally (requires dfx and Rust toolchain):
 
 ```sh
 bash scripts/run_canister_test_suite.sh

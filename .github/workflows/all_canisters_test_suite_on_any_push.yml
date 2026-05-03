@@ -9,14 +9,19 @@ concurrency:
 jobs:
   test:
     name: Run canister test suite
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Run suite in devcontainer
-        uses: devcontainers/ci@v0.3
-        with:
-          runCmd: bash scripts/run_canister_test_suite.sh
-          env: |
-            POCKET_IC_BIN=/workspaces/yral-backend-canister/pocket-ic
+      - name: Install dfx
+        run: bash scripts/install-dfx.sh
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Resolve pocket-ic path
+        run: echo "POCKET_IC_BIN=$(dfx cache show)/pocket-ic" >> $GITHUB_ENV
+
+      - name: Run canister test suite
+        run: bash scripts/run_canister_test_suite.sh

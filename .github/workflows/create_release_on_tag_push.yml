@@ -11,7 +11,7 @@ concurrency:
 jobs:
   test:
     name: Publish canister artifacts and send upgrade proposals
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     permissions:
       packages: read
       contents: write
@@ -22,14 +22,32 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Run release workflow in devcontainer
-        uses: devcontainers/ci@v0.3
-        with:
-          runCmd: bash scripts/release_and_submit_proposals.sh
-          env: |
-            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-            GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
-            HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY=${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}
-            VERSION=${{ github.ref_name }}
-            NEURON_ID=${{ env.NEURON_ID }}
-            GITHUB_REPOSITORY=${{ github.repository }}
+      - name: Install dfx
+        run: bash scripts/install-dfx.sh
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Download quill (macOS)
+        run: |
+          curl -L -o quill \
+            https://github.com/dfinity/quill/releases/download/v0.4.2/quill-macos-x86_64
+          chmod +x quill
+
+      - name: Download ic-repl (macOS)
+        run: |
+          ICREPL_VERSION=$(curl -s https://api.github.com/repos/dfinity/ic-repl/releases/latest \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['tag_name'])")
+          curl -L -o ic-repl-linux64 \
+            "https://github.com/dfinity/ic-repl/releases/download/${ICREPL_VERSION}/ic-repl-macos"
+          chmod +x ic-repl-linux64
+
+      - name: Run release workflow
+        run: bash scripts/release_and_submit_proposals.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY: ${{ secrets.HOT_OR_NOT_SNS_PROPOSAL_SUBMISSION_IDENTITY_PRIVATE_KEY }}
+          VERSION: ${{ github.ref_name }}
+          NEURON_ID: ${{ env.NEURON_ID }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
