@@ -1,0 +1,1 @@
+- write a recursive cte to calculate all canisters owned by our fleet
