@@ -19,8 +19,9 @@ All scripts live under `scripts/`. Use these — do not invent alternatives.
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/install-dependencies.sh` | Install dfx and pocket-ic (idempotent — safe to re-run) |
+| `scripts/install-dependencies.sh` | Install dfx, pocket-ic, and candid-extractor (idempotent — safe to re-run) |
 | `scripts/run-canister-test-suite.sh` | Full local/CI test suite |
+| `scripts/generate-candid.sh` | Rebuild wasm(s) and regenerate `can.did` from the compiled output |
 | `scripts/canister_snapshot.sh` | Canister snapshot operations (take / list / load) |
 | `scripts/release-and-submit-proposals.sh` | Build release artifacts and submit SNS upgrade proposals |
 
