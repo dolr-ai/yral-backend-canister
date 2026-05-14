@@ -2,24 +2,25 @@
 # Build canister wasms and submit SNS upgrade proposals directly from a local machine.
 # Must be run from the repo root.
 #
+# The version counter below is auto-incremented after each successful run.
+# Commit the updated script to git after each deployment so the next run
+# picks up the correct version number.
+#
 # Usage:
-#   VERSION=v1.1.0 bash scripts/release-and-submit-proposals.sh
-#   VERSION=v1.1.0 CHANGE_SUMMARY="Strip individual_user_template to hello_world" bash scripts/release-and-submit-proposals.sh
+#   bash scripts/release-and-submit-proposals.sh
+#   CHANGE_SUMMARY="your description" bash scripts/release-and-submit-proposals.sh
 #
 # Prerequisites:
 #   - actions_identity.pem: paste your SNS proposal submitter PEM key into this file (gitignored)
 #   - dfx installed: bash scripts/install-dependencies.sh
 set -euo pipefail
 
-VERSION="${VERSION:-}"
+# ── Version counter (auto-incremented on each successful run) ──────────────────
+CURRENT_VERSION=0
+# ──────────────────────────────────────────────────────────────────────────────
+
 NEURON_ID="4de673e9cd7a1339afea6523a5f227d25e9d739ff52635ac86dbdb0447ae106a"
 IDENTITY_FILE="actions_identity.pem"
-
-if [[ -z "$VERSION" ]]; then
-  echo "Error: VERSION is required."
-  echo "Usage: VERSION=v1.1.0 bash scripts/release-and-submit-proposals.sh"
-  exit 1
-fi
 
 if [[ ! -f "$IDENTITY_FILE" ]] || ! grep -q "BEGIN" "$IDENTITY_FILE" 2>/dev/null; then
   echo "Error: $IDENTITY_FILE not found or does not contain a PEM key."
@@ -27,7 +28,13 @@ if [[ ! -f "$IDENTITY_FILE" ]] || ! grep -q "BEGIN" "$IDENTITY_FILE" 2>/dev/null
   exit 1
 fi
 
+NEXT_VERSION=$((CURRENT_VERSION + 1))
+VERSION="v${NEXT_VERSION}"
 CHANGE_SUMMARY="${CHANGE_SUMMARY:-Upgrade canister fleet to ${VERSION}}"
+
+echo "Deploying version: ${VERSION}"
+echo "Change summary:    ${CHANGE_SUMMARY}"
+echo ""
 
 # Import the proposal submitter identity into dfx
 dfx identity import --storage-mode=plaintext actions "$IDENTITY_FILE" --force
@@ -91,5 +98,13 @@ for canister_name in user_index individual_user_template; do
 done
 
 rm -rf proposals
+
+# ── Increment version counter in this script ───────────────────────────────────
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+sed -i '' "s/^CURRENT_VERSION=${CURRENT_VERSION}$/CURRENT_VERSION=${NEXT_VERSION}/" "$SCRIPT_PATH"
+# ──────────────────────────────────────────────────────────────────────────────
+
 echo ""
 echo "Done. All proposals submitted for version ${VERSION}."
+echo "CURRENT_VERSION in this script is now ${NEXT_VERSION}."
+echo "Commit scripts/release-and-submit-proposals.sh to git to persist the version counter."
