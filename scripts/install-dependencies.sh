@@ -1,3 +1,8 @@
+# Install candid-extractor (official DFINITY tool for generating .did files from wasm)
+if ! command -v candid-extractor &>/dev/null; then
+  cargo install candid-extractor
+fi
+
 # Install dfx non-interactively
 if ! command -v dfx &>/dev/null; then
   export DFXVM_INIT_YES=true

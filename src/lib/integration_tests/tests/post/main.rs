@@ -1,3 +1,0 @@
-pub mod delete_post;
-pub mod get_total_number_of_posts;
-pub mod when_creating_a_new_post_then_post_score_should_be_calculated;

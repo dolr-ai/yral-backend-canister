@@ -5,6 +5,8 @@ target
 internet_identity.did
 /*.did
 quill
+ic-repl
+ic-repl-linux64
 .direnv/
 **/*.pem
 sns-testing/**
@@ -18,3 +20,5 @@ icp_ledger.wasm.gz
 **/*.db-shm
 **/*.db-wal
 pocket-ic
+.idea
+scripts/proposals/

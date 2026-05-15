@@ -1,1 +1,0 @@
-pub mod platform_orchestrator_on_receiving_call_from_global_admin_can_make_individual_canister_logs_public_test;

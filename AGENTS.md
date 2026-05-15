@@ -19,10 +19,12 @@ All scripts live under `scripts/`. Use these — do not invent alternatives.
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/install-dependencies.sh` | Install dfx and pocket-ic (idempotent — safe to re-run) |
-| `scripts/run-canister-test-suite.sh` | Full local/CI test suite |
+| `scripts/install-dependencies.sh` | Install dfx, pocket-ic, and candid-extractor (idempotent — safe to re-run) |
+| `scripts/run-canister-test-suite.sh` | Full test suite |
+| `scripts/generate-candid.sh` | Rebuild wasm(s) and regenerate `can.did` from the compiled output |
+| `scripts/release-and-submit-proposals.sh` | Build wasms and submit SNS upgrade proposals directly from local machine |
+| `scripts/upgrade_ic_repl.sh` | ic-repl script invoked by release script for user_index and individual_user_template |
 | `scripts/canister_snapshot.sh` | Canister snapshot operations (take / list / load) |
-| `scripts/release-and-submit-proposals.sh` | Build release artifacts and submit SNS upgrade proposals |
 
 ### Running the test suite
 
@@ -54,28 +56,23 @@ Also run `ic_repl_tests/all_tests.sh` to create test users and posts, then verif
 
 ## Mainnet Deployment
 
-Pre-PR checklist:
+Pre-deployment checklist:
 - Run the full upgrade test above.
-- Confirm all user canisters upgrade successfully and repl-test posts are retained.
+- Ensure `actions_identity.pem` contains your SNS proposal submitter PEM key (never commit this file).
 
 Deployment sequence:
-1. Merge PR to `main`.
-2. Create and push a semver tag.
-3. GitHub Actions triggers `create-release-on-tag-push.yml`, which builds artifacts and submits SNS upgrade proposals via `scripts/release-and-submit-proposals.sh`.
+1. Paste your PEM key into `actions_identity.pem` in the repo root.
+2. Run:
+   ```sh
+   VERSION=v1.2.3 CHANGE_SUMMARY="your description" bash scripts/release-and-submit-proposals.sh
+   ```
+3. The script builds `platform_orchestrator`, `user_index`, and `individual_user_template` for mainnet, then submits SNS upgrade proposals for all three.
+4. SNS neuron holders vote on the proposals.
+5. On passing, `platform_orchestrator` distributes and installs the new wasms fleet-wide.
 
 Verify after deployment:
-- `dfx canister info <canister-id> --network=ic` — `Module hash` must match the hash printed during the Actions run.
+- `dfx canister info <canister-id> --network=ic` — `Module hash` must match the hash printed by the script.
 - Canister IDs: `canister_ids.json`.
-
-## CI Workflows
-
-| Workflow | Trigger | Script |
-|----------|---------|--------|
-| `all-canisters-test-suite-on-any-push.yml` | Every push | `run-canister-test-suite.sh` |
-| `create-release-on-tag-push.yml` | Tag push (`v*`) | `release-and-submit-proposals.sh` |
-| `canister-snapshot.yml` | Manual dispatch | `canister_snapshot.sh` |
-
-All workflows run on `macos-latest` and install dependencies via `scripts/install-dependencies.sh`.
 
 ## Agent Behavior Rules
 
