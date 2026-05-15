@@ -69,7 +69,7 @@ fi
 # Submit SNS upgrade proposal for platform_orchestrator (direct canister upgrade)
 canister_name="platform_orchestrator"
 canister_id="$(dfx canister id "$canister_name" --network=ic)"
-mkdir -p "proposals/${canister_name}"
+mkdir -p "scripts/proposals/${canister_name}"
 
 echo "==> Submitting SNS upgrade proposal for ${canister_name}..."
 ./quill sns \
@@ -82,9 +82,9 @@ echo "==> Submitting SNS upgrade proposal for ${canister_name}..."
   --target-canister-id "$canister_id" \
   --wasm-path ".dfx/ic/canisters/${canister_name}/${canister_name}.wasm.gz" \
   --canister-upgrade-arg "(record {version=\"${VERSION}\"})" \
-  "$NEURON_ID" > "proposals/${canister_name}/upgrade.json"
+  "$NEURON_ID" > "scripts/proposals/${canister_name}/upgrade.json"
 
-./quill send "proposals/${canister_name}/upgrade.json" --yes
+./quill send "scripts/proposals/${canister_name}/upgrade.json" --yes
 
 # Submit SNS generic function proposals for user_index and individual_user_template.
 # These go through platform_orchestrator's UpgradeSubnetCanisters generic function (id 4002),
@@ -97,7 +97,7 @@ for canister_name in user_index individual_user_template; do
     ./ic-repl scripts/upgrade_ic_repl.sh -r ic
 done
 
-rm -rf proposals
+rm -rf scripts/proposals
 
 # ── Increment version counter in this script ───────────────────────────────────
 SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
