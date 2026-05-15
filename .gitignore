@@ -20,5 +20,5 @@ icp_ledger.wasm.gz
 **/*.db-shm
 **/*.db-wal
 pocket-ic
-.ideascripts/proposals/
-.idea/
+.idea
+scripts/proposals/

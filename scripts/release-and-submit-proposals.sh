@@ -77,7 +77,8 @@ echo "==> Submitting SNS upgrade proposal for ${canister_name}..."
   --pem-file "$IDENTITY_FILE" \
   make-upgrade-canister-proposal \
   --title "Upgrade ${canister_name}" \
-  --summary "# Upgrade ${canister_name}\n\n${CHANGE_SUMMARY}" \
+  --summary "# Upgrade ${canister_name}
+  ${CHANGE_SUMMARY}" \
   --url 'https://yral.com' \
   --target-canister-id "$canister_id" \
   --wasm-path ".dfx/ic/canisters/${canister_name}/${canister_name}.wasm.gz" \
