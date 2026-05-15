@@ -1,5 +1,5 @@
 #!/usr/bin/ic-repl -o
-identity actions "./actions_identity.pem";
+identity actions "../actions_identity.pem";
 
 import platform_orchestrator_canister = "74zq4-iqaaa-aaaam-ab53a-cai";
 import governance_canister="6wcax-haaaa-aaaaq-aaava-cai";
@@ -22,7 +22,7 @@ function generate_payload() {
                 UpgradeSubnetCanisters = record {
                     version = "${VERSION}"; 
                     canister = canister_type; 
-                    wasm_blob = file(".dfx/ic/canisters/${CANISTER_NAME}/${CANISTER_NAME}.wasm.gz");
+                    wasm_blob = file("../.dfx/ic/canisters/${CANISTER_NAME}/${CANISTER_NAME}.wasm.gz");
                 }
             }
     )
