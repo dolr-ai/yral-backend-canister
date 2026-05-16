@@ -14,6 +14,42 @@
       "problemMatcher": []
     },
     {
+      "label": "Release: platform_orchestrator only",
+      "detail": "Build and submit SNS upgrade proposal for platform_orchestrator",
+      "type": "shell",
+      "command": "RELEASE_SCOPE=platform_orchestrator bash scripts/release-and-submit-proposals.sh",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: platform_orchestrator + user_index",
+      "detail": "Build and submit SNS upgrade proposals for platform_orchestrator and user_index",
+      "type": "shell",
+      "command": "RELEASE_SCOPE=platform_orchestrator_user_index bash scripts/release-and-submit-proposals.sh",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: all canisters",
+      "detail": "Build and submit SNS upgrade proposals for platform_orchestrator, user_index, and individual_user_template",
+      "type": "shell",
+      "command": "bash scripts/release-and-submit-proposals.sh",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "IC Dashboard: Run all snapshot queries",
       "detail": "Execute all SQL queries in queries.sql against ic_canisters.db",
       "type": "shell",

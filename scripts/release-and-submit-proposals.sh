@@ -9,6 +9,12 @@
 # Usage:
 #   bash scripts/release-and-submit-proposals.sh
 #   CHANGE_SUMMARY="your description" bash scripts/release-and-submit-proposals.sh
+#   RELEASE_SCOPE=platform_orchestrator bash scripts/release-and-submit-proposals.sh
+#
+# RELEASE_SCOPE controls which canisters are built and proposed:
+#   platform_orchestrator            — platform_orchestrator only
+#   platform_orchestrator_user_index — platform_orchestrator + user_index
+#   all (default)                    — platform_orchestrator + user_index + individual_user_template
 #
 # Prerequisites:
 #   - actions_identity.pem: paste your SNS proposal submitter PEM key into this file (gitignored)
@@ -21,6 +27,31 @@ CURRENT_VERSION=1
 
 NEURON_ID="4de673e9cd7a1339afea6523a5f227d25e9d739ff52635ac86dbdb0447ae106a"
 IDENTITY_FILE="actions_identity.pem"
+RELEASE_SCOPE="${RELEASE_SCOPE:-all}"
+
+# Determine which subnet canisters to build and propose in addition to platform_orchestrator.
+# platform_orchestrator is always built and proposed via direct SNS upgrade.
+# Subnet canisters (user_index, individual_user_template) are proposed via the
+# platform_orchestrator's UpgradeSubnetCanisters generic function (id 4002).
+case "$RELEASE_SCOPE" in
+  platform_orchestrator)
+    SUBNET_CANISTERS_TO_BUILD=""
+    SUBNET_CANISTERS_TO_UPGRADE=""
+    ;;
+  platform_orchestrator_user_index)
+    SUBNET_CANISTERS_TO_BUILD="user_index"
+    SUBNET_CANISTERS_TO_UPGRADE="user_index"
+    ;;
+  all)
+    SUBNET_CANISTERS_TO_BUILD="individual_user_template user_index"
+    SUBNET_CANISTERS_TO_UPGRADE="user_index individual_user_template"
+    ;;
+  *)
+    echo "Error: Unknown RELEASE_SCOPE '${RELEASE_SCOPE}'."
+    echo "Valid values: platform_orchestrator, platform_orchestrator_user_index, all"
+    exit 1
+    ;;
+esac
 
 if [[ ! -f "$IDENTITY_FILE" ]] || ! grep -q "BEGIN" "$IDENTITY_FILE" 2>/dev/null; then
   echo "Error: $IDENTITY_FILE not found or does not contain a PEM key."
@@ -32,8 +63,9 @@ NEXT_VERSION=$((CURRENT_VERSION + 1))
 VERSION="v${NEXT_VERSION}"
 CHANGE_SUMMARY="${CHANGE_SUMMARY:-Upgrade canister fleet to ${VERSION}}"
 
-echo "Deploying version: ${VERSION}"
-echo "Change summary:    ${CHANGE_SUMMARY}"
+echo "Deploying version:  ${VERSION}"
+echo "Change summary:     ${CHANGE_SUMMARY}"
+echo "Release scope:      ${RELEASE_SCOPE}"
 echo ""
 
 # Import the proposal submitter identity into dfx
@@ -41,7 +73,7 @@ dfx identity import --storage-mode=plaintext actions "$IDENTITY_FILE" --force
 dfx identity use actions
 
 # Build canisters for mainnet and print module hashes
-for canister in platform_orchestrator individual_user_template user_index; do
+for canister in platform_orchestrator $SUBNET_CANISTERS_TO_BUILD; do
   echo "==> Building $canister for mainnet..."
   dfx build "$canister" --network=ic
   hash=$(sha256sum < ".dfx/ic/canisters/${canister}/${canister}.wasm.gz")
@@ -87,16 +119,18 @@ echo "==> Submitting SNS upgrade proposal for ${canister_name}..."
 
 ./quill send "scripts/proposals/${canister_name}/upgrade.json" --yes
 
-# Submit SNS generic function proposals for user_index and individual_user_template.
+# Submit SNS generic function proposals for subnet canisters (if any).
 # These go through platform_orchestrator's UpgradeSubnetCanisters generic function (id 4002),
 # which distributes the wasm to the entire canister fleet.
-for canister_name in user_index individual_user_template; do
-  echo "==> Submitting SNS proposal for ${canister_name}..."
-  CANISTER_NAME="$canister_name" \
-  CHANGE_SUMMARY="$CHANGE_SUMMARY" \
-  VERSION="$VERSION" \
-    ./ic-repl scripts/upgrade_ic_repl.sh -r ic
-done
+if [[ -n "$SUBNET_CANISTERS_TO_UPGRADE" ]]; then
+  for canister_name in $SUBNET_CANISTERS_TO_UPGRADE; do
+    echo "==> Submitting SNS proposal for ${canister_name}..."
+    CANISTER_NAME="$canister_name" \
+    CHANGE_SUMMARY="$CHANGE_SUMMARY" \
+    VERSION="$VERSION" \
+      ./ic-repl scripts/upgrade_ic_repl.sh -r ic
+  done
+fi
 
 rm -rf scripts/proposals
 
