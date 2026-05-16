@@ -30,11 +30,14 @@ use crate::{
     CANISTER_DATA,
 };
 
+pub mod add_platform_orchestrator_as_controller_to_all_canisters;
+pub mod add_platform_orchestrator_as_controller_to_specific_canister;
 pub mod allot_empty_canister;
 pub mod create_pool_of_available_canisters;
 pub mod delete_all_sns_creator_token_in_the_network;
 pub mod delete_all_sns_creator_token_of_an_individual_canister;
 pub mod fixup_individual_canisters_mappings;
+pub mod get_bulk_operation_status;
 pub mod get_last_broadcast_call_status;
 pub mod get_subnet_available_capacity;
 pub mod get_subnet_backup_capacity;

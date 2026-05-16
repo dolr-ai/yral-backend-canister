@@ -9,6 +9,7 @@ use ic_cdk::api::{
     management_canister::main::{CanisterInstallMode, CanisterStatusResponse},
 };
 use ic_cdk_macros::export_candid;
+use data_model::bulk_individual_canister_operation_status::BulkIndividualCanisterOperationStatus;
 use shared_utils::{
     canister_specific::user_index::types::{
         args::UserIndexInitArgs, BroadcastCallStatus, RecycleStatus, UpgradeStatus,

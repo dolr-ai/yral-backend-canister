@@ -378,3 +378,18 @@ async fn upgrade_user_canister(
     .await
     .map_err(|e| e.1)
 }
+
+pub async fn set_controller_with_platform_orchestrator(
+    canister_id_being_updated: Principal,
+    platform_orchestrator: Principal,
+) -> Result<(), String> {
+    main::update_settings(main::UpdateSettingsArgument {
+        canister_id: canister_id_being_updated,
+        settings: main::CanisterSettings {
+            controllers: Some(vec![api::id(), platform_orchestrator]),
+            ..Default::default()
+        },
+    })
+    .await
+    .map_err(|e| e.1)
+}

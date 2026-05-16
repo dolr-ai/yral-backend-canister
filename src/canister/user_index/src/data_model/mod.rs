@@ -17,8 +17,11 @@ use crate::CANISTER_DATA;
 use self::memory::get_wasm_memory;
 use self::{configuration::Configuration, memory::Memory};
 
+pub mod bulk_individual_canister_operation_status;
 pub mod configuration;
 pub mod memory;
+
+use self::bulk_individual_canister_operation_status::BulkIndividualCanisterOperationStatus;
 
 const fn _default_true() -> bool {
     return true;
@@ -50,6 +53,8 @@ pub struct CanisterData {
     pub pump_dump_onboarding_reward: Nat,
     #[serde(default)]
     pub on_going_operation: HashSet<SubnetOrchestratorOperation>,
+    #[serde(default)]
+    pub bulk_operation_status: BulkIndividualCanisterOperationStatus,
 }
 
 impl Default for CanisterData {
@@ -68,6 +73,7 @@ impl Default for CanisterData {
             version_details: VersionDetails::default(),
             pump_dump_onboarding_reward: default_pump_dump_onboarding_reward(),
             on_going_operation: HashSet::new(),
+            bulk_operation_status: Default::default(),
         }
     }
 }
